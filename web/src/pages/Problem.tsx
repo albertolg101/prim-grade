@@ -390,7 +390,7 @@ function Grader({ p, preparing, onSaved, onInfo, onAnswers, onAccepting }: {
               <DialogTitle>{t("Rubric v{n} accepted", { n: p.rubric_version })}</DialogTitle>
               <DialogDescription>{t("The problem is ready for answers. Where do you want to go?")}</DialogDescription>
             </DialogHeader>
-            <DialogFooter className="gap-2 sm:justify-start">
+            <DialogFooter className="gap-2 sm:flex-wrap sm:justify-start">
               <Button autoFocus onClick={() => { setAccepted(false); onAnswers(); }}>{t("Go to the answers")}</Button>
               <Button variant="outline" onClick={() => { setAccepted(false); navigate("/problems"); }}>{t("Go to the problem list")}</Button>
               <Button variant="ghost" onClick={() => setAccepted(false)}>{t("Stay on this page")}</Button>
