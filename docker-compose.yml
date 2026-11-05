@@ -1,0 +1,19 @@
+# PrimGrade platform (ADR-0001). `docker compose up --build` runs everything on http://localhost:8080
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: primgrade
+      POSTGRES_PASSWORD: primgrade
+      POSTGRES_DB: primgrade
+    ports:
+      - "127.0.0.1:5433:5432"   # also used by the server tests (database primgrade_test)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U primgrade"]
+      interval: 2s
+      retries: 30
+
+volumes:
+  pgdata:

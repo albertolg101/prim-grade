@@ -5,7 +5,8 @@
 
 ```bash
 uv sync                          # Python 3.12 deps (grader library + dev tools)
-uv run python -m pytest          # library tests (fake LLM, no network)
+docker compose up -d db          # PostgreSQL on 127.0.0.1:5433 (server tests need it)
+uv run python -m pytest          # grader + server tests (fake LLM, no network)
 uv run ruff check .              # lint
 ```
 

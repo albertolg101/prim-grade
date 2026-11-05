@@ -9,15 +9,15 @@ its test (D3). Ticks match commits.
 | Id | Task | Covers | Output | Test |
 |---|---|---|---|---|
 | T01 | Grader: per-key LLM client, revise step | GL-01, GL-02 | `grader/llm.py` `openai_llm(key)`, `grader/setup.py` `revise_text` | `tests/test_grading.py` |
-| T02 | Server skeleton: config, DB models, migration, compose `db` | ADR-0001 | `server/`, `docker-compose.yml` | `server/tests/test_smoke.py` |
+| T02 | Server skeleton: config, DB models, migration, compose `db` | ADR-0001 | `server/`, `docker-compose.yml` | `server/tests/conftest.py` (migration runs) |
 | T03 | Accounts: sign-up, first admin, login, sessions, admin actions | PL-01–05 | `server/primgrade_server/routes/auth.py`, `admin.py` | `test_accounts.py` (AC-P01, AC-P02) |
 | T04 | Settings: encrypted key, theme, link minutes | PL-06–08 | `routes/settings.py` | `test_settings.py` (AC-P03) |
 | T05 | Files: pages and raw captures, checksums, owner checks | PL-12–14 | `files.py` | `test_files.py` (AC-P07) |
 | T06 | Problems: drafts, generate, edit, improve, accept, versions | PL-15–19 | `routes/problems.py` | `test_problems.py` (AC-P04–06) |
 | T07 | Answers: add, grade, review data, approve with AI feedback | PL-20–24 | `routes/answers.py` | `test_answers.py` (AC-P08, AC-P09) |
 | T08 | Groups and exams | PL-25–27 | `routes/groups.py`, `exams.py` | `test_exams.py` (AC-P10) |
-| T09 | Upload links, student page API, cookie binding | PL-28–31, PL-35 | `routes/links.py`, `public.py` | `test_links.py` (AC-P11, AC-P12, AC-P15, AC-P16) |
-| T10 | Cost records and views | PL-32–34 | `costs.py`, `routes/costs.py` | `test_costs.py` (AC-P13) |
+| T09 | Upload links, student page API, cookie binding | PL-28–31, PL-35 | `routes/exams.py` (links), `public.py` | `test_links.py` (AC-P11, AC-P12, AC-P15, AC-P16) |
+| T10 | Cost records and views | PL-32–34 | `ai.py` (records), `routes/costs.py` | `test_costs.py` (AC-P13) |
 | T11 | Web: Vite, Tailwind, shadcn/ui, theme, auth screens, tabs | PL-07, PL-09–11 | `web/` | `npm run build` |
 | T12 | Web: capture (browse, drop, scan with jscanify) | PL-12–14 | `web/src/components/capture/` | build; browser check |
 | T13 | Web: problems editor, improve, answers, review | PL-15–24 | `web/src/pages/` | build; browser check |
@@ -47,4 +47,4 @@ its test (D3). Ticks match commits.
 
 ## Resume point
 
-Updated 5 November 2026: T01 not started. Next command: `uv run python -m pytest tests`.
+Updated 5 November 2026: T01–T10 done (server, 52 tests on PostgreSQL). Next: T11 web app in `web/`. Check: `docker compose up -d db && uv run python -m pytest`.
