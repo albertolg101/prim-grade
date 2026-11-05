@@ -59,7 +59,17 @@ export default function Review({ id }: { id: string }) {
     // on a computer the page fits the screen (no page scrollbar): the paper takes the height left and the
     // proposal column scrolls inside itself; on a phone the page scrolls as usual
     <div className="w-full space-y-3 px-4 py-4 sm:px-6 lg:flex lg:h-[calc(var(--app-h)-3.25rem)] lg:flex-col">
+      {/* title and prev / next share one row; next / previous wraps under the title when it does not fit */}
       <div className="flex flex-wrap items-center gap-2">
+        {a && (
+          <>
+            <h1 className="text-xl font-semibold">{name}</h1>
+            <StateBadge state={a.state} />
+            <span className="text-sm text-muted-foreground">
+              {a.problem_title} · {a.source === "student" ? t("uploaded by the student") : t("uploaded by you")} {when(a.created_at)} · {t("rubric v{n}", { n: a.rubric_version })}
+            </span>
+          </>
+        )}
         <div className="ml-auto flex items-center gap-1">
           {at >= 0 && <span className="text-sm text-muted-foreground">{t("{n} of {total}", { n: at + 1, total: ids.length })}</span>}
           <Button size="sm" variant="outline" aria-label={t("Previous answer")} disabled={at <= 0} onClick={() => go(at - 1)}><ChevronLeft /> {t("Prev")}</Button>
@@ -69,13 +79,6 @@ export default function Review({ id }: { id: string }) {
       <ErrorText>{ans.error}</ErrorText>
       {a && (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold">{name}</h1>
-            <StateBadge state={a.state} />
-            <span className="text-sm text-muted-foreground">
-              {a.problem_title} · {a.source === "student" ? t("uploaded by the student") : t("uploaded by you")} {when(a.created_at)} · {t("rubric v{n}", { n: a.rubric_version })}
-            </span>
-          </div>
           {a.versions.length > 1 && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted-foreground">{t("Versions:")}</span>
