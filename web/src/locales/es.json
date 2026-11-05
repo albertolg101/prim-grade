@@ -384,5 +384,9 @@
  "Name A–Z": "Nombre A–Z",
  "Name Z–A": "Nombre Z–A",
  "All": "Todos",
- "Find a tag": "Buscar una etiqueta"
+ "Find a tag": "Buscar una etiqueta",
+ "Filter by tag": "Filtrar por etiqueta",
+ "Type a tag…": "Escribe una etiqueta…",
+ "{n} problems": "{n} problemas",
+ "No tag matches “{q}”.": "Ninguna etiqueta coincide con «{q}»."
 }

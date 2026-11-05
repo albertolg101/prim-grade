@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Filter, Search } from "lucide-react";
+import { Filter, Search, X } from "lucide-react";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -45,7 +44,14 @@ export default function Problems() {
     .sort((a, b) => sort.startsWith("name") ? a.title.localeCompare(b.title) * (sort === "name-asc" ? 1 : -1)
       : (a.updated_at < b.updated_at ? -1 : 1) * (sort === "updated-asc" ? 1 : -1));
   const nFilters = (status === "all" ? 0 : 1) + tags.length;
-  const toggle = <T,>(list: T[], x: T) => (list.includes(x) ? list.filter((y) => y !== x) : [...list, x]);
+  // adds a tag filter when the text names one of the teacher's tags (any case); true when it did
+  const pickTag = (text: string) => {
+    const tag = allTags.find((x) => lower(x) === lower(text.trim()));
+    if (!tag) return false;
+    if (!tags.includes(tag)) setTags([...tags, tag]);
+    setTagQ("");
+    return true;
+  };
 
   return (
     <Page title={t("Problems")} actions={
@@ -141,20 +147,41 @@ export default function Problems() {
             {t("Tags (all selected)")}{tags.length ? ` · ${tags.length}` : ""}
           </legend>
           {allTags.length === 0 && <p className="text-xs text-muted-foreground">{t("No tags yet. Add them with the plus on a problem.")}</p>}
-          {allTags.length > 8 && (
-            <Input type="search" aria-label={t("Find a tag")} placeholder={t("Find a tag")} className="h-8 text-sm"
-                   value={tagQ} onChange={(e) => setTagQ(e.target.value)} />
+          {tags.length > 0 && (
+            <ul className="flex flex-wrap gap-1">
+              {tags.map((x) => (
+                <li key={x}>
+                  <Badge variant="secondary" className="max-w-full gap-0.5 pr-0.5">
+                    <span className="truncate" title={x}>{x}</span>
+                    <button type="button" aria-label={t("Remove tag {tag}", { tag: x })}
+                            className="rounded-full p-0.5 hover:bg-background/60" onClick={() => setTags(tags.filter((y) => y !== x))}>
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                </li>
+              ))}
+            </ul>
           )}
-          {/* a long list scrolls inside the panel; checked tags come first so they stay in sight */}
-          <div className="-mx-1 max-h-72 space-y-2 overflow-y-auto px-1">
-          {[...allTags.filter((x) => tags.includes(x)), ...allTags.filter((x) => !tags.includes(x) && lower(x).includes(lower(tagQ.trim())))].map((x) => (
-            <label key={x} className="flex items-center gap-2 text-sm">
-              <Checkbox checked={tags.includes(x)} onCheckedChange={() => setTags(toggle(tags, x))} />
-              <span className="min-w-0 truncate" title={x}>{x}</span>
-              <span className="text-xs text-muted-foreground">{rows.filter((r) => r.tags.some((y) => lower(y) === lower(x))).length}</span>
-            </label>
-          ))}
-          </div>
+          {allTags.length > 0 && (
+            // PL-42: tags are picked from suggestions, so the panel never lists them all
+            <form onSubmit={(e) => { e.preventDefault(); pickTag(tagQ); }}>
+              <Input list="filter-tags" aria-label={t("Filter by tag")} placeholder={t("Type a tag…")} className="h-8 text-sm"
+                     value={tagQ}
+                     onChange={(e) => {
+                       // choosing a suggestion adds it at once; typing waits for Enter
+                       const picked = !(e.nativeEvent instanceof InputEvent) || e.nativeEvent.inputType === "insertReplacementText";
+                       if (!(picked && pickTag(e.target.value))) setTagQ(e.target.value);
+                     }} />
+              <datalist id="filter-tags">
+                {allTags.filter((x) => !tags.includes(x)).map((x) => (
+                  <option key={x} value={x} label={t("{n} problems", { n: rows.filter((r) => r.tags.some((y) => lower(y) === lower(x))).length })} />
+                ))}
+              </datalist>
+              {tagQ.trim() && !allTags.some((x) => lower(x).includes(lower(tagQ.trim()))) && (
+                <p className="mt-1 text-xs text-muted-foreground">{t("No tag matches “{q}”.", { q: tagQ.trim() })}</p>
+              )}
+            </form>
+          )}
         </fieldset>
       </aside>
       </div>

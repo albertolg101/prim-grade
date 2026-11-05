@@ -133,9 +133,10 @@ Each requirement has a stable id; tests and tasks cite it.
   search bar above the list and a filter sidebar on its right with:
   - **Sort by**: recently changed (default), least recently changed, name A–Z, name Z–A.
   - **Status**: a sliding switch, All · Draft · Ready, one choice, because the system sets status.
-  - **Tags**: every stored tag with its count (0 for unused ones); a problem must carry every
-    checked tag. Past 8 tags a "Find a tag" field narrows the list; the list scrolls inside the
-    panel, checked tags first; a long name is cut with its full text on hover.
+  - **Tags**: never listed all at once. A field suggests the stored tags as the teacher types
+    (each with how many problems carry it); picking one, or Enter on a full tag name in any case,
+    adds it as a chip with a remove button. A problem must carry every chosen tag. An unknown
+    name says no tag matches.
   - **Clear** resets status and tags.
   The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
