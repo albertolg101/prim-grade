@@ -248,14 +248,14 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
         {a.approval && <p className="text-sm text-muted-foreground">{t("Approved {when}. You can change it and approve again.", { when: when(a.approval.approved_at) })}</p>}
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="divide-y">
+        {/* the teacher knows the rubric: the id is enough, the description is on hover */}
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-2">
           {rubric.criteria.map((c) => (
-            <label key={c.id} className="flex items-center gap-2 py-2 text-sm">
-              <span className="min-w-0 flex-1"><span className="font-semibold">{c.id}</span> · {c.description}</span>
-              {proposed[c.id] !== undefined && Number(scores[c.id]) !== proposed[c.id] && <Badge variant="outline">{t("AI: {points}", { points: pts(proposed[c.id]) })}</Badge>}
-              <Input type="number" inputMode="decimal" step={0.5} min={0} max={c.max_points} className="h-11 w-20 text-right text-xl font-bold tabular-nums md:text-xl" aria-label={t("{criterion} points", { criterion: c.id })}
+            <label key={c.id} title={c.description} className="flex items-center gap-2 rounded-lg border px-2 py-1.5">
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold">{c.id}</span>
+              <Input type="number" inputMode="decimal" step={0.5} min={0} max={c.max_points} className="h-10 w-14 px-2 text-right text-xl font-bold tabular-nums md:text-xl" aria-label={t("{criterion} points", { criterion: `${c.id} · ${c.description}` })}
                      value={scores[c.id]} onChange={(e) => setScores({ ...scores, [c.id]: e.target.value })} />
-              <span className="w-10 text-base font-medium text-muted-foreground">/ {pts(c.max_points)}</span>
+              <span className="text-sm font-medium text-muted-foreground">/{pts(c.max_points)}</span>
             </label>
           ))}
         </div>

@@ -121,3 +121,8 @@
 
 /* lib/marquee.ts: a cut-off label scrolls to its end and back while its control is hovered */
 [data-marquee] { text-overflow: clip; }
+
+/* number fields without the browser's up / down arrows (typing and the arrow keys still work) */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }

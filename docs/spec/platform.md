@@ -214,8 +214,8 @@ Each requirement has a stable id; tests and tasks cite it.
   high confidence ("Check first") in its header, then one square per criterion with its id, points
   and confidence. The stages fold below: 1 transcription, 2 physics interpretation, 3 proposed
   scores (each criterion with its evidence and source, reasoning and confidence, all shown once
-  open) and the suggested feedback (I3, I5). In the teacher's grade the points per criterion are
-  large and bold. On this screen the page and zoom buttons sit under the paper, beside
+  open) and the suggested feedback (I3, I5). In the teacher's grade each criterion is a small cell with its id
+  (description on hover), its points large and bold, and its maximum; the cells sit side by side. On this screen the page and zoom buttons sit under the paper, beside
   its caption (owner requests, 6 November 2026).
 - **PL-23 Final grade.** The teacher sets the final points per criterion and the feedback, starting
   from the proposal, and approves. Approval is the only way a grade becomes final (I1). The AI's
