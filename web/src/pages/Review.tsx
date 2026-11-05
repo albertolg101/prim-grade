@@ -56,7 +56,7 @@ export default function Review({ id }: { id: string }) {
   const go = (j: number) => navigate(`/answers/${ids[j]}${ctxParam ? `?ctx=${ctxParam}` : ""}`);
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] space-y-3 px-4 py-4">
+    <div className="w-full space-y-3 px-4 py-4 sm:px-6">
       <div className="flex flex-wrap items-center gap-2">
         <div className="ml-auto flex items-center gap-1">
           {at >= 0 && <span className="text-sm text-muted-foreground">{t("{n} of {total}", { n: at + 1, total: ids.length })}</span>}

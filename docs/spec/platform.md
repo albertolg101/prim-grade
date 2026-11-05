@@ -90,6 +90,8 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-10 Colours.** Dark mode uses yellow as the primary colour; light mode uses blue.
 - **PL-11 Phone and computer.** Every screen works on a phone (from 360 px wide, touch) and on a
   computer. On a phone the one-answer review (PL-22) stacks the image above the grade.
+  Pages use the whole screen width; their parts sit two per row and wrap to one column on narrow
+  screens (owner request, 5 November 2026).
 
 ### Capture
 

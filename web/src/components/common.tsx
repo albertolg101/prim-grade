@@ -71,7 +71,7 @@ export function Page({ title, crumbs = [], actions, children }: {
 }) {
   useCrumbs([...crumbs, [title]]);
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-4 sm:py-6">
+    <div className="w-full space-y-4 px-4 py-4 sm:px-6 sm:py-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="min-w-0 break-words text-xl font-semibold sm:text-2xl">{title}</h1>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

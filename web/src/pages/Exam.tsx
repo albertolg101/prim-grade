@@ -32,7 +32,7 @@ export default function ExamPage({ id }: { id: string }) {
     <Page title={e.title} crumbs={[[t("Exams"), "/exams"]]}
           actions={<Button size="sm" variant="outline" onClick={() => { const name = prompt(t("Exam title"), e.title); if (name?.trim()) save(() => api.patch(`/api/exams/${id}`, { title: name })); }}>{t("Rename")}</Button>}>
       <ErrorText>{act.error}</ErrorText>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="cols">
         <ExamProblems e={e} all={problems.data ?? []} save={save} busy={act.busy} />
         <Card>
           <CardHeader><CardTitle>{t("Groups taking this exam")}</CardTitle></CardHeader>

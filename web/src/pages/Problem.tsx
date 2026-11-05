@@ -115,9 +115,9 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
   });
 
   return (
-    <div className="max-w-3xl space-y-6 pt-2">
-      <p className="text-sm text-muted-foreground">{t("Type them, add images, or both. The AI reads all of it.")}</p>
-      <div className="space-y-1.5">
+    <div className="cols pt-2">
+      <p className="col-full text-sm text-muted-foreground">{t("Type them, add images, or both. The AI reads all of it.")}</p>
+      <div className="col-full max-w-xl space-y-1.5">
         <Label htmlFor="t">{t("Title")}</Label>
         <Input id="t" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
       </div>
@@ -130,10 +130,11 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
           <Capture pages={[]} onChange={(v) => upload(role, v)} disabled={act.busy} />
         </div>
       ))}
-      <div className="space-y-1.5">
+      <div className="col-full space-y-1.5">
         <Label htmlFor="rubric">{t("Your rubric (optional)")}</Label>
         <Textarea id="rubric" rows={3} placeholder={t("Leave empty and the AI proposes one.")} value={f.rubric_text} onChange={(e) => setF({ ...f, rubric_text: e.target.value })} />
       </div>
+      <div className="col-full space-y-2">
       <ErrorText>{act.error}</ErrorText>
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" disabled={!dirty || !f.title.trim() || act.busy} onClick={() => act.run(save)}>{t("Save")}</Button>
@@ -148,6 +149,7 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
       {!p.proposal && !(has("statement") && has("solution")) && (
         <p className="text-sm text-muted-foreground">{t("Add the statement and the reference solution first.")}</p>
       )}
+      </div>
     </div>
   );
 }
@@ -175,7 +177,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
 
   if (!draft) {
     return (
-      <div className="max-w-3xl space-y-3 pt-2">
+      <div className="space-y-3 pt-2">
         <p className="text-sm text-muted-foreground">{t("The AI reads the statement and the solution and proposes a rubric. You check and edit everything.")}</p>
         {!has && <p className="text-sm">{t("Add the statement and the reference solution first.")}</p>}
         <div className="flex flex-wrap gap-2">
@@ -197,7 +199,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
 
   return (
     <div className="space-y-8 pt-2">
-      <p className="max-w-3xl text-sm text-muted-foreground">{t("Every field is editable. Saving an edit to a ready problem makes it a draft; accepting creates the next rubric version, and earlier grades keep theirs.")}</p>
+      <p className="text-sm text-muted-foreground">{t("Every field is editable. Saving an edit to a ready problem makes it a draft; accepting creates the next rubric version, and earlier grades keep theirs.")}</p>
       {p.pending_proposal && (
         <Diff before={p.proposal!} after={p.pending_proposal} instruction={p.pending_instruction ?? ""} busy={act.busy}
               onChoose={(c) => act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/improve/${c}`)))} />
@@ -226,6 +228,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
             id: `C${crit.length + 1}`, description: "", max_points: 1, required_evidence: "", full_credit: "", partial_credit: "", zero_credit: "",
           }])}><Plus /> {t("Criterion")}</Button>
         </div>
+        <div className="cols">
         {crit.map((c, i) => {
           const errs = criterionErrors(c, crit);
           const edit = (patch: Partial<Criterion>) => setCrit(crit.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -254,6 +257,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
             </Card>
           );
         })}
+        </div>
         <div className="grid gap-2 md:grid-cols-3">
           <Field label={t("Carried errors")}><Textarea rows={2} value={d.rubric.carried_error_policy} onChange={(e) => up({ rubric: { ...d.rubric, carried_error_policy: e.target.value } })} /></Field>
           <Field label={t("Tolerances")}><Textarea rows={2} value={d.rubric.tolerances} onChange={(e) => up({ rubric: { ...d.rubric, tolerances: e.target.value } })} /></Field>
@@ -281,7 +285,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
         </div>
       </div>
 
-      <section className="max-w-3xl space-y-2">
+      <section className="space-y-2">
         <Separator className="mb-4" />
         <Label htmlFor="ins" className="text-lg font-semibold">{t("Improve with an instruction")}</Label>
         <Textarea id="ins" rows={2} placeholder={t("e.g. C2 should accept g = 9.8 or 10; the diagram needs friction")}

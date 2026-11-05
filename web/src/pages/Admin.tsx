@@ -36,6 +36,7 @@ export default function Admin({ me }: { me: Me }) {
           </CardContent>
         </Card>
       )}
+      <div className="cols">
       <Card>
         <CardHeader><CardTitle>{t("Teachers")}</CardTitle></CardHeader>
         <CardContent className="divide-y">
@@ -85,6 +86,7 @@ export default function Admin({ me }: { me: Me }) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </Page>
   );
 }

@@ -87,6 +87,13 @@
   }
 }
 
+/* Two columns of components that wrap to one on narrow screens; .col-full takes a whole row */
+@layer components {
+  .cols { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1.5rem; }
+  .cols > * { flex: 1 1 calc(50% - 0.75rem); min-width: min(100%, 24rem); }
+  .cols > .col-full { flex-basis: 100%; }
+}
+
 /* PL-39: the zoom footer keeps a fixed pixel height at every zoom; layout leaves room for it */
 :root {
   --footer-h: 28px;

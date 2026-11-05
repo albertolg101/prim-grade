@@ -36,7 +36,7 @@ export default function Settings({ onSignOut }: { onSignOut: () => void }) {
     <Page title={t("Settings")}>
       <ErrorText>{prefs.error}</ErrorText>
       {p && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="cols">
           <Card>
             <CardHeader>
               <CardTitle>{t("OpenAI API key")}</CardTitle>
