@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { BookOpen, ChevronRight, ClipboardList, LogOut, Menu, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
 import { CrumbsContext, type Crumb } from "@/components/common";
 import { LanguageSelect, ThemeButtons } from "@/components/Prefs";
+import ZoomFooter from "@/components/ZoomFooter";
 import { Button } from "@/components/ui/button";
 import { api, type Me, type Theme } from "@/lib/api";
 import { getLang, setLang, t, type Lang } from "@/lib/i18n";
@@ -50,9 +51,9 @@ export default function App() {
   }, [isStudent]);
   useEffect(() => setMenu(false), [loc]);
 
-  if (student) return <Student token={student.token} />;
+  if (student) return <><Student token={student.token} /><ZoomFooter /></>;
   if (me === undefined) return null;
-  if (me === null) return <Auth onIn={signIn} />;
+  if (me === null) return <><Auth onIn={signIn} /><ZoomFooter /></>;
 
   // the screen changes at once; the server copy follows (theme PL-07, language PL-37)
   const changeTheme = (theme: Theme) => {
@@ -86,10 +87,10 @@ export default function App() {
 
   return (
     <CrumbsContext.Provider value={setCrumbs}>
-      <div className="min-h-dvh md:flex">
+      <div className="min-h-(--app-h) md:flex">
         {menu && <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenu(false)} />}
         <aside className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r bg-background transition-transform md:sticky md:top-0 md:h-dvh md:translate-x-0",
+          "fixed top-0 left-0 z-50 flex h-(--app-h) w-60 flex-col border-r bg-background transition-transform md:sticky md:translate-x-0",
           menu ? "translate-x-0" : "invisible -translate-x-full md:visible")}>
           <div className="flex h-13 items-center justify-between px-4">
             <a href="/problems" onClick={(e) => { e.preventDefault(); navigate("/problems"); }}
@@ -160,6 +161,7 @@ export default function App() {
           <main>{page}</main>
         </div>
       </div>
+      <ZoomFooter />
     </CrumbsContext.Provider>
   );
 }

@@ -80,6 +80,10 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-38 Breadcrumbs** (owner request, 5 November 2026). The left of the top bar shows where the
   teacher is (for example *Exams › Exam › Ana*); each earlier step is a link. On a phone only the
   current page is shown.
+- **PL-39 Zoom** (owner request, 5 November 2026). A thin footer on every page has −, the current
+  level (press to return to 100 %) and +, from 75 % to 200 %. A web page cannot change the browser's
+  own zoom, so the app zooms itself with CSS `zoom`; dialogs and menus zoom with it. The footer keeps
+  its size at every level. The level is kept per browser, since it depends on the screen.
 - **PL-10 Colours.** Dark mode uses yellow as the primary colour; light mode uses blue.
 - **PL-11 Phone and computer.** Every screen works on a phone (from 360 px wide, touch) and on a
   computer. On a phone the one-answer review (PL-22) stacks the image above the grade.
@@ -234,6 +238,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P15 | PL-35, US.P12 | Opening a link sets an opaque cookie; a first submission binds it server-side. A different student name with that cookie is refused without storing answer files or grading, including on a replacement link for the same exam/group. Concurrent attempts cannot bind two names. The refusal does not expose the bound name. |
 | AC-P16 | PL-35, PL-31 | The bound student can submit other problems; repeat uploads for one problem remain versions. A shared-device conflict directs the student to the teacher, who can upload on their behalf. Cookie bypass is documented as an unresolved limitation, not treated as verified identity. |
 | AC-P14 | PL-10, PL-11 | At 375 px and 1280 px, in light and dark, every tab is usable and uses the right primary colour. |
+| AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar ends at the footer, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 
 ## Open questions (each with the default applied until answered, D10)

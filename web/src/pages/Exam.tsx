@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { t } from "@/lib/i18n";
+import { getZoom } from "@/lib/zoom";
 import { api, pagesForm, type AnswerRow, type Exam, type Group, type Link, type Page as UploadPage } from "@/lib/api";
 import { navigate, query } from "@/lib/router";
 import { cn } from "@/lib/utils";
@@ -234,7 +235,7 @@ function Links({ e, groupId }: { e: Exam; groupId: string }) {
       {big && open && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white p-4 text-black" onClick={() => setBig(false)}>
           <p className="text-xl font-semibold">{e.title}</p>
-          <QRCodeSVG value={open.url} size={Math.min(innerWidth, innerHeight) * 0.7} />
+          <QRCodeSVG value={open.url} size={Math.min(innerWidth, innerHeight) * 0.7 / getZoom()} />
           <p className="break-all text-center text-lg">{open.url}</p>
           <p className="text-lg tabular-nums">{t("Closes in {time} · tap to close", { time: clock })}</p>
         </div>

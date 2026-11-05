@@ -42,7 +42,7 @@ export default function ImageViewer({ pages }: { pages: FileRef[] }) {
         </div>
       </div>
       <div ref={box}
-           className={`relative h-[60dvh] overflow-hidden rounded-lg border bg-muted lg:h-[calc(100dvh-11rem)] ${z > 1 ? "cursor-grab touch-none" : ""}`}
+           className={`relative h-[calc(var(--app-h)*0.6)] overflow-hidden rounded-lg border bg-muted lg:h-[calc(var(--app-h)-11rem)] ${z > 1 ? "cursor-grab touch-none" : ""}`}
            onPointerDown={(e) => { if (z > 1) { drag.current = { x: e.clientX - off.x, y: e.clientY - off.y }; (e.target as Element).setPointerCapture?.(e.pointerId); } }}
            onPointerMove={(e) => { if (drag.current) setOff({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y }); }}
            onPointerUp={() => (drag.current = null)}

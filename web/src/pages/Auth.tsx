@@ -36,7 +36,7 @@ export default function Auth({ onIn }: { onIn: (m: Me) => void }) {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center p-4">
+    <div className="flex min-h-(--app-h) items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="flex items-center justify-between gap-2">

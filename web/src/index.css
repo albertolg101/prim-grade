@@ -84,5 +84,14 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    /* room for the zoom footer (PL-39), which keeps its real size */
+    padding-bottom: calc(var(--footer-h) / var(--zoom));
   }
+}
+
+/* PL-39: CSS zoom on <html> also scales viewport units, so full-height layout divides by it */
+:root {
+  --zoom: 1;
+  --footer-h: 28px;
+  --app-h: calc((100dvh - var(--footer-h)) / var(--zoom));
 }
