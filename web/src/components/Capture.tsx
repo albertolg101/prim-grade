@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 const ScannerDialog = lazy(() => import("./Scanner"));
 const OK = ["image/jpeg", "image/png", "image/webp"];
 
-/** PL-12: browse, drag and drop, or scan. The pages are shown, in order, before anything is sent. */
-export default function Capture({ pages, onChange, disabled }: {
-  pages: Page[]; onChange: (p: Page[]) => void; disabled?: boolean; label?: string;
+/** PL-12: browse, drag and drop, or scan. The pages are shown, in order, before anything is sent.
+ * With children, they are the drop area (e.g. a text field) and the buttons sit below on the left. */
+export default function Capture({ pages, onChange, disabled, children }: {
+  pages: Page[]; onChange: (p: Page[]) => void; disabled?: boolean; label?: string; children?: React.ReactNode;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -32,26 +33,41 @@ export default function Capture({ pages, onChange, disabled }: {
     onChange(p);
   };
 
+  // only file drags are taken over, so dragging text inside a text field still works
+  const files = (e: React.DragEvent) => e.dataTransfer.types.includes("Files");
+  const drop = {
+    onDragOver: (e: React.DragEvent) => { if (files(e)) { e.preventDefault(); setOver(true); } },
+    onDragLeave: () => setOver(false),
+    onDrop: (e: React.DragEvent) => { if (!files(e)) return; e.preventDefault(); setOver(false); if (!disabled) add(e.dataTransfer.files); },
+  };
+  const buttons = (
+    <div className={cn("flex flex-wrap gap-2", !children && "justify-center")}>
+      <Button type="button" variant="outline" size={children ? "sm" : "default"} disabled={disabled} onClick={() => input.current?.click()}>
+        <Upload /> {t("Browse files")}
+      </Button>
+      <Button type="button" size={children ? "sm" : "default"} disabled={disabled} onClick={() => setScanning(true)}>
+        <Camera /> {t("Scan")}
+      </Button>
+      <input ref={input} type="file" multiple accept={OK.join(",")} hidden
+             onChange={(e) => { if (e.target.files) add(e.target.files); e.target.value = ""; }} />
+    </div>
+  );
+
   return (
     <div className="space-y-2">
-      <div
-        onDragOver={(e) => { e.preventDefault(); setOver(true); }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(e) => { e.preventDefault(); setOver(false); if (!disabled) add(e.dataTransfer.files); }}
-        className={cn("flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-4 text-center transition-colors",
-          over ? "border-primary bg-primary/10" : "border-border")}>
-        <p className="hidden text-sm text-muted-foreground sm:block">{t("Drop images here, or")}</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button type="button" variant="outline" disabled={disabled} onClick={() => input.current?.click()}>
-            <Upload /> {t("Browse files")}
-          </Button>
-          <Button type="button" disabled={disabled} onClick={() => setScanning(true)}>
-            <Camera /> {t("Scan")}
-          </Button>
+      {children ? (
+        <>
+          <div {...drop} className={cn("rounded-md transition-shadow", over && "ring-2 ring-primary")}>{children}</div>
+          {buttons}
+        </>
+      ) : (
+        <div {...drop}
+             className={cn("flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-4 text-center transition-colors",
+               over ? "border-primary bg-primary/10" : "border-border")}>
+          <p className="hidden text-sm text-muted-foreground sm:block">{t("Drop images here, or")}</p>
+          {buttons}
         </div>
-        <input ref={input} type="file" multiple accept={OK.join(",")} hidden
-               onChange={(e) => { if (e.target.files) add(e.target.files); e.target.value = ""; }} />
-      </div>
+      )}
       {refused && <p className="text-sm text-destructive">{refused}</p>}
       {pages.length > 0 && (
         <ol className="flex gap-2 overflow-x-auto pb-1" aria-label={t("Pages to send: {n}", { n: pages.length })}>

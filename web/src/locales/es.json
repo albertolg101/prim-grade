@@ -363,5 +363,6 @@
  "{criterion} points": "Puntos de {criterion}",
  "{label} (one per line)": "{label} (uno por línea)",
  "{n} of {total}": "{n} de {total}",
- "{n} tokens": "{n} tokens"
+ "{n} tokens": "{n} tokens",
+ "Click to type or drag your images here": "Haz clic para escribir o arrastra tus imágenes aquí"
 }

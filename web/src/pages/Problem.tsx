@@ -123,10 +123,19 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
       {(["statement", "solution"] as const).map((role) => (
         <div key={role} className="space-y-2">
           <Label htmlFor={role}>{role === "statement" ? t("Statement") : t("Reference solution")}</Label>
-          <Textarea id={role} rows={4} value={f[`${role}_text`]} onChange={(e) => setF({ ...f, [`${role}_text`]: e.target.value })} />
+          {/* the text field is the drop area (PL-12); dropped images upload at once */}
+          <Capture pages={[]} onChange={(v) => upload(role, v)} disabled={act.busy}>
+            <div className="relative">
+              <Textarea id={role} rows={6} value={f[`${role}_text`]} onChange={(e) => setF({ ...f, [`${role}_text`]: e.target.value })} />
+              {!f[`${role}_text`] && (
+                <p aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-muted-foreground">
+                  {t("Click to type or drag your images here")}
+                </p>
+              )}
+            </div>
+          </Capture>
           <Thumbs files={p.files.filter((x) => x.role === role)} busy={act.busy}
                   onRemove={(x) => act.run(async () => onSaved(await api.del<Problem>(`/api/problems/${p.id}/files/${x.link_id}`)))} />
-          <Capture pages={[]} onChange={(v) => upload(role, v)} disabled={act.busy} />
         </div>
       ))}
       <div className="col-full space-y-1.5">

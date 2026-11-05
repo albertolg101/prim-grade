@@ -113,6 +113,8 @@ Each requirement has a stable id; tests and tasks cite it.
   each, the optional rubric across both) and **2 · AI grader** (what the AI understood, the rubric with one card per criterion,
   accept and improve, then the problem's answers). Images added to the statement or solution are
   uploaded as soon as they are dropped, picked or scanned; tapping one opens it large in a dialog.
+  The text field itself is the drop area (while empty it reads "Click to type or drag your images
+  here", centred and muted); Browse files and Scan sit below it on the left.
   The title is not a form field: a pencil next to the page title turns it into a text input (Enter
   or leaving saves, Esc cancels). Exams are renamed the same way.
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an
