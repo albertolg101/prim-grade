@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { api, pagesForm, type AnswerRow, type Page } from "@/lib/api";
+import { api, pagesForm, type AnswerRow, type Group, type Page } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { navigate } from "@/lib/router";
 
@@ -19,14 +19,19 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   const [pages, setPages] = useState<Page[]>([]);
   const [label, setLabel] = useState("");
   const [name, setName] = useState("");
+  const NO_GROUP = "none";  // a Select item cannot have an empty value
+  const [group, setGroup] = useState(NO_GROUP);  // PL-46: optional
+  const groups = useLoad(() => api.get<Group[]>("/api/groups"), []);
+  const groupName = (id: string | null) => groups.data?.find((g) => g.id === id)?.name;
   const [sort, setSort] = useState<Sort>("newest");  // the server lists newest first
   const act = useAction();
   const shown = [...(rows.data ?? [])];
   if (sort === "oldest") shown.reverse();
   if (sort === "name") shown.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   const add = () => act.run(async () => {
-    await api.form(`/api/problems/${problemId}/answers`, pagesForm(pages, { label, student_name: name }));
-    setPages([]); setLabel(""); setName("");
+    await api.form(`/api/problems/${problemId}/answers`,
+      pagesForm(pages, { label, student_name: name, group_id: group === NO_GROUP ? undefined : group }));
+    setPages([]); setLabel(""); setName("");  // the group stays: the next answer is often from the same one
     await rows.reload();
   });
 
@@ -39,6 +44,15 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
           <div className="flex flex-wrap gap-2">
             <Input className="w-full sm:w-72" placeholder={t("Student name (optional)")} value={name} onChange={(e) => setName(e.target.value)} aria-label={t("Student name")} />
             <Input className="w-full sm:w-52" placeholder={t("Label (optional)")} value={label} onChange={(e) => setLabel(e.target.value)} aria-label={t("Label")} />
+            {!!groups.data?.some((g) => !g.archived) && (
+              <Select value={group} onValueChange={setGroup}>
+                <SelectTrigger className="w-full sm:w-52" aria-label={t("Group")}><SelectValue /></SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value={NO_GROUP}>{t("No group (optional)")}</SelectItem>
+                  {groups.data.filter((g) => !g.archived).map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
             <Button disabled={!pages.length || act.busy} onClick={add}>{pages.length === 1 ? t("Add answer (1 page)") : t("Add answer ({n} pages)", { n: pages.length })}</Button>
           </div>
           <ErrorText>{act.error}</ErrorText>
@@ -54,14 +68,15 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
           </Select>
         </div>
       )}
-      {rows.data && <AnswerTable rows={shown} reload={rows.reload} ctx={`problem:${problemId}`} canGrade={ready} />}
+      {rows.data && <AnswerTable rows={shown} reload={rows.reload} ctx={`problem:${problemId}`} canGrade={ready} groupName={groupName} />}
     </div>
   );
 }
 
 /** Answers with their state; select some and grade them. Polls while any is running. */
-export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle }: {
+export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle, groupName }: {
   rows: AnswerRow[]; reload: () => Promise<unknown>; ctx: string; canGrade: boolean; problemTitle?: (id: string) => string;
+  groupName?: (id: string | null) => string | undefined;
 }) {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const act = useAction();
@@ -101,6 +116,7 @@ export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle }: {
               <div className="truncate font-medium">
                 {r.student_name || r.label || t("Unnamed answer")}
                 {problemTitle && <span className="font-normal text-muted-foreground"> · {problemTitle(r.problem_id)}</span>}
+                {groupName?.(r.group_id) && <span className="font-normal text-muted-foreground"> · {groupName(r.group_id)}</span>}
               </div>
               <div className="truncate text-xs text-muted-foreground">
                 {r.source === "student" ? t("Uploaded by the student") : t("Uploaded by you")} · {when(r.created_at)}

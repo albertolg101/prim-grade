@@ -159,6 +159,10 @@ Each requirement has a stable id; tests and tasks cite it.
   oldest, name A–Z) and is where answers are added once the rubric is accepted. After accepting a
   rubric version the teacher is asked where to go: the answers (default), the problem list, or stay
   on the page. The back link from an answer returns to the Answers screen.
+- **PL-46 Group on an answer** (owner request, 6 November 2026). When the teacher adds an answer
+  on a problem's Answers screen, they can optionally pick one of their groups (archived ones are not
+  offered); the pick stays for the next answer. The group shows next to the student's name in the
+  list. A group given without an exam must be the teacher's own; an exam still needs its group.
 - **PL-44 Archive a problem** (owner request, 5 November 2026). An archive button on each row of
   the Problems list and below the problem's title archives it; on an archived problem the same
   button unarchives it, and the problem shows an "Archived" badge. Archiving only hides the problem
@@ -313,6 +317,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P20 | PL-43 | Preparing runs as a background job: the problem shows as preparing to every request of its owner and to no one else, a second preparation is refused while one runs, and a provider failure or a restart leaves an error and no proposal (`test_preparing_is_shared_and_runs_once`, `test_provider_failure_while_preparing_stores_no_proposal`). |
 | AC-P21 | PL-44 | Archiving a problem keeps its status and rubric version, it is still listed with `archived`, and unarchiving restores it (`test_archiving_a_problem_is_reversible_and_keeps_it`). |
 | AC-P22 | PL-45 | A problem's answers are listed newest first (`test_problem_answers_are_listed_newest_first`). |
+| AC-P23 | PL-46 | An answer can carry one of the teacher's groups without an exam; another teacher's group is refused, and an exam without a group is refused (`test_an_answer_can_name_one_of_the_teachers_groups`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 

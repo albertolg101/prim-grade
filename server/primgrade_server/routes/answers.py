@@ -70,8 +70,11 @@ def owned_answer(db: Session, answer_id: str, user: models.User) -> tuple[models
 
 def check_exam_group(db: Session, user, problem_id: str, exam_id: str | None,
                      group_id: str | None) -> None:
-    if bool(exam_id) != bool(group_id):
-        raise HTTPException(422, "give both the exam and the group, or neither")
+    """An exam needs its group; a group alone (PL-46) must be one of the teacher's groups."""
+    if exam_id and not group_id:
+        raise HTTPException(422, "give the group for that exam")
+    if group_id:
+        owned(db, models.Group, group_id, user)
     if exam_id:
         owned(db, models.Exam, exam_id, user)
         if not db.get(models.ExamProblem, (exam_id, problem_id)):

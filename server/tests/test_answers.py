@@ -113,3 +113,25 @@ def test_problem_answers_are_listed_newest_first(admin):  # PL-45, AC-P22
         upload(admin, p["id"], label=label)
     rows = admin.get(f"/api/problems/{p['id']}/answers").json()
     assert [r["label"] for r in rows] == ["A3", "A2", "A1"]
+
+
+def test_an_answer_can_name_one_of_the_teachers_groups(admin, make_client):  # PL-46, AC-P23
+    from conftest import PNG, teacher
+
+    p = ready_problem(admin)
+    g = admin.post("/api/groups", json={"name": "Group A"}).json()
+    r = admin.post(f"/api/problems/{p['id']}/answers",
+                   data={"student_name": "Ann", "group_id": g["id"]},
+                   files=[("pages", ("a.png", PNG, "image/png"))])
+    assert r.status_code == 201 and r.json()["group_id"] == g["id"] and r.json()["exam_id"] is None
+    plain = upload(admin, p["id"], label="no group")
+    assert plain["group_id"] is None
+    other = teacher(make_client, admin, "bo@example.test")
+    theirs = other.post("/api/groups", json={"name": "Theirs"}).json()
+    r = admin.post(f"/api/problems/{p['id']}/answers", data={"group_id": theirs["id"]},
+                   files=[("pages", ("a.png", PNG, "image/png"))])
+    assert r.status_code == 404
+    e = admin.post("/api/exams", json={"title": "Midterm"}).json()
+    r = admin.post(f"/api/problems/{p['id']}/answers", data={"exam_id": e["id"]},
+                   files=[("pages", ("a.png", PNG, "image/png"))])
+    assert r.status_code == 422  # an exam still needs its group
