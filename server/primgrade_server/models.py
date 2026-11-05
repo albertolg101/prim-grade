@@ -93,6 +93,17 @@ class Problem(Base):
     updated_at: Mapped[datetime] = ts(onupdate=now)
 
 
+class Tag(Base):
+    """PL-41: a teacher's tag; it exists on its own, whether or not a problem carries it."""
+    __tablename__ = "tags"
+    __table_args__ = (UniqueConstraint("owner_id", "key"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(40))  # the first spelling
+    key: Mapped[str] = mapped_column(String(40))  # lower case: "Mechanics" = "mechanics"
+    created_at: Mapped[datetime] = ts()
+
+
 class ProblemFile(Base):
     __tablename__ = "problem_files"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

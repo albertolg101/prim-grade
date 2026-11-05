@@ -37,7 +37,7 @@ def unique_tags(tags: list[str]) -> list[str]:
     """PL-41: the first spelling of a tag wins; 'Mechanics' and 'mechanics' are one tag."""
     seen: dict[str, str] = {}
     for t in tags:
-        seen.setdefault(t.casefold(), t)
+        seen.setdefault(t.lower(), t)
     return list(seen.values())
 
 
@@ -106,9 +106,23 @@ def list_problems(db: Db, user: Teacher) -> list[dict]:
 
 @router.get("/tags")
 def list_tags(db: Db, user: Teacher) -> list[str]:
-    """PL-41: every tag on this teacher's problems, for the autocomplete."""
-    rows = db.scalars(select(models.Problem.tags).where(models.Problem.owner_id == user.id))
-    return sorted(unique_tags([t for tags in rows for t in tags]), key=str.casefold)
+    """PL-41: the teacher's tags, used on a problem or not, for the autocomplete and the filters."""
+    names = db.scalars(select(models.Tag.name).where(models.Tag.owner_id == user.id))
+    return sorted(names, key=str.casefold)
+
+
+def keep_tags(db, user: models.User, tags: list[str]) -> list[str]:
+    """Store new tags; a tag the teacher already has keeps its first spelling on the problem too."""
+    mine = db.scalars(select(models.Tag).where(models.Tag.owner_id == user.id))
+    known = {t.key: t.name for t in mine}
+    out = []
+    for t in unique_tags(tags):
+        key = t.lower()
+        if key not in known:
+            db.add(models.Tag(owner_id=user.id, name=t, key=key))
+            known[key] = t
+        out.append(known[key])
+    return out
 
 
 def create(db, user: models.User, body: NewProblem) -> models.Problem:
@@ -135,7 +149,7 @@ def get_problem(problem_id: str, db: Db, user: Teacher) -> dict:
 def edit_problem(problem_id: str, body: ProblemEdit, db: Db, user: Teacher) -> dict:
     p = owned(db, models.Problem, problem_id, user)
     for k, v in body.model_dump(exclude_none=True).items():
-        setattr(p, k, v.strip() if k == "title" else unique_tags(v) if k == "tags" else v)
+        setattr(p, k, v.strip() if k == "title" else keep_tags(db, user, v) if k == "tags" else v)
     db.commit()
     return problem_out(db, p)
 

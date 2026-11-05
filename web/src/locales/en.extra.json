@@ -77,6 +77,10 @@
   "your account is not active",
   "your account is not active; contact an admin",
   "your account is waiting for an admin's approval",
-  "your session has ended; sign in again"
+  "your session has ended; sign in again",
+  "Recently changed",
+  "Least recently changed",
+  "Name A–Z",
+  "Name Z–A"
  ]
 }

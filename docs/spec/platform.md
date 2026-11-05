@@ -126,11 +126,18 @@ Each requirement has a stable id; tests and tasks cite it.
   in its header opens a field that suggests the teacher's existing tags and accepts a new one
   (Enter adds it; picking a suggestion adds it at once). Tags show as chips with a remove button.
   A tag is 1–40 characters, a problem has at most 20, and "Mechanics" and "mechanics" are one tag
-  (the first spelling is kept). Tags are private to the teacher. Tags do not affect grading.
+  (the first spelling is kept). A teacher's tags are stored on their own: a tag stays when no
+  problem carries it any more, and is offered again. Tags are private to the teacher. Tags do not
+  affect grading.
 - **PL-42 Search and filter problems** (owner request, 5 November 2026). The Problems page has a
-  search bar above the list and a filter sidebar on its right. The search matches every typed word
-  against the problem's name or tags, ignoring case. The filters are status (draft, ready; any
-  checked) and tags (a problem must carry every checked tag), each with its count, and Clear. On a
+  search bar above the list and a filter sidebar on its right with:
+  - **Sort by**: recently changed (default), least recently changed, name A–Z, name Z–A.
+  - **Status**: a sliding switch, All · Draft · Ready, one choice, because the system sets status.
+  - **Tags**: every stored tag with its count (0 for unused ones); a problem must carry every
+    checked tag. Past 8 tags a "Find a tag" field narrows the list; the list scrolls inside the
+    panel, checked tags first; a long name is cut with its full text on hover.
+  - **Clear** resets status and tags.
+  The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
   problems" shows how many match. Search and filters run on the loaded list and are not saved.
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an

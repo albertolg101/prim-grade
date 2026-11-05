@@ -377,5 +377,12 @@
  "Clear": "Сбросить",
  "Status": "Статус",
  "Tags (all selected)": "Метки (все отмеченные)",
- "No tags yet. Add them with the plus on a problem.": "Меток пока нет. Добавьте их плюсом на странице задачи."
+ "No tags yet. Add them with the plus on a problem.": "Меток пока нет. Добавьте их плюсом на странице задачи.",
+ "Sort by": "Сортировка",
+ "Recently changed": "Недавно изменённые",
+ "Least recently changed": "Давно изменённые",
+ "Name A–Z": "Название А–Я",
+ "Name Z–A": "Название Я–А",
+ "All": "Все",
+ "Find a tag": "Найти метку"
 }

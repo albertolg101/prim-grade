@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,28 +15,37 @@ import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
 type Status = "draft" | "ready";
+type Sort = "updated-desc" | "updated-asc" | "name-asc" | "name-desc";
+const SORTS: [Sort, string][] = [
+  ["updated-desc", "Recently changed"], ["updated-asc", "Least recently changed"], ["name-asc", "Name A–Z"], ["name-desc", "Name Z–A"],
+];
 type Row = { id: string; title: string; status: Status; rubric_version: number; tags: string[]; updated_at: string };
 const lower = (s: string) => s.toLocaleLowerCase();
 
 /** PL-15: a title is enough to save a problem; it starts as a draft. */
 export default function Problems() {
   const list = useLoad(() => api.get<Row[]>("/api/problems"), []);
+  const stored = useLoad(() => api.get<string[]>("/api/problems/tags"), []);  // PL-41: used or not
   const [title, setTitle] = useState("");
   const act = useAction();
   // PL-42: search and filters run on the loaded list
   const [q, setQ] = useState("");
-  const [statuses, setStatuses] = useState<Status[]>([]);
+  const [status, setStatus] = useState<Status | "all">("all");  // set by the system, so one choice (a switch)
   const [tags, setTags] = useState<string[]>([]);
+  const [tagQ, setTagQ] = useState("");
+  const [sort, setSort] = useState<Sort>("updated-desc");
   const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens
   const rows = list.data ?? [];
-  const allTags = [...new Map(rows.flatMap((r) => r.tags).map((x) => [lower(x), x])).values()].sort((a, b) => a.localeCompare(b));
+  const allTags = stored.data ?? [];
   const words = lower(q).split(/\s+/).filter(Boolean);
   const shown = rows.filter((r) =>
     words.every((w) => lower(r.title).includes(w) || r.tags.some((x) => lower(x).includes(w)))
-    && (!statuses.length || statuses.includes(r.status))
-    && tags.every((x) => r.tags.some((y) => lower(y) === lower(x))));
+    && (status === "all" || r.status === status)
+    && tags.every((x) => r.tags.some((y) => lower(y) === lower(x))))
+    .sort((a, b) => sort.startsWith("name") ? a.title.localeCompare(b.title) * (sort === "name-asc" ? 1 : -1)
+      : (a.updated_at < b.updated_at ? -1 : 1) * (sort === "updated-asc" ? 1 : -1));
+  const nFilters = (status === "all" ? 0 : 1) + tags.length;
   const toggle = <T,>(list: T[], x: T) => (list.includes(x) ? list.filter((y) => y !== x) : [...list, x]);
-  const filtering = statuses.length + tags.length > 0;
 
   return (
     <Page title={t("Problems")} actions={
@@ -71,7 +81,7 @@ export default function Problems() {
           </div>
           <Button variant="outline" className="lg:hidden" aria-expanded={showFilters} aria-controls="problem-filters"
                   onClick={() => setShowFilters(!showFilters)}>
-            <Filter /> {t("Filters")}{filtering ? ` · ${statuses.length + tags.length}` : ""}
+            <Filter /> {t("Filters")}{nFilters ? ` · ${nFilters}` : ""}
           </Button>
         </div>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -98,28 +108,53 @@ export default function Problems() {
              className={cn("order-first space-y-4 rounded-lg border p-4 lg:order-last lg:sticky lg:top-17 lg:block lg:w-60 lg:shrink-0", !showFilters && "hidden")}>
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("Filters")}</h2>
-          <Button size="sm" variant="ghost" className="h-7" disabled={!filtering}
-                  onClick={() => { setStatuses([]); setTags([]); }}>{t("Clear")}</Button>
+          <Button size="sm" variant="ghost" className="h-7" disabled={!nFilters}
+                  onClick={() => { setStatus("all"); setTags([]); }}>{t("Clear")}</Button>
         </div>
-        <fieldset className="space-y-2">
-          <legend className="mb-2 text-xs font-medium text-muted-foreground">{t("Status")}</legend>
-          {([["draft", t("Draft")], ["ready", t("Ready")]] as const).map(([s, label]) => (
-            <label key={s} className="flex items-center gap-2 text-sm">
-              <Checkbox checked={statuses.includes(s)} onCheckedChange={() => setStatuses(toggle(statuses, s))} />
-              {label} <span className="text-xs text-muted-foreground">{rows.filter((r) => r.status === s).length}</span>
-            </label>
-          ))}
-        </fieldset>
-        <fieldset className="space-y-2">
-          <legend className="mb-2 text-xs font-medium text-muted-foreground">{t("Tags (all selected)")}</legend>
+        <div className="space-y-2">
+          <p id="sort-label" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</p>
+          <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
+            <SelectTrigger size="sm" className="w-full" aria-labelledby="sort-label"><SelectValue /></SelectTrigger>
+            <SelectContent position="popper">
+              {SORTS.map(([id, label]) => <SelectItem key={id} value={id}>{t(label)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <p id="status-label" className="text-xs font-medium text-muted-foreground">{t("Status")}</p>
+          {/* the highlight slides to the chosen position */}
+          <div role="radiogroup" aria-labelledby="status-label" className="relative grid grid-cols-3 rounded-md border bg-muted/50 p-0.5">
+            <span aria-hidden className="absolute inset-y-0.5 left-0.5 w-[calc((100%-0.25rem)/3)] rounded bg-background shadow-sm transition-transform duration-200"
+                  style={{ transform: `translateX(${["all", "draft", "ready"].indexOf(status) * 100}%)` }} />
+            {([["all", t("All"), rows.length], ["draft", t("Draft"), rows.filter((r) => r.status === "draft").length],
+               ["ready", t("Ready"), rows.filter((r) => r.status === "ready").length]] as const).map(([s, label, n]) => (
+              <button key={s} type="button" role="radio" aria-checked={status === s} onClick={() => setStatus(s)}
+                      className={cn("relative z-10 rounded px-1 py-1 text-xs font-medium transition-colors",
+                        status === s ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
+                {label} <span className="font-normal text-muted-foreground">{n}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <fieldset className="min-w-0 space-y-2">
+          <legend className="mb-2 text-xs font-medium text-muted-foreground">
+            {t("Tags (all selected)")}{tags.length ? ` · ${tags.length}` : ""}
+          </legend>
           {allTags.length === 0 && <p className="text-xs text-muted-foreground">{t("No tags yet. Add them with the plus on a problem.")}</p>}
-          {allTags.map((x) => (
+          {allTags.length > 8 && (
+            <Input type="search" aria-label={t("Find a tag")} placeholder={t("Find a tag")} className="h-8 text-sm"
+                   value={tagQ} onChange={(e) => setTagQ(e.target.value)} />
+          )}
+          {/* a long list scrolls inside the panel; checked tags come first so they stay in sight */}
+          <div className="-mx-1 max-h-72 space-y-2 overflow-y-auto px-1">
+          {[...allTags.filter((x) => tags.includes(x)), ...allTags.filter((x) => !tags.includes(x) && lower(x).includes(lower(tagQ.trim())))].map((x) => (
             <label key={x} className="flex items-center gap-2 text-sm">
               <Checkbox checked={tags.includes(x)} onCheckedChange={() => setTags(toggle(tags, x))} />
-              <span className="min-w-0 truncate">{x}</span>
+              <span className="min-w-0 truncate" title={x}>{x}</span>
               <span className="text-xs text-muted-foreground">{rows.filter((r) => r.tags.some((y) => lower(y) === lower(x))).length}</span>
             </label>
           ))}
+          </div>
         </fieldset>
       </aside>
       </div>

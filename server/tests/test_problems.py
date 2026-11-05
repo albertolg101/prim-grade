@@ -86,7 +86,11 @@ def test_tags_are_kept_per_teacher_and_suggested(admin, make_client):  # AC-P19
     q = admin.post("/api/problems", json={"title": "P2"}).json()
     admin.patch(f"/api/problems/{q['id']}", json={"tags": ["Optics", "exam 1"]})
     assert admin.get("/api/problems/tags").json() == ["Exam 1", "Mechanics", "Optics"]
-    assert admin.get("/api/problems").json()[0]["tags"] == ["Optics", "exam 1"]
+    # a tag the teacher already has keeps its first spelling
+    assert admin.get("/api/problems").json()[0]["tags"] == ["Optics", "Exam 1"]
+    # removed from every problem, a tag still exists
+    admin.patch(f"/api/problems/{q['id']}", json={"tags": []})
+    assert admin.get("/api/problems/tags").json() == ["Exam 1", "Mechanics", "Optics"]
     assert admin.patch(f"/api/problems/{p['id']}", json={"tags": [""]}).status_code == 422
     assert admin.patch(f"/api/problems/{p['id']}", json={"tags": ["x" * 41]}).status_code == 422
     other = teacher(make_client, admin, "other@example.test")

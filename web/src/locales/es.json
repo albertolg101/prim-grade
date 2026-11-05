@@ -377,5 +377,12 @@
  "Clear": "Borrar",
  "Status": "Estado",
  "Tags (all selected)": "Etiquetas (todas las marcadas)",
- "No tags yet. Add them with the plus on a problem.": "Aún no hay etiquetas. Añádelas con el signo más en un problema."
+ "No tags yet. Add them with the plus on a problem.": "Aún no hay etiquetas. Añádelas con el signo más en un problema.",
+ "Sort by": "Ordenar por",
+ "Recently changed": "Cambiados recientemente",
+ "Least recently changed": "Cambiados hace más tiempo",
+ "Name A–Z": "Nombre A–Z",
+ "Name Z–A": "Nombre Z–A",
+ "All": "Todos",
+ "Find a tag": "Buscar una etiqueta"
 }
