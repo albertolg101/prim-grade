@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BookOpen, ClipboardList, LogOut, Menu, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api, type Me } from "@/lib/api";
 import { match, navigate, useLocation } from "@/lib/router";
@@ -15,11 +16,12 @@ import Review from "@/pages/Review";
 import Settings from "@/pages/Settings";
 import Student from "@/pages/Student";
 
-const TABS: [string, string][] = [
-  ["Problems", "/problems"],
-  ["Exams", "/exams"],
-  ["Groups", "/groups"],
-  ["Settings", "/settings"],
+type Tab = [string, string, typeof BookOpen];
+const TABS: Tab[] = [
+  ["Problems", "/problems", BookOpen],
+  ["Exams", "/exams", ClipboardList],
+  ["Groups", "/groups", Users],
+  ["Settings", "/settings", SettingsIcon],
 ];
 
 export default function App() {
@@ -27,6 +29,7 @@ export default function App() {
   const path = loc.split("?")[0];
   const student = match("/s/:token", path);
   const [me, setMe] = useState<Me | null | undefined>(undefined);
+  const [menu, setMenu] = useState(false);
   const isStudent = student !== null;
 
   useEffect(() => {
@@ -39,12 +42,13 @@ export default function App() {
       () => setMe(null),
     );
   }, [isStudent]);
+  useEffect(() => setMenu(false), [loc]);
 
   if (student) return <Student token={student.token} />;
   if (me === undefined) return null;
   if (me === null) return <Auth onIn={(m) => { setMe(m); applyTheme(m.theme); }} />;
 
-  const tabs: [string, string][] = me.is_admin ? [...TABS, ["Admin", "/admin"]] : TABS;
+  const tabs: Tab[] = me.is_admin ? [...TABS, ["Admin", "/admin", Shield]] : TABS;
   const fromExam = path.startsWith("/answers") && loc.includes("ctx=exam");
   const active = fromExam ? "/exams" : tabs.find(([, to]) => path.startsWith(to))?.[1] ?? "/problems";
   let page: React.ReactNode;
@@ -60,36 +64,55 @@ export default function App() {
   else if (path === "/admin" && me.is_admin) page = <Admin me={me} />;
   else page = <Problems />;
 
+  const signOut = async () => { await api.post("/api/auth/logout"); setMe(null); navigate("/"); };
+
   return (
-    <div className="min-h-dvh">
-      {me.fake_llm && (
-        <div className="bg-warning/25 px-4 py-1.5 text-center text-xs">
-          Demo mode: a fake AI model answers every call (PRIMGRADE_LLM=fake). Scores are not real.
-        </div>
-      )}
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-1 px-2 sm:px-4">
+    <div className="min-h-dvh md:flex">
+      <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/95 px-2 backdrop-blur md:hidden">
+        <Button variant="ghost" size="icon" aria-label="Open menu" aria-expanded={menu} onClick={() => setMenu(true)}>
+          <Menu />
+        </Button>
+        <span className="py-3 font-bold text-primary">PrimGrade</span>
+      </header>
+      {menu && <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenu(false)} />}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r bg-background transition-transform md:sticky md:top-0 md:h-dvh md:translate-x-0",
+        menu ? "translate-x-0" : "invisible -translate-x-full md:visible")}>
+        <div className="flex items-center justify-between px-4 py-4">
           <a href="/problems" onClick={(e) => { e.preventDefault(); navigate("/problems"); }}
-             className="hidden py-3 pr-3 font-bold text-primary sm:block">PrimGrade</a>
-          <nav className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto" aria-label="Main">
-            {tabs.map(([label, to]) => (
-              <a key={to} href={to}
-                 onClick={(e) => { e.preventDefault(); navigate(to); }}
-                 aria-current={active === to ? "page" : undefined}
-                 className={cn("whitespace-nowrap border-b-2 px-2.5 py-3 text-sm font-medium sm:px-3",
-                   active === to ? "border-primary text-foreground"
-                     : "border-transparent text-muted-foreground hover:text-foreground")}>
-                {label}
-              </a>
-            ))}
-          </nav>
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex"
-                  onClick={async () => { await api.post("/api/auth/logout"); setMe(null); navigate("/"); }}>
-            Sign out
+             className="text-lg font-bold text-primary">PrimGrade</a>
+          <Button variant="ghost" size="icon" className="md:hidden" aria-label="Close menu" onClick={() => setMenu(false)}>
+            <X />
           </Button>
         </div>
-      </header>
-      <main>{page}</main>
+        <nav className="flex flex-1 flex-col gap-0.5 px-2" aria-label="Main">
+          {tabs.map(([label, to, Icon]) => (
+            <a key={to} href={to}
+               onClick={(e) => { e.preventDefault(); navigate(to); }}
+               aria-current={active === to ? "page" : undefined}
+               className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                 active === to ? "bg-primary/15 text-foreground"
+                   : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
+              <Icon className="size-4" />
+              {label}
+            </a>
+          ))}
+        </nav>
+        <div className="border-t p-2">
+          <p className="truncate px-3 py-1 text-xs text-muted-foreground">{me.email}</p>
+          <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground" onClick={signOut}>
+            <LogOut className="size-4" /> Sign out
+          </Button>
+        </div>
+      </aside>
+      <div className="min-w-0 flex-1">
+        {me.fake_llm && (
+          <div className="bg-warning/25 px-4 py-1.5 text-center text-xs">
+            Demo mode: a fake AI model answers every call (PRIMGRADE_LLM=fake). Scores are not real.
+          </div>
+        )}
+        <main>{page}</main>
+      </div>
     </div>
   );
 }

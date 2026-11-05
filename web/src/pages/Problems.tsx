@@ -3,7 +3,9 @@ import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api, type Problem } from "@/lib/api";
 import { navigate } from "@/lib/router";
 
@@ -16,18 +18,32 @@ export default function Problems() {
   const act = useAction();
 
   return (
-    <Page title="Problems">
-      <form className="flex max-w-lg gap-2" onSubmit={(e) => {
-        e.preventDefault();
-        act.run(async () => navigate(`/problems/${(await api.post<Problem>("/api/problems", { title })).id}`));
-      }}>
-        <Input placeholder="New problem title" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Problem title" />
-        <Button type="submit" disabled={!title.trim() || act.busy}>Save draft</Button>
-      </form>
-      <ErrorText>{list.error ?? act.error}</ErrorText>
-      {list.data?.length === 0 && <p className="text-sm text-muted-foreground">No problems yet. Give one a title to start.</p>}
-      <Card className="divide-y gap-0 py-0">
-        {list.data?.map((p) => (
+    <Page title="Problems" actions={
+      <Dialog onOpenChange={(open) => { if (!open) { setTitle(""); act.setError(null); } }}>
+        <DialogTrigger asChild><Button>New Draft</Button></DialogTrigger>
+        <DialogContent>
+          <form className="space-y-4" onSubmit={(e) => {
+            e.preventDefault();
+            act.run(async () => navigate(`/problems/${(await api.post<Problem>("/api/problems", { title })).id}`));
+          }}>
+            <DialogHeader><DialogTitle>New draft</DialogTitle></DialogHeader>
+            <div className="space-y-1.5">
+              <Label htmlFor="problem-name">Name</Label>
+              <Input id="problem-name" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} />
+            </div>
+            <ErrorText>{act.error}</ErrorText>
+            <DialogFooter>
+              <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+              <Button type="submit" disabled={!title.trim() || act.busy}>Save draft</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    }>
+      <ErrorText>{list.error}</ErrorText>
+      {list.data?.length === 0 && <p className="text-sm text-muted-foreground">No problems yet. Use New Draft to start one.</p>}
+      {!!list.data?.length && <Card className="divide-y gap-0 py-0">
+        {list.data.map((p) => (
           <a key={p.id} href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent">
             <span className="min-w-0 truncate font-medium">{p.title}</span>
@@ -37,7 +53,7 @@ export default function Problems() {
             </span>
           </a>
         ))}
-      </Card>
+      </Card>}
     </Page>
   );
 }
