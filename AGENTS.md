@@ -4,6 +4,49 @@ PrimGrade is a local class-project prototype for helping university physics
 teachers review photographed, handwritten exam answers. It is not an
 autonomous grader or a production service.
 
+The full rules are in `rules/`. When you apply a rule, cite its id, e.g. "(D8)".
+
+## Product directive (owned by the human)
+
+The directive and its invariants I1–I5 are in [`docs/directive.md`](./docs/directive.md). Read it
+before any product change. The agent never edits it: propose new text as a question with its
+default, and the human commits it (U2).
+
+## Always on
+
+1. Requirements and user situations before code; plan in tasks of 20–30 minutes (D1, D3).
+2. Run the tests yourself before "done"; fix the code, never weaken a test (D7).
+3. No claim without the command and the output that show it (D8).
+4. Every number has a source, an as-of date and a kind, and code that reproduces it (A3, A12).
+5. Keep sourced fact, your analysis and speculation apart, and label each (A6).
+6. When unsure, write the question with its default, apply it, log it, continue; stop only before
+   anything irreversible or public, or the changes "Implementation practices" says to ask about
+   first (D10).
+7. Commit each working step, stage only your own files, push before you stop (D11, D13).
+8. No personal data, no real person as a persona, no keys in files or prompts (A13).
+
+## Read when
+
+| When you are about to … | Read first |
+|---|---|
+| collect data, compute a number, write a finding or a recommendation | `rules/ANALYTICS_RULES.md` |
+| publish a slide, a post or a summary of results | `rules/ANALYTICS_RULES.md`, A14 |
+| write requirements, plan, code, test or commit | `rules/DEVELOPMENT_RULES.md` |
+| let simulated users critique a screen, or triage their findings into a wave | `rules/USER_SIMULATION.md`, `tools/wave/` |
+| call a user-facing feature done | `rules/USER_SIMULATION.md`, then D9 |
+| work while other agents or teammates change the same repo | `rules/DEVELOPMENT_RULES.md`, D13 and D14 |
+| end a session or hand over to someone | `rules/DEVELOPMENT_RULES.md`, D15 |
+
+If `rules/USER_SIMULATION.md` is missing, follow D9 and say that it is missing.
+
+Run a wave (no key: `--dry-run`, then paste the prompts by hand; see `tools/wave/ux_critic.md`):
+
+```bash
+uv run --with pyyaml --with anthropic --with playwright python tools/wave/simulate_wave.py \
+  --directive docs/directive.md --personas tools/wave/personas.yaml \
+  --url http://localhost:5173 --runs 2 --out out/wave-1
+```
+
 ## Source of truth
 
 - Read [`project_definition.md`](./project_definition.md) before changing
@@ -64,6 +107,25 @@ to engineering students or to mechanics only.
 - Ask before changing scoring policy, rubric semantics, evidence states,
   approval meaning, privacy handling, or fixed demo scope.
 
+## Grader library boundary
+
+`grader/` is the grading library that was validated with a real teacher (5 November 2026). It must
+stay separate from the product at all times.
+
+- `grader/` never imports from the product: no app package, web framework, database, storage or UI
+  code. Its only runtime dependencies are `openai` and `pydantic`. It takes inputs as arguments
+  (page paths, grader instructions, an `LLM` callable) and returns records; the caller stores them.
+- The product imports `grader` through its public functions (`setup`, `grading`, `llm`, `schemas`)
+  and lives in its own top-level folder with its own tests. Never move product code into `grader/`,
+  and never copy grader logic into the product: extend the library instead.
+- A change to `grader/` comes with tests in `tests/` that use the fake LLM, and the matching update
+  to `docs/spec/grader.md` in the same commit (D12).
+- Keep the experiment's data in `data/` (git-ignored) untouched; it is the reference set from the
+  teacher test.
+
+Check: `grep -rn "^from \|^import " grader/` shows only stdlib, `openai`, `pydantic` and `grader`
+modules.
+
 ## Testing and verification
 
 Write or update tests for the behavior being changed. Cover both normal and
@@ -79,10 +141,14 @@ failure paths, especially:
 
 Before declaring implementation work complete, run:
 
-```powershell
-python -m pytest
-ruff check .
+```bash
+uv run python -m pytest
+uv run ruff check .
 ```
+
+Keep real-model runs small to save tokens: a test batch, a demo or a simulated-user wave uses at
+most 5 answers and one model unless the human asks for more. Never run the 300-answer target batch
+without asking first.
 
 Report the exact commands and observed results. Do not claim behavior works
 without verification output. Documentation-only changes do not require these

@@ -1,0 +1,26 @@
+[project]
+name = "primgrade"
+version = "0.1.0"
+description = "Grader library: teacher-reviewed grading of handwritten physics answers"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=1.99",
+    "pydantic>=2.8",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.setuptools]
+packages = ["grader"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["tools/wave"]  # tools/wave: course kit, kept unchanged
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
