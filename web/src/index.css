@@ -89,9 +89,13 @@
 
 /* Two columns of components that wrap to one on narrow screens; .col-full takes a whole row */
 @layer components {
-  .cols { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1.5rem; }
-  .cols > * { flex: 1 1 calc(50% - 0.75rem); min-width: min(100%, 24rem); }
-  .cols > .col-full { flex-basis: 100%; }
+  /* at most two equal columns, one below 2 x 24rem; an odd last item keeps its half width.
+     Items in a row stretch to the same height. */
+  .cols {
+    display: grid; gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(max(min(100%, 24rem), calc(50% - 0.75rem)), 1fr));
+  }
+  .cols > .col-full { grid-column: 1 / -1; }
 }
 
 /* PL-39: the zoom footer keeps a fixed pixel height at every zoom; layout leaves room for it */

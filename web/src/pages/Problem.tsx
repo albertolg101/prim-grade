@@ -122,12 +122,14 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
       <p className="col-full text-sm text-muted-foreground">{t("Type them, add images, or both. The AI reads all of it.")}</p>
       {(["statement", "solution"] as const).map((role) => (
         // the whole block is the drop area (PL-12); dropped images upload at once
+        // rows (label, text, buttons + images) line up across the two blocks
         <Capture key={role} pages={[]} onChange={(v) => upload(role, v)} disabled={act.busy}
+                 className="row-span-3 grid grid-rows-subgrid gap-2"
                  after={<Thumbs files={p.files.filter((x) => x.role === role)} busy={act.busy}
                                 onRemove={(x) => act.run(async () => onSaved(await api.del<Problem>(`/api/problems/${p.id}/files/${x.link_id}`)))} />}>
             <Label htmlFor={role}>{role === "statement" ? t("Statement") : t("Reference solution")}</Label>
-            <div className="relative">
-              <Textarea id={role} rows={6} value={f[`${role}_text`]} onChange={(e) => setF({ ...f, [`${role}_text`]: e.target.value })} />
+            <div className="relative flex flex-col">
+              <Textarea id={role} rows={6} className="grow" value={f[`${role}_text`]} onChange={(e) => setF({ ...f, [`${role}_text`]: e.target.value })} />
               {!f[`${role}_text`] && (
                 <p aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-muted-foreground">
                   {t("Click to type or drag your images here")}
@@ -240,7 +242,8 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
           const edit = (patch: Partial<Criterion>) => setCrit(crit.map((x, j) => (j === i ? { ...x, ...patch } : x)));
           const swap = (j: number) => { const n = [...crit]; [n[i], n[j]] = [n[j], n[i]]; setCrit(n); };
           return (
-            <Card key={i} className="gap-3 py-4">
+            // a subgrid: the header and each row of fields line up with the card beside it
+            <Card key={i} className="row-span-5 grid grid-rows-subgrid gap-3 py-4 md:row-span-3">
               <CardHeader className="px-4">
                 <div className="flex flex-wrap items-end gap-2">
                   <Field label={t("Id")} className="w-20"><Input value={c.id} onChange={(e) => edit({ id: e.target.value })} /></Field>
@@ -254,7 +257,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
                 </div>
                 {errs.length > 0 && <p className="text-sm text-destructive">{c.id || t("Criterion")}: {errs.join(", ")}</p>}
               </CardHeader>
-              <CardContent className="grid gap-2 px-4 md:grid-cols-2">
+              <CardContent className="row-span-4 grid grid-rows-subgrid gap-3 px-4 md:row-span-2 md:grid-cols-2">
                 <Field label={t("Required evidence")}><Textarea rows={2} value={c.required_evidence} onChange={(e) => edit({ required_evidence: e.target.value })} /></Field>
                 <Field label={t("Full credit")}><Textarea rows={2} value={c.full_credit} onChange={(e) => edit({ full_credit: e.target.value })} /></Field>
                 <Field label={t("Partial credit")}><Textarea rows={2} value={c.partial_credit} onChange={(e) => edit({ partial_credit: e.target.value })} /></Field>
@@ -312,7 +315,8 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
 }
 
 function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
-  return <label className={`block space-y-1 ${className ?? ""}`}><span className="text-sm font-medium">{label}</span>{children}</label>;
+  // the text field fills the cell, so fields side by side share the tallest one's height
+  return <label className={cn("flex flex-col gap-1 [&>textarea]:grow", className)}><span className="text-sm font-medium">{label}</span>{children}</label>;
 }
 
 function ListField({ label, value, onChange }: { label: string; value: string[]; onChange: (v: string[]) => void }) {

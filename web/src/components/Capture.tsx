@@ -9,10 +9,12 @@ const ScannerDialog = lazy(() => import("./Scanner"));
 const OK = ["image/jpeg", "image/png", "image/webp"];
 
 /** PL-12: browse, drag and drop, or scan. The pages are shown, in order, before anything is sent.
- * With children, the whole block (children, buttons below on the left, then `after`) is the drop area. */
-export default function Capture({ pages, onChange, disabled, children, after }: {
+ * With children, the whole block is the drop area: the children, then one row with the buttons on the
+ * left and `after` below them. Each child and that row are direct children of the block (className),
+ * so the caller can line them up across blocks with a subgrid. */
+export default function Capture({ pages, onChange, disabled, children, after, className }: {
   pages: Page[]; onChange: (p: Page[]) => void; disabled?: boolean; label?: string;
-  children?: React.ReactNode; after?: React.ReactNode;
+  children?: React.ReactNode; after?: React.ReactNode; className?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -55,29 +57,41 @@ export default function Capture({ pages, onChange, disabled, children, after }: 
     </div>
   );
 
-  return (
-    <div className="space-y-2">
-      {children ? (
-        <div {...drop} className="relative space-y-2">
-          {/* first child: space-y gives every child but the last a bottom margin, so a cover added
-              last would push the block 0.5rem taller; out of the flow here, it moves nothing */}
-          {over && (
-            <div className="pointer-events-none absolute -inset-3 z-10 m-0! flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-background/60 backdrop-blur-sm">
-              <p className="text-sm font-medium text-primary">{t("Drop your images here")}</p>
-            </div>
-          )}
-          {children}
+  const scanner = scanning && (
+    <Suspense fallback={null}>
+      <ScannerDialog count={pages.length} onClose={() => setScanning(false)}
+                     onPage={(p) => onChange([...latest.current, p])} />
+    </Suspense>
+  );
+
+  if (children) {
+    return (
+      <div {...drop} className={cn("relative", className)}>
+        {/* out of the flow, so showing it moves nothing */}
+        {over && (
+          <div className="pointer-events-none absolute -inset-3 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-background/60 backdrop-blur-sm">
+            <p className="text-sm font-medium text-primary">{t("Drop your images here")}</p>
+          </div>
+        )}
+        {children}
+        <div className="space-y-2">
           {buttons}
+          {refused && <p className="text-sm text-destructive">{refused}</p>}
           {after}
         </div>
-      ) : (
-        <div {...drop}
-             className={cn("flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-4 text-center transition-colors",
-               over ? "border-primary bg-primary/10" : "border-border")}>
-          <p className="hidden text-sm text-muted-foreground sm:block">{t("Drop images here, or")}</p>
-          {buttons}
-        </div>
-      )}
+        {scanner}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div {...drop}
+           className={cn("flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-4 text-center transition-colors",
+             over ? "border-primary bg-primary/10" : "border-border")}>
+        <p className="hidden text-sm text-muted-foreground sm:block">{t("Drop images here, or")}</p>
+        {buttons}
+      </div>
       {refused && <p className="text-sm text-destructive">{refused}</p>}
       {pages.length > 0 && (
         <ol className="flex gap-2 overflow-x-auto pb-1" aria-label={t("Pages to send: {n}", { n: pages.length })}>
@@ -97,12 +111,7 @@ export default function Capture({ pages, onChange, disabled, children, after }: 
           ))}
         </ol>
       )}
-      {scanning && (
-        <Suspense fallback={null}>
-          <ScannerDialog count={pages.length} onClose={() => setScanning(false)}
-                         onPage={(p) => onChange([...latest.current, p])} />
-        </Suspense>
-      )}
+      {scanner}
     </div>
   );
 }

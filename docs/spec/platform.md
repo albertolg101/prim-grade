@@ -92,6 +92,9 @@ Each requirement has a stable id; tests and tasks cite it.
   computer. On a phone the one-answer review (PL-22) stacks the image above the grade.
   Pages use the whole screen width; their parts sit two per row and wrap to one column on narrow
   screens (owner request, 5 November 2026).
+  An odd last part keeps its half width. Text fields side by side share one height, the height
+  the longest text needs; in rubric criterion cards and in the statement and solution blocks the
+  rows of fields line up across the two columns.
 
 ### Capture
 
