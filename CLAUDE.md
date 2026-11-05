@@ -18,4 +18,5 @@ uv run ruff check .              # lint
 - `grader/grading.py` contains validation and the parallel batch; callers pass page paths and store runs.
 - `server/` is the platform API (FastAPI, PostgreSQL); `web/` is the React app (`npm run build`).
 - `PRIMGRADE_LLM=fake` runs the platform on a deterministic fake model (no key, no tokens).
-- `input/` and `data/` hold real exam images and the teacher-test data, and are git-ignored. Never commit them.
+- `input/` is the teacher-test exam set, committed as authorised test data (one folder per problem).
+  `data/` holds runtime state and is git-ignored; never commit it.

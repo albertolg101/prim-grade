@@ -1,0 +1,34 @@
+1. Rúbrica de calificación
+Criterio de evaluación  Puntuación
+1. Diagrama de fuerzas. Representa correctamente las fuerzas que actúan sobre el automóvil en el punto más alto de la trayectoria, con sus direcciones y sentidos adecuados.  Condición obligatoria
+2. Segunda ley de Newton. Escribe correctamente la ecuación de la segunda ley de Newton en el eje radial (vertical en este punto), considerando la aceleración centrípeta dirigida hacia el centro de curvatura.  Condición obligatoria
+3. Correspondencia entre el diagrama y la ecuación. Existe coherencia completa entre las fuerzas representadas, sus proyecciones y los signos utilizados en la ecuación.  Condición obligatoria
+Cumplimiento conjunto de los tres criterios anteriores.  3 puntos
+4. Condición de pérdida de contacto. Reconoce correctamente que la ausencia de presión sobre el puente implica que la fuerza normal es nula: \(N=0\).  1 punto
+5. Determinación de la velocidad. Obtiene correctamente la expresión literal de la velocidad a partir de la ecuación de Newton y la condición anterior.  1 punto
+Total  5 puntos
+
+2. Reglas de evaluación
+Regla 1. Condición eliminatoria
+
+Los criterios 1, 2 y 3 forman un bloque indivisible de 3 puntos.
+- Si los tres criterios son correctos, el estudiante obtiene 3 puntos.
+- Si existe al menos un error en cualquiera de ellos, la calificación total del problema es 0 puntos, independientemente del resto de la solución.
+- La omisión del diagrama o de la ecuación necesaria de Newton implica igualmente 0 puntos.
+Regla 2. Ecuaciones de Newton necesarias
+
+No se exige escribir la ecuación de la segunda ley de Newton para el eje horizontal, porque no aporta información necesaria para resolver el problema.
+
+Es suficiente formular correctamente la ecuación en la dirección radial, que coincide con la vertical en el punto más alto de la trayectoria.
+
+Regla 3. Evaluación del procedimiento
+
+Una vez superado el bloque obligatorio, los 2 puntos restantes se asignan de forma independiente por el cumplimiento de los criterios 4 y 5.
+
+Regla 4. Errores de cálculo
+
+No se descuentan puntos por errores de cálculo numérico, operaciones aritméticas incorrectas o redondeos. Se evalúa exclusivamente la corrección física y algebraica del procedimiento.
+
+Regla 5. Convenciones de signos
+
+Se admiten distintas orientaciones del eje radial, siempre que las ecuaciones sean coherentes con el diagrama de fuerzas y la dirección de la aceleración centrípeta.

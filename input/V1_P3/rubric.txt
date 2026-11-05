@@ -1,0 +1,32 @@
+1. Rúbrica de calificación
+Criterio de evaluación
+Puntuación
+1. Diagrama de fuerzas. Representa correctamente las cuatro fuerzas: peso, normal, rozamiento y fuerza aplicada, con sus direcciones y sentidos adecuados.
+Condición obligatoria
+2. Segunda ley de Newton en el eje X. Escribe correctamente la ecuación correspondiente, en plena concordancia con el diagrama de fuerzas.
+Condición obligatoria
+3. Segunda ley de Newton en el eje Y. Escribe correctamente la ecuación correspondiente, en plena concordancia con el diagrama de fuerzas.
+Condición obligatoria
+Cumplimiento conjunto de los tres criterios anteriores.
+4 puntos
+4. Determinación de la fuerza normal. Despeja correctamente la normal a partir de la ecuación del eje Y.
+1 punto
+5. Determinación de la fuerza de rozamiento. Aplica correctamente la relación entre la fuerza de rozamiento y la normal.
+1 punto
+6. Determinación de la aceleración. Despeja la aceleración y obtiene una expresión literal correcta en función de los datos.
+1 punto
+Total
+7 puntos
+2. Reglas de aplicación
+Regla 1. Condición eliminatoria
+Los criterios 1, 2 y 3 constituyen un único bloque obligatorio de 4 puntos.
+Si los tres criterios son completamente correctos, el estudiante obtiene 4 puntos.
+Si existe al menos un error en cualquiera de ellos, la calificación total del problema es 0 puntos, independientemente de los procedimientos posteriores.
+La ausencia de cualquiera de los tres elementos se considera incumplimiento de la condición.
+Regla 2. Evaluación del procedimiento
+Una vez superado el bloque obligatorio, los 3 puntos restantes se asignan de manera independiente, según la correcta ejecución de los procedimientos correspondientes.
+Regla 3. Errores de cálculo
+No se descuentan puntos por errores de cálculo numérico, operaciones aritméticas incorrectas o redondeos.
+Se evalúa la corrección física y algebraica del procedimiento. Un resultado numérico incorrecto no implica pérdida de puntuación si el procedimiento es correcto.
+Regla 4. Convenciones de signos
+Se aceptan distintas orientaciones de los ejes coordenados siempre que las ecuaciones sean físicamente correctas y completamente coherentes con el diagrama.

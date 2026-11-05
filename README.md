@@ -20,7 +20,10 @@ library** stays in `grader/`, separate from the platform in `server/` and `web/`
 - `server/`: the platform API (FastAPI, SQLAlchemy, Alembic, PostgreSQL) and its tests.
 - `web/`: the web app (React, Vite, Tailwind, shadcn/ui; jscanify scanner vendored in `public/vendor`).
 - `rules/`, `tools/wave/`: the agent rules pack and the simulated-user wave harness (DS403 session 10).
-- `data/`, `input/`: real exam data from the teacher test; git-ignored, never committed.
+- `data/`: runtime state from the teacher test; git-ignored, never committed.
+- `input/`: the teacher-test exam set, committed as authorised test data.
+  `input/<variant>_P<n>/` holds one problem: `statement.txt` (from the exam .docx), `rubric.txt`
+  (the teacher's original rubric), `teacher_solution.jpg` and `student_solutions/student_NN/` (pages).
 
 ## Run the platform
 

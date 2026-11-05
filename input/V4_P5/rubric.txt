@@ -1,0 +1,37 @@
+1. Rúbrica de calificación
+Criterio de evaluación  Puntuación
+1. Diagrama de fuerzas. Representa correctamente las fuerzas que actúan sobre el piloto en el punto más alto de la trayectoria, indicando sus direcciones y sentidos.  Condición obligatoria
+2. Segunda ley de Newton. Escribe correctamente la ecuación en el eje radial, considerando que la aceleración centrípeta está dirigida hacia el centro de la trayectoria.  Condición obligatoria
+3. Correspondencia entre el diagrama y la ecuación. Existe coherencia completa entre las fuerzas representadas, sus proyecciones y los signos utilizados en la ecuación de Newton.  Condición obligatoria
+Cumplimiento conjunto de los tres criterios anteriores.  4 puntos
+4. Condición de velocidad mínima. Reconoce correctamente que, en la situación límite en que el piloto está a punto de separarse del asiento, la fuerza normal es nula: \(N=0\).  1 punto
+5. Aplicación de la condición límite. Sustituye correctamente la condición \(N=0\) en la ecuación de Newton y obtiene la relación entre la aceleración centrípeta y la gravedad.  1 punto
+6. Determinación de la velocidad mínima. Despeja correctamente la velocidad mínima y obtiene su expresión literal en función del radio y la aceleración de la gravedad.  1 punto
+Total  7 puntos
+
+2. Reglas de evaluación
+Regla 1. Condición eliminatoria
+
+Los criterios 1, 2 y 3 forman un bloque indivisible de 4 puntos.
+- Si los tres criterios son completamente correctos, el estudiante obtiene 4 puntos.
+- Si existe al menos un error en cualquiera de ellos, la calificación total del problema es 0 puntos, independientemente del resto de la solución.
+- La ausencia del diagrama de fuerzas o de la ecuación necesaria de Newton implica igualmente 0 puntos.
+Regla 2. Ecuaciones de Newton necesarias
+
+No se exige escribir la ecuación de la segunda ley de Newton para el eje horizontal, puesto que no aporta información necesaria para la resolución del problema.
+
+Es suficiente formular correctamente la ecuación en la dirección radial, que coincide con la vertical en el punto más alto de la trayectoria.
+
+Regla 3. Evaluación de los procedimientos posteriores
+
+Una vez superado el bloque obligatorio, los 3 puntos restantes se asignan de forma independiente según el cumplimiento de los criterios 4, 5 y 6.
+
+Se aceptan procedimientos algebraicos equivalentes aunque el estudiante no escriba explícitamente todos los pasos intermedios.
+
+Regla 4. Errores de cálculo
+
+No se descuentan puntos por errores numéricos, operaciones aritméticas incorrectas o redondeos. Se evalúa exclusivamente la corrección física y algebraica del procedimiento.
+
+Regla 5. Convenciones de signos
+
+Se admiten distintas orientaciones del eje radial, siempre que las ecuaciones sean coherentes con el diagrama y la dirección de la aceleración centrípeta.
