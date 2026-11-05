@@ -32,7 +32,6 @@
  "Approve grade": "Aprobar calificación",
  "Approved": "Aprobada",
  "Approved {when}. You can change it and approve again.": "Aprobada el {when}. Puedes cambiarla y aprobarla de nuevo.",
- "Approved · {total} / {max}": "Aprobada · {total} / {max}",
  "Archive": "Archivar",
  "Ask the AI to revise": "Pedir a la IA que lo revise",
  "Asking the AI…": "Consultando a la IA…",
@@ -233,7 +232,6 @@
  "Student upload links close after (minutes)": "Los enlaces de subida para estudiantes se cierran tras (minutos)",
  "Students who have submitted ({n}): {names}": "Estudiantes que han entregado ({n}): {names}",
  "Students' uploads arrive here. Nothing is graded until you start it.": "Aquí llegan las entregas de los estudiantes. No se califica nada hasta que lo inicies.",
- "Suggested feedback:": "Comentario sugerido:",
  "System": "Sistema",
  "Take a photo": "Tomar una foto",
  "Teachers": "Profesores",
@@ -249,7 +247,6 @@
  "This upload link is closed": "Este enlace de entrega está cerrado",
  "Title": "Título",
  "Tolerances": "Tolerancias",
- "Total {total} / {max}": "Total {total} / {max}",
  "Transcription": "Transcripción",
  "Type them, add images, or both. The AI reads all of it.": "Escríbelos, añade imágenes o ambas cosas. La IA lo lee todo.",
  "Type your name first": "Primero escribe tu nombre",
@@ -413,5 +410,6 @@
  "Remove group {name}": "Quitar el grupo {name}",
  "Reset view": "Restablecer vista",
  "Check first: {ids}": "Revisa primero: {ids}",
- "Proposed scores": "Puntuación propuesta"
+ "Proposed scores": "Puntuación propuesta",
+ "Suggested feedback": "Comentario sugerido"
 }

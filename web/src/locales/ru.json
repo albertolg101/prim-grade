@@ -32,7 +32,6 @@
  "Approve grade": "Утвердить оценку",
  "Approved": "Утверждено",
  "Approved {when}. You can change it and approve again.": "Утверждено {when}. Можно изменить и утвердить снова.",
- "Approved · {total} / {max}": "Утверждено · {total} / {max}",
  "Archive": "В архив",
  "Ask the AI to revise": "Попросить ИИ доработать",
  "Asking the AI…": "Запрос к ИИ…",
@@ -233,7 +232,6 @@
  "Student upload links close after (minutes)": "Ссылки для загрузки закрываются через (минут)",
  "Students who have submitted ({n}): {names}": "Сдали работу ({n}): {names}",
  "Students' uploads arrive here. Nothing is graded until you start it.": "Сюда приходят работы студентов. Ничего не проверяется, пока вы не запустите проверку.",
- "Suggested feedback:": "Предлагаемый комментарий:",
  "System": "Системная",
  "Take a photo": "Сделать фото",
  "Teachers": "Преподаватели",
@@ -249,7 +247,6 @@
  "This upload link is closed": "Эта ссылка для загрузки закрыта",
  "Title": "Название",
  "Tolerances": "Допуски",
- "Total {total} / {max}": "Итого {total} / {max}",
  "Transcription": "Расшифровка",
  "Type them, add images, or both. The AI reads all of it.": "Введите текст, добавьте изображения или и то, и другое. ИИ прочитает всё.",
  "Type your name first": "Сначала введите своё имя",
@@ -413,5 +410,6 @@
  "Remove group {name}": "Убрать группу {name}",
  "Reset view": "Сбросить вид",
  "Check first: {ids}": "Проверьте сначала: {ids}",
- "Proposed scores": "Предложенные баллы"
+ "Proposed scores": "Предложенные баллы",
+ "Suggested feedback": "Предложенный комментарий"
 }

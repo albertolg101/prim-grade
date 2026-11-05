@@ -94,7 +94,7 @@ export default function Review({ id }: { id: string }) {
             </div>
           )}
           <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <ImageViewer pages={a.pages} className="lg:flex lg:min-h-0 lg:flex-col"
+            <ImageViewer pages={a.pages} toolsBelow className="lg:flex lg:min-h-0 lg:flex-col"
                          boxClass="h-[calc(var(--app-h)*0.6)] lg:h-auto lg:min-h-0 lg:flex-1" />
             <div className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
               {a.rubric && <ApprovalForm key={`${a.id}-${run?.id ?? "none"}-${a.approval?.approved_at ?? ""}`} a={a} run={run}
@@ -111,8 +111,8 @@ export default function Review({ id }: { id: string }) {
 }
 
 /** One AI stage (I5); the first two fold away so the scores are what the teacher sees first. */
-function Stage({ n, title, fold, children }: { n: number; title: string; fold?: boolean; children: React.ReactNode }) {
-  const head = <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{n} · {title}</span>;
+function Stage({ n, title, fold, children }: { n?: number; title: string; fold?: boolean; children: React.ReactNode }) {
+  const head = <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{n ? `${n} · ` : ""}{title}</span>;
   if (!fold) return <section className="space-y-2"><h3>{head}</h3>{children}</section>;
   return (
     <details className="group space-y-2">
@@ -134,11 +134,11 @@ function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; on
   const proposed = run?.status === "proposed" && h;
   const check = proposed ? h.criteria.filter((c) => c.confidence !== "high").map((c) => c.criterion_id) : [];
   return (
-    <Card>
-      <CardHeader className="gap-1">
+    <Card className="gap-4 bg-muted/30 py-4 shadow-none">
+      <CardHeader className="gap-1 px-4">
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>{t("AI proposal")}</CardTitle>
-          {proposed && <span className="ml-auto text-lg font-semibold tabular-nums">{pts(run.total)} / {pts(run.max_points)}</span>}
+          <CardTitle className="text-base">{t("AI proposal")}</CardTitle>
+          {proposed && <span className="ml-auto font-semibold tabular-nums text-muted-foreground">{pts(run.total)} / {pts(run.max_points)}</span>}
           {canGrade && <Button size="sm" variant={run ? "outline" : "default"} className={proposed ? "" : "ml-auto"} disabled={busy} onClick={onGrade}>{run ? t("Grade again") : t("Grade with AI")}</Button>}
         </div>
         <p className="text-sm text-muted-foreground">
@@ -146,7 +146,7 @@ function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; on
           {check.length > 0 && <> · <span className="font-medium text-foreground">{t("Check first: {ids}", { ids: check.join(", ") })}</span></>}
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-4">
         {!run && <p className="text-sm text-muted-foreground">{t("Not graded yet.")}</p>}
         {run?.status === "running" && <p className="animate-pulse text-sm">{t("The AI is reading this answer…")}</p>}
         {run?.status === "failed" && (
@@ -166,25 +166,30 @@ function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; on
               {h.criteria.map((c) => {
                 const rc = a.rubric?.criteria.find((x) => x.id === c.criterion_id);
                 return (
-                  <li key={c.criterion_id} className="space-y-2 rounded-lg border p-3 text-sm">
-                    <div className="flex items-start gap-2">
-                      <span className="min-w-0 flex-1 font-medium">{c.criterion_id} · {rc?.description}</span>
-                      <span className="shrink-0 font-semibold tabular-nums">{pts(c.points)} / {pts(rc?.max_points)}</span>
-                    </div>
-                    <blockquote className="border-l-2 pl-2 text-muted-foreground">
-                      <span className="text-xs">{t("Evidence ({source}):", { source: c.source })}</span> <q className="italic">{c.evidence}</q>
-                    </blockquote>
-                    <p><span className="text-muted-foreground">{t("Why:")}</span> {c.reasoning}</p>
-                    <Badge variant="outline" className={CONF[c.confidence]}>{t("confidence: {level}", { level: t(c.confidence) })}</Badge>
+                  <li key={c.criterion_id} className="rounded-lg border bg-card text-sm">
+                    <details className="group">
+                      <summary className="flex cursor-pointer list-none items-center gap-2 p-2.5 [&::-webkit-details-marker]:hidden">
+                        <ChevronRight className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+                        <span className="min-w-0 flex-1">{c.criterion_id} · {rc?.description}</span>
+                        <Badge variant="outline" className={CONF[c.confidence]}>{t("confidence: {level}", { level: t(c.confidence) })}</Badge>
+                        <span className="w-12 shrink-0 text-right font-semibold tabular-nums">{pts(c.points)} / {pts(rc?.max_points)}</span>
+                      </summary>
+                      <div className="space-y-2 px-3 pb-3 pl-8">
+                        <blockquote className="border-l-2 pl-2 text-muted-foreground">
+                          <span className="text-xs">{t("Evidence ({source}):", { source: c.source })}</span> <q className="italic">{c.evidence}</q>
+                        </blockquote>
+                        <p><span className="text-muted-foreground">{t("Why:")}</span> {c.reasoning}</p>
+                      </div>
+                    </details>
                   </li>
                 );
               })}
             </ul>
-            {h.feedback && <p className="text-sm"><span className="text-muted-foreground">{t("Suggested feedback:")}</span> {h.feedback}</p>}
           </Stage>
         )}
         {h && (
           <div className="space-y-2 border-t pt-3">
+            {proposed && h.feedback && <Stage title={t("Suggested feedback")} fold><p className="text-sm">{h.feedback}</p></Stage>}
             <Stage n={1} title={t("Transcription")} fold><p className="whitespace-pre-wrap rounded bg-muted p-2 font-mono text-sm">{h.transcription || "—"}</p></Stage>
             <Stage n={2} title={t("Physics interpretation")} fold>
               <p className="text-sm">{h.interpretation || "—"}</p>
@@ -225,9 +230,12 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
   })));
 
   return (
-    <Card className={a.approval ? "border-success" : "border-primary"}>
+    <Card className={`border-2 shadow-md ${a.approval ? "border-success" : "border-primary"}`}>
       <CardHeader>
-        <CardTitle>{a.approval ? t("Approved · {total} / {max}", { total: pts(a.approval.total), max: pts(max) }) : t("Your grade")}</CardTitle>
+        <div className="flex items-baseline gap-2">
+          <CardTitle className="text-lg">{a.approval ? t("Approved") : t("Your grade")}</CardTitle>
+          <span className={`ml-auto text-3xl font-bold tabular-nums ${a.approval ? "text-success" : ""}`}>{pts(total)}<span className="text-lg font-medium text-muted-foreground"> / {pts(max)}</span></span>
+        </div>
         {a.approval && <p className="text-sm text-muted-foreground">{t("Approved {when}. You can change it and approve again.", { when: when(a.approval.approved_at) })}</p>}
       </CardHeader>
       <CardContent className="space-y-4">
@@ -241,7 +249,6 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
               <span className="w-10 text-muted-foreground">/ {pts(c.max_points)}</span>
             </label>
           ))}
-          <div className="text-right text-sm font-semibold tabular-nums">{t("Total {total} / {max}", { total: pts(total), max: pts(max) })}</div>
         </div>
         <label className="block space-y-1">
           <span className="text-sm font-medium">{t("Feedback for the student")}</span>
