@@ -19,7 +19,7 @@ export default function Student({ token }: { token: string }) {
   const [lang, setLang] = useLocalLang();
   const i = info.data;
   return (
-    <div className="mx-auto max-w-xl space-y-4 px-4 py-6">
+    <div className="mx-auto max-w-xl space-y-4 px-4 pt-6 pb-[calc(1.5rem+var(--footer-pad))]">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-primary">PrimGrade</h1>
         <LanguageSelect value={lang} onChange={setLang} />

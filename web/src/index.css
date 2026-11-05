@@ -84,8 +84,6 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    /* room for the zoom footer (PL-39), which keeps its real size */
-    padding-bottom: calc(var(--footer-h) / var(--zoom));
   }
 }
 
@@ -95,4 +93,6 @@
   --footer-h: 28px;
   --app-h: calc((100dvh - var(--footer-h)) / var(--zoom));
   --screen-h: calc(100dvh / var(--zoom));  /* the sidebar runs beside the footer */
+  /* room under content for the footer; on the content column, never the whole page (no extra scroll) */
+  --footer-pad: calc(var(--footer-h) / var(--zoom));
 }

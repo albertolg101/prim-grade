@@ -87,7 +87,7 @@ export default function App() {
 
   return (
     <CrumbsContext.Provider value={setCrumbs}>
-      <div className="min-h-(--app-h) md:flex">
+      <div className="min-h-(--screen-h) md:flex">
         {menu && <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenu(false)} />}
         <aside className={cn(
           "fixed top-0 left-0 z-50 flex h-(--screen-h) w-60 flex-col border-r bg-background transition-transform md:sticky md:translate-x-0",
@@ -112,14 +112,14 @@ export default function App() {
               </a>
             ))}
           </nav>
-          <div className="border-t p-2">
+          <div className="p-2">
             <p className="truncate px-3 py-1 text-xs text-muted-foreground">{me.email}</p>
             <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground" onClick={signOut}>
               <LogOut className="size-4" /> {t("Sign out")}
             </Button>
           </div>
         </aside>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 pb-(--footer-pad)">
           <header className="sticky top-0 z-30 flex h-13 items-center gap-2 border-b bg-background/95 px-2 backdrop-blur sm:px-4">
             <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("Open menu")} aria-expanded={menu}
                     onClick={() => setMenu(true)}>
