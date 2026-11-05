@@ -39,8 +39,10 @@ export default function ProblemPage({ id }: { id: string }) {
     navigate(`/problems/${id}?${q}`);
   };
   if (!p) return <Page title={t("Problem")}><ErrorText>{prob.error}</ErrorText></Page>;
-  // PL-45: with no screen asked for, a problem with an AI grader (or one being prepared) opens on it
-  const view: View = asked && VIEWS.includes(asked) ? asked : p.proposal || preparing ? "grader" : "info";
+  // PL-45: with no screen asked for, an accepted rubric opens the answers; an AI grader (or one being
+  // prepared) opens on it; otherwise the problem information
+  const view: View = asked && VIEWS.includes(asked) ? asked
+    : p.status === "ready" ? "answers" : p.proposal || preparing ? "grader" : "info";
   const set = (next: Problem) => prob.setData(next);
   const tabs: [View, string][] = [["info", t("1 · Problem information")], ["grader", t("2 · AI grader")], ["answers", t("3 · Answers")]];
   return (
@@ -71,7 +73,8 @@ export default function ProblemPage({ id }: { id: string }) {
       {/* both stay mounted, so unsaved edits survive switching screens */}
       <div hidden={view !== "info"}><Sources p={p} preparing={preparing} onSaved={set} onGrader={() => go("grader")} /></div>
       <div hidden={view !== "grader"}>
-        <Grader p={p} preparing={preparing} onSaved={set} onInfo={() => go("info")} onAnswers={() => go("answers")} />
+        <Grader p={p} preparing={preparing} onSaved={set} onInfo={() => go("info")} onAnswers={() => go("answers")}
+                onAccepting={() => { if (!asked) go("grader"); }} />
       </div>
       {/* PL-45: the answers, newest first */}
       <section hidden={view !== "answers"} className="space-y-3 pt-2">
@@ -258,8 +261,9 @@ function criterionErrors(c: Criterion, all: Criterion[]): string[] {
 }
 
 /** PL-16 to PL-19: generate, edit every field, improve by instruction, accept a version. */
-function Grader({ p, preparing, onSaved, onInfo, onAnswers }: {
+function Grader({ p, preparing, onSaved, onInfo, onAnswers, onAccepting }: {
   p: Problem; preparing: boolean; onSaved: (p: Problem) => void; onInfo: () => void; onAnswers: () => void;
+  onAccepting: () => void;  // keeps this screen, since a ready problem otherwise opens on the answers
 }) {
   const [accepted, setAccepted] = useState(false);  // PL-45: ask where to go next
   const [draft, setDraft] = useState<Proposal | null>(p.proposal);
@@ -376,7 +380,7 @@ function Grader({ p, preparing, onSaved, onInfo, onAnswers }: {
           <Button variant="outline" disabled={!dirty || act.busy} onClick={() => act.run(async () => onSaved(await api.put<Problem>(`/api/problems/${p.id}/proposal`, { proposal: d })))}>{t("Save edits")}</Button>
           <Button variant="ghost" disabled={!dirty} onClick={() => setDraft(p.proposal)}>{t("Undo edits")}</Button>
           <Button disabled={dirty || p.status === "ready" || act.busy || (d.issues.length > 0 && !ack)}
-                  onClick={() => act.run(async () => { onSaved(await api.post<Problem>(`/api/problems/${p.id}/accept`, { issues_acknowledged: ack })); setAccepted(true); })}>
+                  onClick={() => act.run(async () => { onAccepting(); onSaved(await api.post<Problem>(`/api/problems/${p.id}/accept`, { issues_acknowledged: ack })); setAccepted(true); })}>
           {p.status === "ready" ? t("Accepted · v{n}", { n: p.rubric_version }) : t("Accept as rubric v{n}", { n: p.rubric_version + 1 })}
           </Button>
         </div>

@@ -152,8 +152,8 @@ Each requirement has a stable id; tests and tasks cite it.
   problems" shows how many match. Search and filters run on the loaded list and are not saved.
 - **PL-45 Problem screens and what follows acceptance** (owner request, 5 November 2026). A problem
   has three screens: 1 · Problem information, 2 · AI grader, 3 · Answers. Opened without a chosen
-  screen, a problem that has an AI grader or is being prepared opens on the AI grader; otherwise on
-  Problem information. Answers lists the problem's answers newest first by default (sort: newest,
+  screen, a ready problem (its rubric accepted) opens on Answers; one that has an AI grader or is
+  being prepared opens on the AI grader; otherwise on Problem information. Answers lists the problem's answers newest first by default (sort: newest,
   oldest, name A–Z) and is where answers are added once the rubric is accepted. After accepting a
   rubric version the teacher is asked where to go: the answers (default), the problem list, or stay
   on the page. The back link from an answer returns to the Answers screen.
