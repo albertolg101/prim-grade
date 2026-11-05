@@ -104,7 +104,13 @@ Each requirement has a stable id; tests and tasks cite it.
 ### Problems
 
 - **PL-15 Draft with a title.** A problem can be saved as a draft with only a title. Statement,
-  solution and rubric can be added later.
+  solution and rubric can be added later. The button is **New problem**, with **Create problem**
+  in its dialog; the problem still starts as a draft.
+- **PL-40 Two problem screens** (owner request, 5 November 2026). A problem has two screens, with
+  no cards around them: **1 · Your information** (title, statement, reference solution, optional
+  rubric) and **2 · AI grader** (what the AI understood, the rubric with one card per criterion,
+  accept and improve, then the problem's answers). Images added to the statement or solution are
+  uploaded as soon as they are dropped, picked or scanned; tapping one opens it large in a dialog.
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an
   optional rubric), the teacher asks the AI to prepare the problem: its reading of the statement and
   solution, final answers, assumptions, expected forces when a diagram is needed, a rubric with

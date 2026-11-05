@@ -55,6 +55,10 @@ its test (D3). Ticks match commits.
   recorded on the problem and the run, so switching language never rewrites earlier output.
 - *Student page language (PL-37).* Default: the student's browser language or their own pick on the
   page, not the teacher's, since a class can mix languages.
+- *Where a problem's answers go (PL-40).* Default: below the AI grader on screen 2, since answers
+  can only be graded once the grader is accepted; a third screen if teachers ask.
+- *Unsaved edits when switching problem screens (PL-40).* Default: both screens stay loaded, so
+  typed text survives switching; *Prepare the grader with AI* saves the text first.
 - *Translating server messages.* Default: the fixed messages are translated in the web app by their
   English text; messages with details (e.g. a provider error) stay in English.
 

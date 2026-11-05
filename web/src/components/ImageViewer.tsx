@@ -5,8 +5,10 @@ import { fileUrl, type FileRef } from "@/lib/api";
 import { t } from "@/lib/i18n";
 
 /** PL-22: the paper large, with zoom, pan and page switch; the raw capture of a scan is one click away (PL-14). */
-export default function ImageViewer({ pages }: { pages: FileRef[] }) {
-  const [i, setI] = useState(0);
+export default function ImageViewer({ pages, start = 0, boxClass }: {
+  pages: FileRef[]; start?: number; boxClass?: string;  // boxClass: the image area's height (e.g. inside a dialog)
+}) {
+  const [i, setI] = useState(start);
   const [raw, setRaw] = useState(false);
   const [z, setZ] = useState(1);
   const [off, setOff] = useState({ x: 0, y: 0 });
@@ -42,7 +44,7 @@ export default function ImageViewer({ pages }: { pages: FileRef[] }) {
         </div>
       </div>
       <div ref={box}
-           className={`relative h-[calc(var(--app-h)*0.6)] overflow-hidden rounded-lg border bg-muted lg:h-[calc(var(--app-h)-11rem)] ${z > 1 ? "cursor-grab touch-none" : ""}`}
+           className={`relative overflow-hidden rounded-lg border bg-muted ${boxClass ?? "h-[calc(var(--app-h)*0.6)] lg:h-[calc(var(--app-h)-11rem)]"} ${z > 1 ? "cursor-grab touch-none" : ""}`}
            onPointerDown={(e) => { if (z > 1) { drag.current = { x: e.clientX - off.x, y: e.clientY - off.y }; (e.target as Element).setPointerCapture?.(e.pointerId); } }}
            onPointerMove={(e) => { if (drag.current) setOff({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y }); }}
            onPointerUp={() => (drag.current = null)}

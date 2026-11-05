@@ -35,7 +35,7 @@ export default function Problems() {
             <ErrorText>{act.error}</ErrorText>
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
-              <Button type="submit" disabled={!title.trim() || act.busy}>{t("Save problem")}</Button>
+              <Button type="submit" disabled={!title.trim() || act.busy}>{t("Create problem")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

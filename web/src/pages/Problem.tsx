@@ -1,98 +1,154 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Plus, Trash2 } from "lucide-react";
 import Answers from "@/components/Answers";
 import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad } from "@/components/common";
+import ImageViewer from "@/components/ImageViewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { api, fileUrl, pagesForm, type Criterion, type Page as UploadPage, type Problem, type Proposal } from "@/lib/api";
 import { t } from "@/lib/i18n";
-import { query } from "@/lib/router";
+import { navigate, query } from "@/lib/router";
+import { cn } from "@/lib/utils";
 
+type View = "info" | "grader";
+type ProblemFile = Problem["files"][number];
+
+/** PL-15 to PL-20 on two screens: what the teacher gives, and what the AI generated from it. */
 export default function ProblemPage({ id }: { id: string }) {
   const prob = useLoad(() => api.get<Problem>(`/api/problems/${id}`), [id]);
   const p = prob.data;
   const from = query("exam");
+  const view: View = query("view") === "grader" ? "grader" : "info";
+  const go = (v: View) => {
+    const q = new URLSearchParams(from ? { exam: from } : {});
+    if (v === "grader") q.set("view", "grader");
+    navigate(`/problems/${id}${q.size ? `?${q}` : ""}`);
+  };
   if (!p) return <Page title={t("Problem")}><ErrorText>{prob.error}</ErrorText></Page>;
   const set = (next: Problem) => prob.setData(next);
+  const tabs: [View, string][] = [["info", t("1 · Your information")], ["grader", t("2 · AI grader")]];
   return (
     <Page title={p.title}
           crumbs={from ? [[t("Exams"), "/exams"], [t("Exam"), `/exams/${from}`]] : [[t("Problems"), "/problems"]]}
           actions={p.status === "ready" ? <Badge>{t("Ready · rubric v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}>
-      <Sources p={p} onSaved={set} />
-      <Grader p={p} onSaved={set} />
-      {(p.status === "ready" || p.answers > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Answers")}</CardTitle>
-            <CardDescription>{t("Add one answer per student (one or more pages). Grading only starts when you ask for it.")}</CardDescription>
-          </CardHeader>
-          <CardContent><Answers problemId={p.id} ready={p.status === "ready"} /></CardContent>
-        </Card>
-      )}
+      <nav aria-label={t("Problem screens")} className="flex gap-1 border-b">
+        {tabs.map(([v, label]) => (
+          <button key={v} type="button" aria-current={view === v ? "page" : undefined} onClick={() => go(v)}
+                  className={cn("-mb-px border-b-2 px-3 py-2 text-sm font-medium",
+                    view === v ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>
+            {label}
+          </button>
+        ))}
+      </nav>
+      {/* both stay mounted, so unsaved edits survive switching screens */}
+      <div hidden={view !== "info"}><Sources p={p} onSaved={set} onGrader={() => go("grader")} /></div>
+      <div hidden={view !== "grader"} className="space-y-8">
+        <Grader p={p} onSaved={set} onInfo={() => go("info")} />
+        {(p.status === "ready" || p.answers > 0) && (
+          <section className="space-y-3">
+            <Separator />
+            <div>
+              <h2 className="text-lg font-semibold">{t("Answers")}</h2>
+              <p className="text-sm text-muted-foreground">{t("Add one answer per student (one or more pages). Grading only starts when you ask for it.")}</p>
+            </div>
+            <Answers problemId={p.id} ready={p.status === "ready"} />
+          </section>
+        )}
+      </div>
     </Page>
   );
 }
 
+/** Uploaded statement or solution pages; a tap opens them large (PL-12, I4: the originals). */
+function Thumbs({ files, onRemove, busy }: { files: ProblemFile[]; onRemove: (f: ProblemFile) => void; busy: boolean }) {
+  const [open, setOpen] = useState<number | null>(null);
+  if (!files.length) return null;
+  return (
+    <>
+      <ul className="flex flex-wrap gap-2">
+        {files.map((x, i) => (
+          <li key={x.link_id} className="relative">
+            <button type="button" aria-label={t("Open {name}", { name: x.name })} onClick={() => setOpen(i)}
+                    className="block overflow-hidden rounded border focus-visible:ring-2 focus-visible:ring-ring">
+              <img src={fileUrl(x.id)} alt={x.name} className="h-24 object-cover" />
+            </button>
+            <button type="button" aria-label={t("Remove {name}", { name: x.name })} disabled={busy}
+                    className="absolute right-1 top-1 rounded-full bg-background/90 p-0.5" onClick={() => onRemove(x)}>
+              <Trash2 className="size-3.5" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <Dialog open={open !== null} onOpenChange={(o) => { if (!o) setOpen(null); }}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogTitle>{t("Preview")}</DialogTitle>
+          {open !== null && <ImageViewer key={open} pages={files} start={open} boxClass="h-[calc(var(--app-h)-12rem)]" />}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 /** PL-15, PL-16 inputs: title, statement and solution as text and/or images, optional rubric. */
-function Sources({ p, onSaved }: { p: Problem; onSaved: (p: Problem) => void }) {
+function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) => void; onGrader: () => void }) {
   const [f, setF] = useState({ title: p.title, statement_text: p.statement_text, solution_text: p.solution_text, rubric_text: p.rubric_text });
-  const [pages, setPages] = useState<Record<"statement" | "solution", UploadPage[]>>({ statement: [], solution: [] });
   const act = useAction();
   const dirty = f.title !== p.title || f.statement_text !== p.statement_text || f.solution_text !== p.solution_text || f.rubric_text !== p.rubric_text;
-  const upload = (role: "statement" | "solution") => act.run(async () => {
-    onSaved(await api.form<Problem>(`/api/problems/${p.id}/files`, pagesForm(pages[role], { role })));
-    setPages({ ...pages, [role]: [] });
+  const has = (role: "statement" | "solution") => !!f[`${role}_text`].trim() || p.files.some((x) => x.role === role);
+  // pages go up as soon as they are dropped, picked or scanned: no extra step
+  const upload = (role: "statement" | "solution", pages: UploadPage[]) => {
+    if (pages.length) act.run(async () => onSaved(await api.form<Problem>(`/api/problems/${p.id}/files`, pagesForm(pages, { role }))));
+  };
+  const save = async () => { if (dirty) onSaved(await api.patch<Problem>(`/api/problems/${p.id}`, f)); };
+  const prepare = () => act.run(async () => {
+    await save();
+    onSaved(await api.post<Problem>(`/api/problems/${p.id}/generate`));
+    onGrader();
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("1 · Statement and reference solution")}</CardTitle>
-        <CardDescription>{t("Type them, add images, or both. The AI reads all of it.")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="t">{t("Title")}</Label>
-          <Input id="t" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
+    <div className="max-w-3xl space-y-6 pt-2">
+      <p className="text-sm text-muted-foreground">{t("Type them, add images, or both. The AI reads all of it.")}</p>
+      <div className="space-y-1.5">
+        <Label htmlFor="t">{t("Title")}</Label>
+        <Input id="t" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
+      </div>
+      {(["statement", "solution"] as const).map((role) => (
+        <div key={role} className="space-y-2">
+          <Label htmlFor={role}>{role === "statement" ? t("Statement") : t("Reference solution")}</Label>
+          <Textarea id={role} rows={4} value={f[`${role}_text`]} onChange={(e) => setF({ ...f, [`${role}_text`]: e.target.value })} />
+          <Thumbs files={p.files.filter((x) => x.role === role)} busy={act.busy}
+                  onRemove={(x) => act.run(async () => onSaved(await api.del<Problem>(`/api/problems/${p.id}/files/${x.link_id}`)))} />
+          <Capture pages={[]} onChange={(v) => upload(role, v)} disabled={act.busy} />
         </div>
-        {(["statement", "solution"] as const).map((role) => (
-          <div key={role} className="space-y-2">
-            <Label htmlFor={role}>{role === "statement" ? t("Statement") : t("Reference solution")}</Label>
-            <Textarea id={role} rows={4} value={f[`${role}_text`]} onChange={(e) => setF({ ...f, [`${role}_text`]: e.target.value })} />
-            {p.files.filter((x) => x.role === role).length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {p.files.filter((x) => x.role === role).map((x) => (
-                  <figure key={x.link_id} className="relative">
-                    <a href={fileUrl(x.id)} target="_blank" rel="noreferrer"><img src={fileUrl(x.id)} alt={x.name} className="h-24 rounded border object-cover" /></a>
-                    <button type="button" aria-label={t("Remove {name}", { name: x.name })} className="absolute right-1 top-1 rounded-full bg-background/90 p-0.5"
-                            onClick={() => act.run(async () => onSaved(await api.del<Problem>(`/api/problems/${p.id}/files/${x.link_id}`)))}>
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </figure>
-                ))}
-              </div>
-            )}
-            <Capture label={role === "statement" ? t("statement pages") : t("solution pages")} pages={pages[role]} onChange={(v) => setPages({ ...pages, [role]: v })} />
-            {pages[role].length > 0 && <Button size="sm" disabled={act.busy} onClick={() => upload(role)}>{t("Add {n} page(s)", { n: pages[role].length })}</Button>}
-          </div>
-        ))}
-        <div className="space-y-1.5">
-          <Label htmlFor="rubric">{t("Your rubric (optional)")}</Label>
-          <Textarea id="rubric" rows={3} placeholder={t("Leave empty and the AI proposes one.")} value={f.rubric_text} onChange={(e) => setF({ ...f, rubric_text: e.target.value })} />
-        </div>
-        <ErrorText>{act.error}</ErrorText>
-        <Button disabled={!dirty || !f.title.trim() || act.busy}
-                onClick={() => act.run(async () => onSaved(await api.patch<Problem>(`/api/problems/${p.id}`, f)))}>
-          {t("Save")}
-        </Button>
-      </CardContent>
-    </Card>
+      ))}
+      <div className="space-y-1.5">
+        <Label htmlFor="rubric">{t("Your rubric (optional)")}</Label>
+        <Textarea id="rubric" rows={3} placeholder={t("Leave empty and the AI proposes one.")} value={f.rubric_text} onChange={(e) => setF({ ...f, rubric_text: e.target.value })} />
+      </div>
+      <ErrorText>{act.error}</ErrorText>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" disabled={!dirty || !f.title.trim() || act.busy} onClick={() => act.run(save)}>{t("Save")}</Button>
+        {p.proposal ? (
+          <Button onClick={onGrader}>{t("Go to the AI grader")} <ArrowRight /></Button>
+        ) : (
+          <Button disabled={!has("statement") || !has("solution") || !f.title.trim() || act.busy} onClick={prepare}>
+            {act.busy ? t("Preparing…") : t("Prepare the grader with AI")}
+          </Button>
+        )}
+      </div>
+      {!p.proposal && !(has("statement") && has("solution")) && (
+        <p className="text-sm text-muted-foreground">{t("Add the statement and the reference solution first.")}</p>
+      )}
+    </div>
   );
 }
 
@@ -108,7 +164,7 @@ function criterionErrors(c: Criterion, all: Criterion[]): string[] {
 }
 
 /** PL-16 to PL-19: generate, edit every field, improve by instruction, accept a version. */
-function Grader({ p, onSaved }: { p: Problem; onSaved: (p: Problem) => void }) {
+function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => void; onInfo: () => void }) {
   const [draft, setDraft] = useState<Proposal | null>(p.proposal);
   const [ack, setAck] = useState(false);
   const [instruction, setInstruction] = useState("");
@@ -119,19 +175,17 @@ function Grader({ p, onSaved }: { p: Problem; onSaved: (p: Problem) => void }) {
 
   if (!draft) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("2 · Grader")}</CardTitle>
-          <CardDescription>{t("The AI reads the statement and the solution and proposes a rubric. You check and edit everything.")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {!has && <p className="text-sm text-muted-foreground">{t("Add the statement and the reference solution first.")}</p>}
+      <div className="max-w-3xl space-y-3 pt-2">
+        <p className="text-sm text-muted-foreground">{t("The AI reads the statement and the solution and proposes a rubric. You check and edit everything.")}</p>
+        {!has && <p className="text-sm">{t("Add the statement and the reference solution first.")}</p>}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={onInfo}>{t("Go to your information")}</Button>
           <Button disabled={!has || act.busy} onClick={() => act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/generate`)))}>
             {act.busy ? t("Preparing…") : t("Prepare the grader with AI")}
           </Button>
-          <ErrorText>{act.error}</ErrorText>
-        </CardContent>
-      </Card>
+        </div>
+        <ErrorText>{act.error}</ErrorText>
+      </div>
     );
   }
 
@@ -142,16 +196,14 @@ function Grader({ p, onSaved }: { p: Problem; onSaved: (p: Problem) => void }) {
   const total = crit.reduce((s, c) => s + (Number(c.max_points) || 0), 0);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("2 · What the AI understood")}</CardTitle>
-        <CardDescription>{t("Every field is editable. Saving an edit to a ready problem makes it a draft; accepting creates the next rubric version, and earlier grades keep theirs.")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {p.pending_proposal && (
-          <Diff before={p.proposal!} after={p.pending_proposal} instruction={p.pending_instruction ?? ""} busy={act.busy}
-                onChoose={(c) => act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/improve/${c}`)))} />
-        )}
+    <div className="space-y-8 pt-2">
+      <p className="max-w-3xl text-sm text-muted-foreground">{t("Every field is editable. Saving an edit to a ready problem makes it a draft; accepting creates the next rubric version, and earlier grades keep theirs.")}</p>
+      {p.pending_proposal && (
+        <Diff before={p.proposal!} after={p.pending_proposal} instruction={p.pending_instruction ?? ""} busy={act.busy}
+              onChoose={(c) => act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/improve/${c}`)))} />
+      )}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">{t("What the AI understood")}</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label={t("Statement (as read)")}><Textarea rows={4} value={d.normalized_statement} onChange={(e) => up({ normalized_statement: e.target.value })} /></Field>
           <Field label={t("Solution (as read)")}><Textarea rows={4} value={d.normalized_solution} onChange={(e) => up({ normalized_solution: e.target.value })} /></Field>
@@ -165,20 +217,22 @@ function Grader({ p, onSaved }: { p: Problem; onSaved: (p: Problem) => void }) {
           </div>
           <ListField label={t("Grading plan")} value={d.grading_plan} onChange={(v) => up({ grading_plan: v })} />
         </div>
+      </section>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">{t("Rubric · {n} points", { n: total })}</h3>
-            <Button size="sm" variant="outline" onClick={() => setCrit([...crit, {
-              id: `C${crit.length + 1}`, description: "", max_points: 1, required_evidence: "", full_credit: "", partial_credit: "", zero_credit: "",
-            }])}><Plus /> {t("Criterion")}</Button>
-          </div>
-          {crit.map((c, i) => {
-            const errs = criterionErrors(c, crit);
-            const edit = (patch: Partial<Criterion>) => setCrit(crit.map((x, j) => (j === i ? { ...x, ...patch } : x)));
-            const swap = (j: number) => { const n = [...crit]; [n[i], n[j]] = [n[j], n[i]]; setCrit(n); };
-            return (
-              <div key={i} className="space-y-2 rounded-lg border p-3">
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{t("Rubric · {n} points", { n: total })}</h2>
+          <Button size="sm" variant="outline" onClick={() => setCrit([...crit, {
+            id: `C${crit.length + 1}`, description: "", max_points: 1, required_evidence: "", full_credit: "", partial_credit: "", zero_credit: "",
+          }])}><Plus /> {t("Criterion")}</Button>
+        </div>
+        {crit.map((c, i) => {
+          const errs = criterionErrors(c, crit);
+          const edit = (patch: Partial<Criterion>) => setCrit(crit.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+          const swap = (j: number) => { const n = [...crit]; [n[i], n[j]] = [n[j], n[i]]; setCrit(n); };
+          return (
+            <Card key={i} className="gap-3 py-4">
+              <CardHeader className="px-4">
                 <div className="flex flex-wrap items-end gap-2">
                   <Field label={t("Id")} className="w-20"><Input value={c.id} onChange={(e) => edit({ id: e.target.value })} /></Field>
                   <Field label={t("Points")} className="w-24"><Input type="number" min={0} step={0.5} value={c.max_points} onChange={(e) => edit({ max_points: Number(e.target.value) })} /></Field>
@@ -190,29 +244,31 @@ function Grader({ p, onSaved }: { p: Problem; onSaved: (p: Problem) => void }) {
                   </div>
                 </div>
                 {errs.length > 0 && <p className="text-sm text-destructive">{c.id || t("Criterion")}: {errs.join(", ")}</p>}
-                <div className="grid gap-2 md:grid-cols-2">
-                  <Field label={t("Required evidence")}><Textarea rows={2} value={c.required_evidence} onChange={(e) => edit({ required_evidence: e.target.value })} /></Field>
-                  <Field label={t("Full credit")}><Textarea rows={2} value={c.full_credit} onChange={(e) => edit({ full_credit: e.target.value })} /></Field>
-                  <Field label={t("Partial credit")}><Textarea rows={2} value={c.partial_credit} onChange={(e) => edit({ partial_credit: e.target.value })} /></Field>
-                  <Field label={t("Zero credit")}><Textarea rows={2} value={c.zero_credit} onChange={(e) => edit({ zero_credit: e.target.value })} /></Field>
-                </div>
-              </div>
-            );
-          })}
-          <div className="grid gap-2 md:grid-cols-3">
-            <Field label={t("Carried errors")}><Textarea rows={2} value={d.rubric.carried_error_policy} onChange={(e) => up({ rubric: { ...d.rubric, carried_error_policy: e.target.value } })} /></Field>
-            <Field label={t("Tolerances")}><Textarea rows={2} value={d.rubric.tolerances} onChange={(e) => up({ rubric: { ...d.rubric, tolerances: e.target.value } })} /></Field>
-            <Field label={t("Alternative methods")}><Textarea rows={2} value={d.rubric.alternative_methods} onChange={(e) => up({ rubric: { ...d.rubric, alternative_methods: e.target.value } })} /></Field>
-          </div>
-        </section>
+              </CardHeader>
+              <CardContent className="grid gap-2 px-4 md:grid-cols-2">
+                <Field label={t("Required evidence")}><Textarea rows={2} value={c.required_evidence} onChange={(e) => edit({ required_evidence: e.target.value })} /></Field>
+                <Field label={t("Full credit")}><Textarea rows={2} value={c.full_credit} onChange={(e) => edit({ full_credit: e.target.value })} /></Field>
+                <Field label={t("Partial credit")}><Textarea rows={2} value={c.partial_credit} onChange={(e) => edit({ partial_credit: e.target.value })} /></Field>
+                <Field label={t("Zero credit")}><Textarea rows={2} value={c.zero_credit} onChange={(e) => edit({ zero_credit: e.target.value })} /></Field>
+              </CardContent>
+            </Card>
+          );
+        })}
+        <div className="grid gap-2 md:grid-cols-3">
+          <Field label={t("Carried errors")}><Textarea rows={2} value={d.rubric.carried_error_policy} onChange={(e) => up({ rubric: { ...d.rubric, carried_error_policy: e.target.value } })} /></Field>
+          <Field label={t("Tolerances")}><Textarea rows={2} value={d.rubric.tolerances} onChange={(e) => up({ rubric: { ...d.rubric, tolerances: e.target.value } })} /></Field>
+          <Field label={t("Alternative methods")}><Textarea rows={2} value={d.rubric.alternative_methods} onChange={(e) => up({ rubric: { ...d.rubric, alternative_methods: e.target.value } })} /></Field>
+        </div>
+      </section>
 
-        {d.issues.length > 0 && (
-          <section className="space-y-2 rounded-lg border border-warning bg-warning/10 p-3">
-            <h3 className="font-semibold">{t("Issues the AI found")}</h3>
-            <ul className="list-disc pl-5 text-sm">{d.issues.map((x, i) => <li key={i}>{x}</li>)}</ul>
-            <label className="flex items-center gap-2 text-sm"><Checkbox checked={ack} onCheckedChange={(v) => setAck(v === true)} /> {t("I have read these issues")}</label>
-          </section>
-        )}
+      {d.issues.length > 0 && (
+        <section className="space-y-2 rounded-lg border border-warning bg-warning/10 p-3">
+          <h3 className="font-semibold">{t("Issues the AI found")}</h3>
+          <ul className="list-disc pl-5 text-sm">{d.issues.map((x, i) => <li key={i}>{x}</li>)}</ul>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={ack} onCheckedChange={(v) => setAck(v === true)} /> {t("I have read these issues")}</label>
+        </section>
+      )}
+      <div className="space-y-2">
         {p.rubric_errors.length > 0 && !dirty && <ErrorText>{t("Fix the rubric: {errors}", { errors: p.rubric_errors.join("; ") })}</ErrorText>}
         <ErrorText>{act.error}</ErrorText>
         <div className="flex flex-wrap gap-2">
@@ -223,24 +279,25 @@ function Grader({ p, onSaved }: { p: Problem; onSaved: (p: Problem) => void }) {
             {p.status === "ready" ? t("Accepted · v{n}", { n: p.rubric_version }) : t("Accept as rubric v{n}", { n: p.rubric_version + 1 })}
           </Button>
         </div>
+      </div>
 
-        <section className="space-y-2 border-t pt-4">
-          <Label htmlFor="ins" className="font-semibold">{t("Improve with an instruction")}</Label>
-          <Textarea id="ins" rows={2} placeholder={t("e.g. C2 should accept g = 9.8 or 10; the diagram needs friction")}
-                    value={instruction} onChange={(e) => setInstruction(e.target.value)} />
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" disabled={!instruction.trim() || dirty || act.busy || !!p.pending_proposal}
-                    onClick={() => act.run(async () => { onSaved(await api.post<Problem>(`/api/problems/${p.id}/improve`, { instruction })); setInstruction(""); })}>
-              {act.busy ? t("Asking the AI…") : t("Ask the AI to revise")}
-            </Button>
-            <Button variant="ghost" disabled={act.busy} onClick={() => { if (confirm(t("Replace the whole proposal with a fresh one from the AI?"))) act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/generate`))); }}>
-              {t("Prepare again from scratch")}
-            </Button>
-          </div>
-          {dirty && <p className="text-xs text-muted-foreground">{t("Save or undo your edits before asking the AI.")}</p>}
-        </section>
-      </CardContent>
-    </Card>
+      <section className="max-w-3xl space-y-2">
+        <Separator className="mb-4" />
+        <Label htmlFor="ins" className="text-lg font-semibold">{t("Improve with an instruction")}</Label>
+        <Textarea id="ins" rows={2} placeholder={t("e.g. C2 should accept g = 9.8 or 10; the diagram needs friction")}
+                  value={instruction} onChange={(e) => setInstruction(e.target.value)} />
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" disabled={!instruction.trim() || dirty || act.busy || !!p.pending_proposal}
+                  onClick={() => act.run(async () => { onSaved(await api.post<Problem>(`/api/problems/${p.id}/improve`, { instruction })); setInstruction(""); })}>
+            {act.busy ? t("Asking the AI…") : t("Ask the AI to revise")}
+          </Button>
+          <Button variant="ghost" disabled={act.busy} onClick={() => { if (confirm(t("Replace the whole proposal with a fresh one from the AI?"))) act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/generate`))); }}>
+            {t("Prepare again from scratch")}
+          </Button>
+        </div>
+        {dirty && <p className="text-xs text-muted-foreground">{t("Save or undo your edits before asking the AI.")}</p>}
+      </section>
+    </div>
   );
 }
 
