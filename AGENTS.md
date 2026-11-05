@@ -55,15 +55,18 @@ uv run --with pyyaml --with anthropic --with playwright python tools/wave/simula
   for the validated product direction, evidence status, and research queue.
 - Read [`docs/analysis/niche/README.md`](./docs/analysis/niche/README.md) before
   changing niche-analysis documents or research prompts.
+- Read [`docs/spec/platform.md`](./docs/spec/platform.md) (PL ids) and
+  [`docs/adr/`](./docs/adr/) before building platform features.
 - Keep related documentation, tests, and implementation behavior consistent.
 
 ## Required product journey
 
 Preserve this vertical slice:
 
-1. A student uploads photos of their own answer to an exercise; the teacher
-   can also upload on a student's behalf. The submission is tied to the
-   uploader's identity and the chosen exercise, never to a name typed by hand.
+1. A student uploads photos of their own answer to an exercise through the
+   teacher's upload link, typing their name; the teacher can also upload on a
+   student's behalf. The submission is tied to that link, the name, the time
+   and the chosen exercise (platform spec PL-28 to PL-31).
 2. Keep every upload as an original and show who uploaded it, when, and for
    which exercise, so a disputed or late submission can be traced.
 3. Transcribe the answer.
