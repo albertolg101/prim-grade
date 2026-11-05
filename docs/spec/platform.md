@@ -133,13 +133,14 @@ Each requirement has a stable id; tests and tasks cite it.
   search bar above the list and a filter sidebar on its right with:
   - **Sort by**: recently changed (default), least recently changed, name A–Z, name Z–A.
   - **Status**: Draft and Ready checkboxes with counts; none checked shows both.
-  - **Tags**: never listed all at once. A field suggests the stored tags only once the teacher
-    types (each with how many problems carry it); picking one, or Enter on a full tag name in any
+  - **Tags**: never listed all at once. Clicking the field opens a menu with the first 8 tags and
+    "Type to see {n} more"; typing searches them all (each with how many problems carry it); picking one, or Enter on a full tag name in any
     case, adds it as a chip with a remove button. A problem must carry every chosen tag. An unknown
     name says no tag matches.
   Tag suggestions here and on the problem header open in the site's own menu (`TagInput`), as wide
   as the field, so they stay inside the panel; the typed part is bold, arrow keys move, Enter
   picks, Escape closes. On the problem header a name that is not a tag yet shows "Create …".
+  Every scrollbar on the site is thin and drawn in the theme's colours (light and dark).
   - **Clear** resets status and tags.
   The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}

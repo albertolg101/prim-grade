@@ -389,5 +389,6 @@
  "Type a tag…": "Escribe una etiqueta…",
  "{n} problems": "{n} problemas",
  "No tag matches “{q}”.": "Ninguna etiqueta coincide con «{q}».",
- "Create “{tag}”": "Crear «{tag}»"
+ "Create “{tag}”": "Crear «{tag}»",
+ "Type to see {n} more": "Escribe para ver {n} más"
 }

@@ -23,7 +23,11 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
   const [open, setOpen] = useState(!!autoFocus);
   const [active, setActive] = useState(0);
   const q = lower(text.trim());
-  const matches = suggestions.filter((s) => lower(s.value).includes(q));
+  // an empty field shows a few, so the tags are never all listed at once (PL-42); typing searches all
+  const SHOWN_EMPTY = 8;
+  const all = suggestions.filter((s) => lower(s.value).includes(q));
+  const matches = q ? all : all.slice(0, SHOWN_EMPTY);
+  const more = q ? 0 : all.length - matches.length;
   const exact = suggestions.find((s) => lower(s.value) === q);
   const create = allowNew && q && !exact ? text.trim() : null;
   const items = [...matches.map((s) => ({ ...s, create: false })), ...(create ? [{ value: create, hint: undefined, create: true }] : [])];
@@ -31,11 +35,12 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
 
   return (
     <div className={cn("relative", className)}>
-      <Input role="combobox" aria-label={label} aria-expanded={open && !!q} aria-controls={`${id}-list`}
-             aria-autocomplete="list" aria-activedescendant={open && q && items[active] ? `${id}-${active}` : undefined}
+      <Input role="combobox" aria-label={label} aria-expanded={open} aria-controls={`${id}-list`}
+             aria-autocomplete="list" aria-activedescendant={open && items[active] ? `${id}-${active}` : undefined}
              autoFocus={autoFocus} maxLength={40} placeholder={placeholder} className="h-8 text-sm" value={text}
              onChange={(e) => { setText(e.target.value); setActive(0); setOpen(true); }}
              onFocus={() => setOpen(true)}
+             onClick={() => setOpen(true)}  // reopens after Escape
              onBlur={() => { setOpen(false); if (!text.trim()) onClose?.(); }}
              onKeyDown={(e) => {
                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -44,18 +49,17 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
                  if (items.length) setActive((active + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length);
                } else if (e.key === "Enter") {
                  e.preventDefault();
-                 const it = open && q ? items[active] : undefined;
+                 const it = open ? items[active] : undefined;
                  if (exact && (!it || it.create)) pick(exact.value);  // a full name in any case is that tag
                  else if (it) pick(it.value);
                } else if (e.key === "Escape") {
                  if (open && text) { setOpen(false); } else onClose?.();
                }
              }} />
-      {open && q && (
-        // only once something is typed, so the tags are never all listed at once (PL-42);
+      {open && (q || items.length > 0) && (
         // as wide as the field, so it never runs past the panel it sits in
         <ul id={`${id}-list`} role="listbox" aria-label={label}
-            className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 scrollbar-thin overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+            className="absolute top-full right-0 left-0 z-50 mt-1 max-h-80 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
           {items.length === 0 && <li className="px-2 py-1.5 text-xs text-muted-foreground">{t("No tag matches “{q}”.", { q: text.trim() })}</li>}
           {items.map((it, i) => (
             <li key={`${it.create}-${it.value}`} id={`${id}-${i}`} role="option" aria-selected={i === active}
@@ -72,6 +76,7 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
               {it.hint && <span className="shrink-0 text-xs text-muted-foreground">{it.hint}</span>}
             </li>
           ))}
+          {more > 0 && <li role="presentation" className="px-2 py-1.5 text-xs text-muted-foreground">{t("Type to see {n} more", { n: more })}</li>}
         </ul>
       )}
     </div>
