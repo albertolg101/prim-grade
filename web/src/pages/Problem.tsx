@@ -35,7 +35,7 @@ export default function ProblemPage({ id }: { id: string }) {
   };
   if (!p) return <Page title={t("Problem")}><ErrorText>{prob.error}</ErrorText></Page>;
   const set = (next: Problem) => prob.setData(next);
-  const tabs: [View, string][] = [["info", t("1 · Your information")], ["grader", t("2 · AI grader")]];
+  const tabs: [View, string][] = [["info", t("1 · Problem information")], ["grader", t("2 · AI grader")]];
   return (
     <Page title={p.title}
           onRename={(title) => rename.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { title })))}

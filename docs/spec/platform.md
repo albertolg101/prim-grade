@@ -109,7 +109,7 @@ Each requirement has a stable id; tests and tasks cite it.
   solution and rubric can be added later. The button is **New problem**, with **Create problem**
   in its dialog; the problem still starts as a draft.
 - **PL-40 Two problem screens** (owner request, 5 November 2026). A problem has two screens, with
-  no cards around them: **1 · Your information** (statement and reference solution in one column
+  no cards around them: **1 · Problem information** (statement and reference solution in one column
   each, the optional rubric across both) and **2 · AI grader** (what the AI understood, the rubric with one card per criterion,
   accept and improve, then the problem's answers). Images added to the statement or solution are
   uploaded as soon as they are dropped, picked or scanned; tapping one opens it large in a dialog.
