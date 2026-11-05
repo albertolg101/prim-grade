@@ -146,6 +146,8 @@ Each requirement has a stable id; tests and tasks cite it.
   as the field, so they stay inside the panel; the typed part is bold, arrow keys move, Enter
   picks, Escape closes. On the problem header a name that is not a tag yet shows "Create …".
   Every scrollbar on the site is thin and drawn in the theme's colours (light and dark).
+  A cut-off label on a button or a select slides to its end and back while hovered, so it can be
+  read in full (none with reduced motion).
   - **Clear** resets status to the default and removes the tags.
   The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
