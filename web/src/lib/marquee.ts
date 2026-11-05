@@ -4,8 +4,8 @@
  * animation was not repainted by Chrome); reduced motion turns it off. */
 const CONTROLS = "button, a, [role=combobox], [role=option], [data-slot=badge]";
 const LABELS = ".truncate, [data-slot=select-value]";
-const SPEED = 80;  // px/s
-const HOLD = 500;  // ms at each end
+const SPEED = 65;  // px/s
+const HOLD = 250;  // ms at each end
 let current: Element | null = null;
 let frame = 0;
 
@@ -21,7 +21,7 @@ function start(control: Element) {
   const tick = (now: number) => {
     for (const el of labels) {
       const over = el.scrollWidth - el.clientWidth;
-      const move = Math.max(800, (over / SPEED) * 1000);
+      const move = Math.max(1000, (over / SPEED) * 1000);
       const u = (now - t0) % (2 * (HOLD + move));
       el.scrollLeft = over * (u < HOLD ? 0 : u < HOLD + move ? ease((u - HOLD) / move)
         : u < 2 * HOLD + move ? 1 : 1 - ease((u - 2 * HOLD - move) / move));
