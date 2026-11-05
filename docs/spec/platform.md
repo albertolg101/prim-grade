@@ -160,8 +160,9 @@ Each requirement has a stable id; tests and tasks cite it.
   rubric version the teacher is asked where to go: the answers (default), the problem list, or stay
   on the page. The back link from an answer returns to the Answers screen.
 - **PL-46 Group on an answer** (owner request, 6 November 2026). When the teacher adds an answer
-  on a problem's Answers screen, they can optionally pick one of their groups (archived ones are not
-  offered); the pick stays for the next answer. The group shows next to the student's name in the
+  on a problem's Answers screen, they can optionally pick one of their groups in an autocomplete
+  (archived ones are not offered; with no groups the field says so); the picked group shows as a
+  removable chip and stays for the next answer. The group shows next to the student's name in the
   list. A group given without an exam must be the teacher's own; an exam still needs its group.
 - **PL-44 Archive a problem** (owner request, 5 November 2026). An archive button on each row of
   the Problems list and below the problem's title archives it; on an archived problem the same

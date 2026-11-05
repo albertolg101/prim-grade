@@ -409,5 +409,8 @@
  "The problem is ready for answers. Where do you want to go?": "El problema está listo para recibir respuestas. ¿Adónde quieres ir?",
  "Newest first": "Más recientes primero",
  "Oldest first": "Más antiguas primero",
- "No group (optional)": "Sin grupo (opcional)"
+ "Group (optional)": "Grupo (opcional)",
+ "No groups yet": "Aún no hay grupos",
+ "No group matches “{q}”.": "Ningún grupo coincide con «{q}».",
+ "Remove group {name}": "Quitar el grupo {name}"
 }

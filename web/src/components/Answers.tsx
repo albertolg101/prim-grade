@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import TagInput from "@/components/TagInput";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 import { api, pagesForm, type AnswerRow, type Group, type Page } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { navigate } from "@/lib/router";
@@ -19,8 +22,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   const [pages, setPages] = useState<Page[]>([]);
   const [label, setLabel] = useState("");
   const [name, setName] = useState("");
-  const NO_GROUP = "none";  // a Select item cannot have an empty value
-  const [group, setGroup] = useState(NO_GROUP);  // PL-46: optional
+  const [group, setGroup] = useState<Group | null>(null);  // PL-46: optional
   const groups = useLoad(() => api.get<Group[]>("/api/groups"), []);
   const groupName = (id: string | null) => groups.data?.find((g) => g.id === id)?.name;
   const [sort, setSort] = useState<Sort>("newest");  // the server lists newest first
@@ -30,7 +32,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   if (sort === "name") shown.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   const add = () => act.run(async () => {
     await api.form(`/api/problems/${problemId}/answers`,
-      pagesForm(pages, { label, student_name: name, group_id: group === NO_GROUP ? undefined : group }));
+      pagesForm(pages, { label, student_name: name, group_id: group?.id }));
     setPages([]); setLabel(""); setName("");  // the group stays: the next answer is often from the same one
     await rows.reload();
   });
@@ -44,15 +46,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
           <div className="flex flex-wrap gap-2">
             <Input className="w-full sm:w-72" placeholder={t("Student name (optional)")} value={name} onChange={(e) => setName(e.target.value)} aria-label={t("Student name")} />
             <Input className="w-full sm:w-52" placeholder={t("Label (optional)")} value={label} onChange={(e) => setLabel(e.target.value)} aria-label={t("Label")} />
-            {!!groups.data?.some((g) => !g.archived) && (
-              <Select value={group} onValueChange={setGroup}>
-                <SelectTrigger className="w-full sm:w-52" aria-label={t("Group")}><SelectValue /></SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value={NO_GROUP}>{t("No group (optional)")}</SelectItem>
-                  {groups.data.filter((g) => !g.archived).map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
+            <GroupPick groups={(groups.data ?? []).filter((g) => !g.archived)} value={group} onChange={setGroup} />
             <Button disabled={!pages.length || act.busy} onClick={add}>{pages.length === 1 ? t("Add answer (1 page)") : t("Add answer ({n} pages)", { n: pages.length })}</Button>
           </div>
           <ErrorText>{act.error}</ErrorText>
@@ -131,5 +125,26 @@ export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle, groupNa
         ))}
       </ul>
     </div>
+  );
+}
+
+/** PL-46: an optional group, picked from the teacher's groups with an autocomplete; once picked it
+ * shows as a chip that can be removed. */
+function GroupPick({ groups, value, onChange }: { groups: Group[]; value: Group | null; onChange: (g: Group | null) => void }) {
+  const box = "w-full sm:w-52";
+  if (value) {
+    return (
+      <div className={cn("flex h-9 items-center justify-between gap-2 rounded-md border px-3 text-sm", box)}>
+        <span className="min-w-0 truncate" title={value.name}>{value.name}</span>
+        <button type="button" aria-label={t("Remove group {name}", { name: value.name })} className="rounded-full p-0.5 hover:bg-accent"
+                onClick={() => onChange(null)}><X className="size-3.5" /></button>
+      </div>
+    );
+  }
+  if (!groups.length) return <Input className={box} disabled placeholder={t("No groups yet")} aria-label={t("Group")} />;
+  return (
+    <TagInput className={box} inputClassName="h-9" label={t("Group")} placeholder={t("Group (optional)")}
+              noMatch="No group matches “{q}”." suggestions={groups.map((g) => ({ value: g.name }))}
+              onPick={(name) => onChange(groups.find((g) => g.name === name) ?? null)} />
   );
 }

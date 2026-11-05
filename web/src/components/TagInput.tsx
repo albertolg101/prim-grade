@@ -8,7 +8,7 @@ const lower = (s: string) => s.toLocaleLowerCase();
 
 /** PL-41, PL-42: a text field whose suggestions open in our own menu (a native datalist can't be styled).
  * Arrow keys move, Enter picks, Escape closes; with allowNew, a typed name that is not a tag yet can be created. */
-export default function TagInput({ suggestions, onPick, allowNew, label, placeholder, autoFocus, onClose, className }: {
+export default function TagInput({ suggestions, onPick, allowNew, label, placeholder, autoFocus, onClose, className, inputClassName, noMatch }: {
   suggestions: { value: string; hint?: string }[];
   onPick: (tag: string) => void;
   allowNew?: boolean;
@@ -17,6 +17,8 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
   autoFocus?: boolean;
   onClose?: () => void;  // Escape, or leaving an empty field
   className?: string;
+  inputClassName?: string;
+  noMatch?: string;  // shown when nothing matches what was typed; {q} is the typed text
 }) {
   const id = useId();
   const [text, setText] = useState("");
@@ -37,7 +39,7 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
     <div className={cn("relative", className)}>
       <Input role="combobox" aria-label={label} aria-expanded={open} aria-controls={`${id}-list`}
              aria-autocomplete="list" aria-activedescendant={open && items[active] ? `${id}-${active}` : undefined}
-             autoFocus={autoFocus} maxLength={40} placeholder={placeholder} className="h-8 text-sm" value={text}
+             autoFocus={autoFocus} maxLength={40} placeholder={placeholder} className={cn("h-8 text-sm", inputClassName)} value={text}
              onChange={(e) => { setText(e.target.value); setActive(0); setOpen(true); }}
              onFocus={() => setOpen(true)}
              onClick={() => setOpen(true)}  // reopens after Escape
@@ -60,7 +62,7 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
         // as wide as the field, so it never runs past the panel it sits in
         <ul id={`${id}-list`} role="listbox" aria-label={label}
             className="absolute top-full right-0 left-0 z-50 mt-1 max-h-80 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
-          {items.length === 0 && <li className="px-2 py-1.5 text-xs text-muted-foreground">{t("No tag matches “{q}”.", { q: text.trim() })}</li>}
+          {items.length === 0 && <li className="px-2 py-1.5 text-xs text-muted-foreground">{t(noMatch ?? "No tag matches “{q}”.", { q: text.trim() })}</li>}
           {items.map((it, i) => (
             <li key={`${it.create}-${it.value}`} id={`${id}-${i}`} role="option" aria-selected={i === active}
                 onMouseDown={(e) => e.preventDefault()}  // keep the focus in the field
