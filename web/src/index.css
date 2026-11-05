@@ -94,4 +94,5 @@
   --zoom: 1;
   --footer-h: 28px;
   --app-h: calc((100dvh - var(--footer-h)) / var(--zoom));
+  --screen-h: calc(100dvh / var(--zoom));  /* the sidebar runs beside the footer */
 }

@@ -90,7 +90,7 @@ export default function App() {
       <div className="min-h-(--app-h) md:flex">
         {menu && <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenu(false)} />}
         <aside className={cn(
-          "fixed top-0 left-0 z-50 flex h-(--app-h) w-60 flex-col border-r bg-background transition-transform md:sticky md:translate-x-0",
+          "fixed top-0 left-0 z-50 flex h-(--screen-h) w-60 flex-col border-r bg-background transition-transform md:sticky md:translate-x-0",
           menu ? "translate-x-0" : "invisible -translate-x-full md:visible")}>
           <div className="flex h-13 items-center justify-between px-4">
             <a href="/problems" onClick={(e) => { e.preventDefault(); navigate("/problems"); }}
@@ -161,7 +161,7 @@ export default function App() {
           <main>{page}</main>
         </div>
       </div>
-      <ZoomFooter />
+      <ZoomFooter besideSidebar />
     </CrumbsContext.Provider>
   );
 }

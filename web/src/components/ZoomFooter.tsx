@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { getZoom, setZoom, ZOOMS } from "@/lib/zoom";
 
-/** PL-39: fixed at the bottom and counter-zoomed, so it keeps its size while the page zooms. */
-export default function ZoomFooter() {
+/** PL-39: fixed at the bottom and counter-zoomed, so it keeps its size while the page zooms.
+ * Beside the sidebar on a computer: its left edge is the sidebar's real width, 15rem × zoom. */
+export default function ZoomFooter({ besideSidebar = false }: { besideSidebar?: boolean }) {
   const [z, setZ] = useState(getZoom());
   const i = ZOOMS.indexOf(z);
   // step from the live value, so quick repeated clicks never skip or repeat a level
@@ -17,7 +19,8 @@ export default function ZoomFooter() {
   const pct = `${Math.round(z * 100)}%`;
   return (
     <footer style={{ zoom: 1 / z }}
-            className="fixed inset-x-0 bottom-0 z-40 flex h-7 items-center justify-end gap-1 border-t bg-background/95 px-3 text-xs text-muted-foreground backdrop-blur">
+            className={cn("fixed inset-x-0 bottom-0 z-40 flex h-7 items-center justify-end gap-1 border-t bg-background/95 px-3 text-xs text-muted-foreground backdrop-blur",
+              besideSidebar && "md:left-[calc(15rem*var(--zoom))]")}>
       <span className="mr-1">{t("Zoom")}</span>
       <Button variant="ghost" size="icon" className="size-6" aria-label={t("Zoom out")} disabled={i <= 0}
               onClick={() => step(-1)}><Minus className="size-3.5" /></Button>
