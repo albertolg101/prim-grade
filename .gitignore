@@ -1,0 +1,13 @@
+# real exam data and runtime state — never commit
+input/
+data/
+.env
+# tooling
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+*.swp
+# simulate_wave.py output (screenshots may show exam data)
+out/
