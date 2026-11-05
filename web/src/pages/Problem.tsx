@@ -385,7 +385,8 @@ function Grader({ p, preparing, onSaved, onInfo, onAnswers, onAccepting }: {
           </Button>
         </div>
         <Dialog open={accepted} onOpenChange={setAccepted}>
-          <DialogContent>
+          {/* wide enough for the three choices on one row; they wrap only on narrower screens */}
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>{t("Rubric v{n} accepted", { n: p.rubric_version })}</DialogTitle>
               <DialogDescription>{t("The problem is ready for answers. Where do you want to go?")}</DialogDescription>
