@@ -209,6 +209,11 @@ Each requirement has a stable id; tests and tasks cite it.
   2026).
   A "Reset view" button (with the current zoom) puts the paper back at 100% and centred; whenever
   the zoom returns to 100% by any path, the paper is centred again (owner request, 6 November 2026).
+  In the right column the teacher's grade comes first and the AI proposal below it. The proposal
+  card shows its total and the criteria not marked high confidence ("Check first") in its header,
+  then the proposed scores with their evidence, reasoning and confidence; the transcription and
+  the physics interpretation stay as numbered stages, folded under the scores (I3, I5; owner
+  request, 6 November 2026).
 - **PL-23 Final grade.** The teacher sets the final points per criterion and the feedback, starting
   from the proposal, and approves. Approval is the only way a grade becomes final (I1). The AI's
   proposal is kept unchanged beside the approved grade.

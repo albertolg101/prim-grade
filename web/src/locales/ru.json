@@ -175,7 +175,6 @@
  "Problem screens": "Экраны задачи",
  "Problems": "Задачи",
  "Problems: {n}": "Задач: {n}",
- "Proposed scores · {total} / {max}": "Предложенные баллы · {total} / {max}",
  "Raw camera capture": "Исходный снимок камеры",
  "Reactivate": "Включить снова",
  "Ready": "Готово",
@@ -412,5 +411,7 @@
  "No groups yet": "Групп пока нет",
  "No group matches “{q}”.": "Нет группы «{q}».",
  "Remove group {name}": "Убрать группу {name}",
- "Reset view": "Сбросить вид"
+ "Reset view": "Сбросить вид",
+ "Check first: {ids}": "Проверьте сначала: {ids}",
+ "Proposed scores": "Предложенные баллы"
 }

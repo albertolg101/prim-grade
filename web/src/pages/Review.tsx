@@ -94,11 +94,11 @@ export default function Review({ id }: { id: string }) {
             <ImageViewer pages={a.pages} className="lg:flex lg:min-h-0 lg:flex-col"
                          boxClass="h-[calc(var(--app-h)*0.6)] lg:h-auto lg:min-h-0 lg:flex-1" />
             <div className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
-              <Proposal a={a} run={run} onGrade={() => act.run(async () => { await api.post("/api/answers/grade", { answer_ids: [a.id] }); await ans.reload(); })} busy={act.busy} />
-              <ErrorText>{act.error}</ErrorText>
               {a.rubric && <ApprovalForm key={`${a.id}-${run?.id ?? "none"}-${a.approval?.approved_at ?? ""}`} a={a} run={run}
                                          onDone={(next) => { ans.setData(next); list.reload(); }} />}
               {!a.rubric && <p className="text-sm text-muted-foreground">{t("Accept the problem's grader before grading this answer.")}</p>}
+              <Proposal a={a} run={run} onGrade={() => act.run(async () => { await api.post("/api/answers/grade", { answer_ids: [a.id] }); await ans.reload(); })} busy={act.busy} />
+              <ErrorText>{act.error}</ErrorText>
             </div>
           </div>
         </>
@@ -107,25 +107,41 @@ export default function Review({ id }: { id: string }) {
   );
 }
 
-function Stage({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+/** One AI stage (I5); the first two fold away so the scores are what the teacher sees first. */
+function Stage({ n, title, fold, children }: { n: number; title: string; fold?: boolean; children: React.ReactNode }) {
+  const head = <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{n} · {title}</span>;
+  if (!fold) return <section className="space-y-2"><h3>{head}</h3>{children}</section>;
   return (
-    <section className="space-y-1">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{n} · {title}</h3>
+    <details className="group space-y-2">
+      <summary className="flex cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="size-3.5 text-muted-foreground transition-transform group-open:rotate-90" />{head}
+      </summary>
       {children}
-    </section>
+    </details>
   );
 }
 
-const CONF: Record<CriterionScore["confidence"], string> = { high: "border-success", medium: "border-warning", low: "border-destructive" };
+const CONF: Record<CriterionScore["confidence"], string> = {
+  high: "border-success/60 text-success", medium: "border-warning bg-warning/15", low: "border-destructive bg-destructive/10 text-destructive",
+};
 
 function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; onGrade: () => void; busy: boolean }) {
   const h = run?.harness;
   const canGrade = a.state !== "running" && a.state !== "approved" && a.selected;
+  const proposed = run?.status === "proposed" && h;
+  const check = proposed ? h.criteria.filter((c) => c.confidence !== "high").map((c) => c.criterion_id) : [];
   return (
     <Card>
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-        <CardTitle>{t("AI proposal")} <span className="text-sm font-normal text-muted-foreground">{t("(a draft until you approve)")}</span></CardTitle>
-        {canGrade && <Button size="sm" variant={run ? "outline" : "default"} disabled={busy} onClick={onGrade}>{run ? t("Grade again") : t("Grade with AI")}</Button>}
+      <CardHeader className="gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <CardTitle>{t("AI proposal")}</CardTitle>
+          {proposed && <span className="ml-auto text-lg font-semibold tabular-nums">{pts(run.total)} / {pts(run.max_points)}</span>}
+          {canGrade && <Button size="sm" variant={run ? "outline" : "default"} className={proposed ? "" : "ml-auto"} disabled={busy} onClick={onGrade}>{run ? t("Grade again") : t("Grade with AI")}</Button>}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {t("(a draft until you approve)")}
+          {check.length > 0 && <> · <span className="font-medium text-foreground">{t("Check first: {ids}", { ids: check.join(", ") })}</span></>}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {!run && <p className="text-sm text-muted-foreground">{t("Not graded yet.")}</p>}
@@ -141,35 +157,37 @@ function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; on
             {h?.review_reasons.length ? <ul className="mt-1 list-disc pl-5">{h.review_reasons.map((r, i) => <li key={i}>{r}</li>)}</ul> : null}
           </div>
         )}
+        {proposed && (
+          <Stage n={3} title={t("Proposed scores")}>
+            <ul className="space-y-2">
+              {h.criteria.map((c) => {
+                const rc = a.rubric?.criteria.find((x) => x.id === c.criterion_id);
+                return (
+                  <li key={c.criterion_id} className="space-y-2 rounded-lg border p-3 text-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="min-w-0 flex-1 font-medium">{c.criterion_id} · {rc?.description}</span>
+                      <span className="shrink-0 font-semibold tabular-nums">{pts(c.points)} / {pts(rc?.max_points)}</span>
+                    </div>
+                    <blockquote className="border-l-2 pl-2 text-muted-foreground">
+                      <span className="text-xs">{t("Evidence ({source}):", { source: c.source })}</span> <q className="italic">{c.evidence}</q>
+                    </blockquote>
+                    <p><span className="text-muted-foreground">{t("Why:")}</span> {c.reasoning}</p>
+                    <Badge variant="outline" className={CONF[c.confidence]}>{t("confidence: {level}", { level: t(c.confidence) })}</Badge>
+                  </li>
+                );
+              })}
+            </ul>
+            {h.feedback && <p className="text-sm"><span className="text-muted-foreground">{t("Suggested feedback:")}</span> {h.feedback}</p>}
+          </Stage>
+        )}
         {h && (
-          <>
-            <Stage n={1} title={t("Transcription")}><p className="whitespace-pre-wrap rounded bg-muted p-2 font-mono text-sm">{h.transcription || "—"}</p></Stage>
-            <Stage n={2} title={t("Physics interpretation")}>
+          <div className="space-y-2 border-t pt-3">
+            <Stage n={1} title={t("Transcription")} fold><p className="whitespace-pre-wrap rounded bg-muted p-2 font-mono text-sm">{h.transcription || "—"}</p></Stage>
+            <Stage n={2} title={t("Physics interpretation")} fold>
               <p className="text-sm">{h.interpretation || "—"}</p>
               {h.diagram_observations && <p className="text-sm text-muted-foreground">{t("Diagram:")} {h.diagram_observations}</p>}
             </Stage>
-            {run.status === "proposed" && (
-              <Stage n={3} title={t("Proposed scores · {total} / {max}", { total: pts(run.total), max: pts(run.max_points) })}>
-                <ul className="space-y-2">
-                  {h.criteria.map((c) => {
-                    const rc = a.rubric?.criteria.find((x) => x.id === c.criterion_id);
-                    return (
-                      <li key={c.criterion_id} className={`space-y-0.5 rounded-md border-l-4 bg-muted/50 p-2 text-sm ${CONF[c.confidence]}`}>
-                        <div className="flex justify-between gap-2 font-medium">
-                          <span>{c.criterion_id} · {rc?.description}</span>
-                          <span className="tabular-nums">{pts(c.points)} / {pts(rc?.max_points)}</span>
-                        </div>
-                        <div><span className="text-muted-foreground">{t("Evidence ({source}):", { source: c.source })}</span> {c.evidence}</div>
-                        <div><span className="text-muted-foreground">{t("Why:")}</span> {c.reasoning}</div>
-                        <Badge variant="outline" className="mt-1">{t("confidence: {level}", { level: t(c.confidence) })}</Badge>
-                      </li>
-                    );
-                  })}
-                </ul>
-                {h.feedback && <p className="text-sm"><span className="text-muted-foreground">{t("Suggested feedback:")}</span> {h.feedback}</p>}
-              </Stage>
-            )}
-          </>
+          </div>
         )}
       </CardContent>
     </Card>

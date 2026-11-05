@@ -175,7 +175,6 @@
  "Problem screens": "Pantallas del problema",
  "Problems": "Problemas",
  "Problems: {n}": "Problemas: {n}",
- "Proposed scores · {total} / {max}": "Puntuación propuesta · {total} / {max}",
  "Raw camera capture": "Captura original de la cámara",
  "Reactivate": "Reactivar",
  "Ready": "Listo",
@@ -412,5 +411,7 @@
  "No groups yet": "Aún no hay grupos",
  "No group matches “{q}”.": "Ningún grupo coincide con «{q}».",
  "Remove group {name}": "Quitar el grupo {name}",
- "Reset view": "Restablecer vista"
+ "Reset view": "Restablecer vista",
+ "Check first: {ids}": "Revisa primero: {ids}",
+ "Proposed scores": "Puntuación propuesta"
 }
