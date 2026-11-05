@@ -44,7 +44,20 @@ its test (D3). Ticks match commits.
 - *Phone camera needs HTTPS.* Default for now: localhost works on the computer. For phones,
   `PUBLIC_BASE_URL` sets the address in the QR code, and HTTPS stays an open task (ADR-0001).
 - *GL-04 (ignore instructions written on answers).* Not implemented: it needs owner approval.
+- *Price file missing.* Default: the server refuses to start without a price for `gpt-6.1-sol`, so an
+  unknown cost is never shown as $0 (PL-32). Found in the browser walk on 5 November 2026.
+- *No live camera (plain HTTP, or permission refused).* Default: *Scan* falls back to the phone's own
+  camera app (`capture="environment"`) and still detects and straightens the page.
+- *Student page after a refusal.* Open: the pages picked before a PL-35 refusal stay on the page and
+  are sent with the next submission from that browser. Default for now: unchanged, since the student
+  sees every page before sending (PL-29). Candidate for the first simulated-user wave.
 
 ## Resume point
 
-Updated 5 November 2026: T01–T10 done (server, 52 tests on PostgreSQL). Next: T11 web app in `web/`. Check: `docker compose up -d db && uv run python -m pytest`.
+Updated 5 November 2026: T01–T15 done. 54 tests pass (grader + server on PostgreSQL); `npm run build`
+passes; `docker compose up --build` serves the app on :8080. Browser walk with the fake model at
+375 px and 1280 px, light and dark: sign-up, problem setup, improve/discard, accept, answers, grading,
+review, approval with AI verdict, exam + group, link with QR, student upload, PL-35 refusal, scanner
+corners (synthetic photo; the pane has no camera). Not done: a real phone camera on HTTPS, a real-model
+run (needs the owner's key; at most 5 answers), and the D9 simulated-user wave. Next: run wave 1 with
+`tools/wave/` against http://localhost:8080.

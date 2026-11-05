@@ -2,7 +2,7 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
 from . import config, db
@@ -34,6 +34,8 @@ def create_app(cfg: config.Settings | None = None) -> FastAPI:
 
         @app.get("/{path:path}", include_in_schema=False)
         def spa(path: str):
+            if path.startswith("api/"):
+                raise HTTPException(404, "not found")
             target = (dist / path).resolve()
             if path and target.is_file() and dist in target.parents:
                 return FileResponse(target)

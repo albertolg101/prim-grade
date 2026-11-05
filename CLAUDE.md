@@ -16,4 +16,6 @@ uv run ruff check .              # lint
 - `grader/llm.py` is the only module that calls OpenAI; tests pass a fake with the same signature.
 - `grader/setup.py` holds the exercise-setup prompt and the generated grader instructions.
 - `grader/grading.py` contains validation and the parallel batch; callers pass page paths and store runs.
+- `server/` is the platform API (FastAPI, PostgreSQL); `web/` is the React app (`npm run build`).
+- `PRIMGRADE_LLM=fake` runs the platform on a deterministic fake model (no key, no tokens).
 - `input/` and `data/` hold real exam images and the teacher-test data, and are git-ignored. Never commit them.
