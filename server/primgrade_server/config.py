@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from grader.llm import PRICES_PATH, load_prices
+
 MODEL = "gpt-6.1-sol"  # PL-34, GL-03: every AI call; checked on the OpenAI pricing page 2026-11-05
 
 
@@ -26,6 +28,8 @@ def load() -> Settings:
     llm = os.environ.get("PRIMGRADE_LLM", "openai")
     if llm not in ("openai", "fake"):
         raise RuntimeError(f"PRIMGRADE_LLM must be 'openai' or 'fake', not {llm!r}")
+    if not load_prices().get(MODEL):  # PL-32: never show unknown costs as $0
+        raise RuntimeError(f"no price for {MODEL} in {PRICES_PATH.resolve()}; set PRIMGRADE_PRICES")
     dist = os.environ.get("PRIMGRADE_WEB_DIST")
     return Settings(
         database_url=os.environ.get(
