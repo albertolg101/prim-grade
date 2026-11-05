@@ -61,8 +61,11 @@ uv run --with pyyaml --with anthropic --with playwright python tools/wave/simula
 
 Preserve this vertical slice:
 
-1. Upload a prepared exam-page image.
-2. Enter the student name and map the page to a question.
+1. A student uploads photos of their own answer to an exercise; the teacher
+   can also upload on a student's behalf. The submission is tied to the
+   uploader's identity and the chosen exercise, never to a name typed by hand.
+2. Keep every upload as an original and show who uploaded it, when, and for
+   which exercise, so a disputed or late submission can be traced.
 3. Transcribe the answer.
 4. Interpret the physics.
 5. Propose criterion-level rubric scores with visible evidence.

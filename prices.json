@@ -1,23 +1,23 @@
 {
-  "_note": "USD per 1M tokens. Fill from https://openai.com/api/pricing ; null means cost is shown as unknown.",
+  "_note": "USD per 1M tokens, Standard tier, short context (<=272K input). Source: https://developers.openai.com/api/docs/pricing (kind: reported, as of 2026-11-05). null means cost is shown as unknown.",
   "gpt-6-luna": {
-    "input_per_1m": null,
-    "cached_input_per_1m": null,
-    "output_per_1m": null
+    "input_per_1m": 0.10,
+    "cached_input_per_1m": 0.01,
+    "output_per_1m": 0.50
   },
   "gpt-6.1-terra": {
-    "input_per_1m": null,
-    "cached_input_per_1m": null,
-    "output_per_1m": null
+    "input_per_1m": 1.00,
+    "cached_input_per_1m": 0.05,
+    "output_per_1m": 5.00
   },
   "gpt-6.1-sol": {
-    "input_per_1m": null,
-    "cached_input_per_1m": null,
-    "output_per_1m": null
+    "input_per_1m": 2.00,
+    "cached_input_per_1m": 0.10,
+    "output_per_1m": 10.00
   },
   "gpt-6-astra": {
-    "input_per_1m": null,
-    "cached_input_per_1m": null,
-    "output_per_1m": null
+    "input_per_1m": 10.00,
+    "cached_input_per_1m": 1.00,
+    "output_per_1m": 50.00
   }
 }
