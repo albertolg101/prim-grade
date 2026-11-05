@@ -1,5 +1,6 @@
-/** PL-39: page zoom with CSS `zoom` on <html> (a page cannot set the browser's own zoom).
- * --zoom lets heights use the real screen: calc((100dvh - footer) / var(--zoom)). Per browser. */
+/** PL-39: page zoom. A page cannot set the browser's own zoom, so the app scales the root font
+ * size: every size in the UI is in rem, so the whole UI grows, while pixel positions stay real
+ * (CSS `zoom` broke dropdown placement, which uses on-screen pixels). Kept per browser. */
 export const ZOOMS = [0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
 const KEY = "primgrade.zoom";
 
@@ -14,9 +15,7 @@ function saved(): number {
 let zoom = saved();
 
 function paint() {
-  const root = document.documentElement;
-  root.style.zoom = String(zoom);
-  root.style.setProperty("--zoom", String(zoom));
+  document.documentElement.style.fontSize = `${zoom * 100}%`;
 }
 
 export const getZoom = () => zoom;

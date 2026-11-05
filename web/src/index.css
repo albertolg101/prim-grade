@@ -87,12 +87,10 @@
   }
 }
 
-/* PL-39: CSS zoom on <html> also scales viewport units, so full-height layout divides by it */
+/* PL-39: the zoom footer keeps a fixed pixel height at every zoom; layout leaves room for it */
 :root {
-  --zoom: 1;
   --footer-h: 28px;
-  --app-h: calc((100dvh - var(--footer-h)) / var(--zoom));
-  --screen-h: calc(100dvh / var(--zoom));  /* the sidebar runs beside the footer */
-  /* room under content for the footer; on the content column, never the whole page (no extra scroll) */
-  --footer-pad: calc(var(--footer-h) / var(--zoom));
+  --app-h: calc(100dvh - var(--footer-h));
+  --screen-h: 100dvh;  /* the sidebar runs beside the footer */
+  --footer-pad: var(--footer-h);  /* room under content, on the content column only (no extra scroll) */
 }

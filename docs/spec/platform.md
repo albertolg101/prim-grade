@@ -82,7 +82,9 @@ Each requirement has a stable id; tests and tasks cite it.
   current page is shown.
 - **PL-39 Zoom** (owner request, 5 November 2026). A thin footer on every page has −, the current
   level (press to return to 100 %) and +, from 75 % to 200 %. A web page cannot change the browser's
-  own zoom, so the app zooms itself with CSS `zoom`; dialogs and menus zoom with it. The footer keeps
+  own zoom, so the app scales its root font size (every size is in rem); dialogs and menus zoom
+  with it and open in the right place. CSS `zoom` was tried first and dropped: dropdowns opened
+  off-screen because they are placed in on-screen pixels. The footer keeps
   its size at every level and sits beside the sidebar on a computer (full width on a phone, where
   the sidebar is a drawer). The level is kept per browser, since it depends on the screen.
 - **PL-10 Colours.** Dark mode uses yellow as the primary colour; light mode uses blue.
