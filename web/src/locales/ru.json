@@ -368,5 +368,14 @@
  "Drop your images here": "Перетащите сюда изображения",
  "Add tag": "Добавить метку",
  "Tag name": "Название метки",
- "Remove tag {tag}": "Убрать метку {tag}"
+ "Remove tag {tag}": "Убрать метку {tag}",
+ "Search problems": "Поиск задач",
+ "Search by name or tag": "Поиск по названию или метке",
+ "Filters": "Фильтры",
+ "{n} of {total} problems": "{n} из {total} задач",
+ "No problem matches the search and filters.": "Ни одна задача не подходит под поиск и фильтры.",
+ "Clear": "Сбросить",
+ "Status": "Статус",
+ "Tags (all selected)": "Метки (все отмеченные)",
+ "No tags yet. Add them with the plus on a problem.": "Меток пока нет. Добавьте их плюсом на странице задачи."
 }

@@ -127,6 +127,12 @@ Each requirement has a stable id; tests and tasks cite it.
   (Enter adds it; picking a suggestion adds it at once). Tags show as chips with a remove button.
   A tag is 1–40 characters, a problem has at most 20, and "Mechanics" and "mechanics" are one tag
   (the first spelling is kept). Tags are private to the teacher. Tags do not affect grading.
+- **PL-42 Search and filter problems** (owner request, 5 November 2026). The Problems page has a
+  search bar above the list and a filter sidebar on its right. The search matches every typed word
+  against the problem's name or tags, ignoring case. The filters are status (draft, ready; any
+  checked) and tags (a problem must carry every checked tag), each with its count, and Clear. On a
+  phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
+  problems" shows how many match. Search and filters run on the loaded list and are not saved.
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an
   optional rubric), the teacher asks the AI to prepare the problem: its reading of the statement and
   solution, final answers, assumptions, expected forces when a diagram is needed, a rubric with

@@ -368,5 +368,14 @@
  "Drop your images here": "Suelta tus imágenes aquí",
  "Add tag": "Añadir etiqueta",
  "Tag name": "Nombre de la etiqueta",
- "Remove tag {tag}": "Quitar la etiqueta {tag}"
+ "Remove tag {tag}": "Quitar la etiqueta {tag}",
+ "Search problems": "Buscar problemas",
+ "Search by name or tag": "Buscar por nombre o etiqueta",
+ "Filters": "Filtros",
+ "{n} of {total} problems": "{n} de {total} problemas",
+ "No problem matches the search and filters.": "Ningún problema coincide con la búsqueda y los filtros.",
+ "Clear": "Borrar",
+ "Status": "Estado",
+ "Tags (all selected)": "Etiquetas (todas las marcadas)",
+ "No tags yet. Add them with the plus on a problem.": "Aún no hay etiquetas. Añádelas con el signo más en un problema."
 }
