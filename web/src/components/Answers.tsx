@@ -37,8 +37,8 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
           <h3 className="text-sm font-semibold">{t("Add an answer")}</h3>
           <Capture pages={pages} onChange={setPages} label={t("answer pages")} />
           <div className="flex flex-wrap gap-2">
-            <Input className="w-full sm:w-48" placeholder={t("Student name (optional)")} value={name} onChange={(e) => setName(e.target.value)} aria-label={t("Student name")} />
-            <Input className="w-full sm:w-40" placeholder={t("Label (optional)")} value={label} onChange={(e) => setLabel(e.target.value)} aria-label={t("Label")} />
+            <Input className="w-full sm:w-72" placeholder={t("Student name (optional)")} value={name} onChange={(e) => setName(e.target.value)} aria-label={t("Student name")} />
+            <Input className="w-full sm:w-52" placeholder={t("Label (optional)")} value={label} onChange={(e) => setLabel(e.target.value)} aria-label={t("Label")} />
             <Button disabled={!pages.length || act.busy} onClick={add}>{pages.length === 1 ? t("Add answer (1 page)") : t("Add answer ({n} pages)", { n: pages.length })}</Button>
           </div>
           <ErrorText>{act.error}</ErrorText>
