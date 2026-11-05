@@ -211,10 +211,11 @@ Each requirement has a stable id; tests and tasks cite it.
   the zoom returns to 100% by any path, the paper is centred again (owner request, 6 November 2026).
   In the right column the teacher's grade comes first, with its live total as the headline, and
   the AI proposal below it, quieter. The proposal card shows its total and the criteria not marked
-  high confidence ("Check first") in its header. Each proposed score shows its criterion, confidence
-  and points, and opens to its evidence (with its source) and reasoning; the suggested feedback, the
-  transcription and the physics interpretation stay folded under the scores, the last two as
-  numbered stages (I3, I5). On this screen the page and zoom buttons sit under the paper, beside
+  high confidence ("Check first") in its header, then one square per criterion with its id, points
+  and confidence. The stages fold below: 1 transcription, 2 physics interpretation, 3 proposed
+  scores (each criterion with its evidence and source, reasoning and confidence, all shown once
+  open) and the suggested feedback (I3, I5). In the teacher's grade the points per criterion are
+  large and bold. On this screen the page and zoom buttons sit under the paper, beside
   its caption (owner requests, 6 November 2026).
 - **PL-23 Final grade.** The teacher sets the final points per criterion and the feedback, starting
   from the proposal, and approves. Approval is the only way a grade becomes final (I1). The AI's

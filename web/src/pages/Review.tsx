@@ -161,40 +161,49 @@ function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; on
           </div>
         )}
         {proposed && (
-          <Stage n={3} title={t("Proposed scores")}>
-            <ul className="space-y-2">
-              {h.criteria.map((c) => {
-                const rc = a.rubric?.criteria.find((x) => x.id === c.criterion_id);
-                return (
-                  <li key={c.criterion_id} className="rounded-lg border bg-card text-sm">
-                    <details className="group">
-                      <summary className="flex cursor-pointer list-none items-center gap-2 p-2.5 [&::-webkit-details-marker]:hidden">
-                        <ChevronRight className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
-                        <span className="min-w-0 flex-1">{c.criterion_id} · {rc?.description}</span>
-                        <Badge variant="outline" className={CONF[c.confidence]}>{t("confidence: {level}", { level: t(c.confidence) })}</Badge>
-                        <span className="w-12 shrink-0 text-right font-semibold tabular-nums">{pts(c.points)} / {pts(rc?.max_points)}</span>
-                      </summary>
-                      <div className="space-y-2 px-3 pb-3 pl-8">
-                        <blockquote className="border-l-2 pl-2 text-muted-foreground">
-                          <span className="text-xs">{t("Evidence ({source}):", { source: c.source })}</span> <q className="italic">{c.evidence}</q>
-                        </blockquote>
-                        <p><span className="text-muted-foreground">{t("Why:")}</span> {c.reasoning}</p>
-                      </div>
-                    </details>
-                  </li>
-                );
-              })}
-            </ul>
-          </Stage>
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
+            {h.criteria.map((c) => {
+              const rc = a.rubric?.criteria.find((x) => x.id === c.criterion_id);
+              return (
+                <li key={c.criterion_id} title={rc?.description} className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 p-2 ${CONF[c.confidence]}`}>
+                  <span className="text-sm font-semibold text-foreground">{c.criterion_id}</span>
+                  <span className="text-2xl font-bold tabular-nums text-foreground">{pts(c.points)}<span className="text-sm font-medium text-muted-foreground">/{pts(rc?.max_points)}</span></span>
+                  <span className="text-center text-xs leading-tight">{t("confidence: {level}", { level: t(c.confidence) })}</span>
+                </li>
+              );
+            })}
+          </ul>
         )}
         {h && (
           <div className="space-y-2 border-t pt-3">
-            {proposed && h.feedback && <Stage title={t("Suggested feedback")} fold><p className="text-sm">{h.feedback}</p></Stage>}
             <Stage n={1} title={t("Transcription")} fold><p className="whitespace-pre-wrap rounded bg-muted p-2 font-mono text-sm">{h.transcription || "—"}</p></Stage>
             <Stage n={2} title={t("Physics interpretation")} fold>
               <p className="text-sm">{h.interpretation || "—"}</p>
               {h.diagram_observations && <p className="text-sm text-muted-foreground">{t("Diagram:")} {h.diagram_observations}</p>}
             </Stage>
+            {proposed && (
+              <Stage n={3} title={t("Proposed scores")} fold>
+                <ul className="space-y-2">
+                  {h.criteria.map((c) => {
+                    const rc = a.rubric?.criteria.find((x) => x.id === c.criterion_id);
+                    return (
+                      <li key={c.criterion_id} className="space-y-2 rounded-lg border bg-card p-3 text-sm">
+                        <div className="flex items-start gap-2">
+                          <span className="min-w-0 flex-1 font-medium">{c.criterion_id} · {rc?.description}</span>
+                          <Badge variant="outline" className={CONF[c.confidence]}>{t("confidence: {level}", { level: t(c.confidence) })}</Badge>
+                          <span className="shrink-0 font-semibold tabular-nums">{pts(c.points)} / {pts(rc?.max_points)}</span>
+                        </div>
+                        <blockquote className="border-l-2 pl-2 text-muted-foreground">
+                          <span className="text-xs">{t("Evidence ({source}):", { source: c.source })}</span> <q className="italic">{c.evidence}</q>
+                        </blockquote>
+                        <p><span className="text-muted-foreground">{t("Why:")}</span> {c.reasoning}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Stage>
+            )}
+            {proposed && h.feedback && <Stage title={t("Suggested feedback")} fold><p className="text-sm">{h.feedback}</p></Stage>}
           </div>
         )}
       </CardContent>
@@ -239,14 +248,14 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
         {a.approval && <p className="text-sm text-muted-foreground">{t("Approved {when}. You can change it and approve again.", { when: when(a.approval.approved_at) })}</p>}
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
+        <div className="divide-y">
           {rubric.criteria.map((c) => (
-            <label key={c.id} className="flex items-center gap-2 text-sm">
-              <span className="min-w-0 flex-1">{c.id} · {c.description}</span>
+            <label key={c.id} className="flex items-center gap-2 py-2 text-sm">
+              <span className="min-w-0 flex-1"><span className="font-semibold">{c.id}</span> · {c.description}</span>
               {proposed[c.id] !== undefined && Number(scores[c.id]) !== proposed[c.id] && <Badge variant="outline">{t("AI: {points}", { points: pts(proposed[c.id]) })}</Badge>}
-              <Input type="number" inputMode="decimal" step={0.5} min={0} max={c.max_points} className="w-20 text-right" aria-label={t("{criterion} points", { criterion: c.id })}
+              <Input type="number" inputMode="decimal" step={0.5} min={0} max={c.max_points} className="h-11 w-20 text-right text-xl font-bold tabular-nums md:text-xl" aria-label={t("{criterion} points", { criterion: c.id })}
                      value={scores[c.id]} onChange={(e) => setScores({ ...scores, [c.id]: e.target.value })} />
-              <span className="w-10 text-muted-foreground">/ {pts(c.max_points)}</span>
+              <span className="w-10 text-base font-medium text-muted-foreground">/ {pts(c.max_points)}</span>
             </label>
           ))}
         </div>
