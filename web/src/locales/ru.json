@@ -364,5 +364,6 @@
  "{label} (one per line)": "{label} (по одному в строке)",
  "{n} of {total}": "{n} из {total}",
  "{n} tokens": "токенов: {n}",
- "Click to type or drag your images here": "Нажмите, чтобы ввести текст, или перетащите сюда изображения"
+ "Click to type or drag your images here": "Нажмите, чтобы ввести текст, или перетащите сюда изображения",
+ "Drop your images here": "Перетащите сюда изображения"
 }

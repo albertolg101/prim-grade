@@ -9,9 +9,10 @@ const ScannerDialog = lazy(() => import("./Scanner"));
 const OK = ["image/jpeg", "image/png", "image/webp"];
 
 /** PL-12: browse, drag and drop, or scan. The pages are shown, in order, before anything is sent.
- * With children, they are the drop area (e.g. a text field) and the buttons sit below on the left. */
-export default function Capture({ pages, onChange, disabled, children }: {
-  pages: Page[]; onChange: (p: Page[]) => void; disabled?: boolean; label?: string; children?: React.ReactNode;
+ * With children, the whole block (children, buttons below on the left, then `after`) is the drop area. */
+export default function Capture({ pages, onChange, disabled, children, after }: {
+  pages: Page[]; onChange: (p: Page[]) => void; disabled?: boolean; label?: string;
+  children?: React.ReactNode; after?: React.ReactNode;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -37,7 +38,8 @@ export default function Capture({ pages, onChange, disabled, children }: {
   const files = (e: React.DragEvent) => e.dataTransfer.types.includes("Files");
   const drop = {
     onDragOver: (e: React.DragEvent) => { if (files(e)) { e.preventDefault(); setOver(true); } },
-    onDragLeave: () => setOver(false),
+    // moving onto a child also fires dragleave; only leaving the zone itself counts
+    onDragLeave: (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(false); },
     onDrop: (e: React.DragEvent) => { if (!files(e)) return; e.preventDefault(); setOver(false); if (!disabled) add(e.dataTransfer.files); },
   };
   const buttons = (
@@ -56,10 +58,16 @@ export default function Capture({ pages, onChange, disabled, children }: {
   return (
     <div className="space-y-2">
       {children ? (
-        <>
-          <div {...drop} className={cn("rounded-md transition-shadow", over && "ring-2 ring-primary")}>{children}</div>
+        <div {...drop} className="relative space-y-2">
+          {children}
           {buttons}
-        </>
+          {after}
+          {over && (
+            <div className="pointer-events-none absolute -inset-2 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-background/60 backdrop-blur-sm">
+              <p className="text-sm font-medium text-primary">{t("Drop your images here")}</p>
+            </div>
+          )}
+        </div>
       ) : (
         <div {...drop}
              className={cn("flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-4 text-center transition-colors",

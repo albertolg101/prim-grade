@@ -121,10 +121,11 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
     <div className="cols pt-2">
       <p className="col-full text-sm text-muted-foreground">{t("Type them, add images, or both. The AI reads all of it.")}</p>
       {(["statement", "solution"] as const).map((role) => (
-        <div key={role} className="space-y-2">
-          <Label htmlFor={role}>{role === "statement" ? t("Statement") : t("Reference solution")}</Label>
-          {/* the text field is the drop area (PL-12); dropped images upload at once */}
-          <Capture pages={[]} onChange={(v) => upload(role, v)} disabled={act.busy}>
+        // the whole block is the drop area (PL-12); dropped images upload at once
+        <Capture key={role} pages={[]} onChange={(v) => upload(role, v)} disabled={act.busy}
+                 after={<Thumbs files={p.files.filter((x) => x.role === role)} busy={act.busy}
+                                onRemove={(x) => act.run(async () => onSaved(await api.del<Problem>(`/api/problems/${p.id}/files/${x.link_id}`)))} />}>
+            <Label htmlFor={role}>{role === "statement" ? t("Statement") : t("Reference solution")}</Label>
             <div className="relative">
               <Textarea id={role} rows={6} value={f[`${role}_text`]} onChange={(e) => setF({ ...f, [`${role}_text`]: e.target.value })} />
               {!f[`${role}_text`] && (
@@ -133,10 +134,7 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
                 </p>
               )}
             </div>
-          </Capture>
-          <Thumbs files={p.files.filter((x) => x.role === role)} busy={act.busy}
-                  onRemove={(x) => act.run(async () => onSaved(await api.del<Problem>(`/api/problems/${p.id}/files/${x.link_id}`)))} />
-        </div>
+        </Capture>
       ))}
       <div className="col-full space-y-1.5">
         <Label htmlFor="rubric">{t("Your rubric (optional)")}</Label>
