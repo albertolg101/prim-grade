@@ -55,7 +55,7 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
         // only once something is typed, so the tags are never all listed at once (PL-42);
         // as wide as the field, so it never runs past the panel it sits in
         <ul id={`${id}-list`} role="listbox" aria-label={label}
-            className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+            className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 scrollbar-thin overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
           {items.length === 0 && <li className="px-2 py-1.5 text-xs text-muted-foreground">{t("No tag matches “{q}”.", { q: text.trim() })}</li>}
           {items.map((it, i) => (
             <li key={`${it.create}-${it.value}`} id={`${id}-${i}`} role="option" aria-selected={i === active}

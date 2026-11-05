@@ -98,6 +98,16 @@
   .cols > .col-full { grid-column: 1 / -1; }
 }
 
+/* a thin scrollbar in the theme's colours (light and dark), for menus and panels that scroll */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  &:hover { scrollbar-color: color-mix(in oklab, var(--muted-foreground) 50%, transparent) transparent; }
+  &::-webkit-scrollbar { width: 8px; height: 8px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; border: 2px solid var(--popover); }
+}
+
 /* PL-39: the zoom footer keeps a fixed pixel height at every zoom; layout leaves room for it */
 :root {
   --footer-h: 28px;
