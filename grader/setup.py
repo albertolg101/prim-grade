@@ -1,6 +1,6 @@
 """Exercise setup skill (GR-01–04) and the generated grader instructions (GR-05)."""
 
-from .schemas import Exercise, Language, Rubric
+from .schemas import Exercise, Language, Rubric, SetupProposal
 
 LANGUAGES: dict[str, str] = {"en": "English", "es": "Spanish", "ru": "Russian"}
 
@@ -63,6 +63,49 @@ def setup_text(
             f"Attached images: the first {n_stmt} show the statement, "
             f"the next {n_sol} show the reference solution."
         )
+    parts.append(language_rule(language))
+    return "\n\n".join(parts)
+
+
+REVISE_INSTRUCTIONS = """\
+You revise a prepared university physics exercise for teacher-reviewed grading, following ONE
+instruction from the teacher. You receive the exercise sources and the current proposal as JSON.
+
+- Apply the teacher's instruction. Change only what it requires, plus whatever must change to stay
+  consistent (for example, the rubric total or the grading plan). Keep criterion ids that still
+  exist; give new criteria new ids.
+- Keep every rule of exercise preparation: never invent missing data, never silently repair the
+  reference solution, keep the carried-error policy, tolerances and valid alternative methods.
+- If the instruction conflicts with the sources or is unclear, apply what you safely can and
+  explain the conflict in `issues`. Otherwise `issues` keeps only the earlier issues that still
+  apply.
+- Return the complete revised proposal in the same structure.
+"""
+
+
+def revise_text(
+    title: str,
+    statement: str,
+    solution: str,
+    current: SetupProposal,
+    instruction: str,
+    n_stmt: int,
+    n_sol: int,
+    language: Language,
+) -> str:
+    """GL-02: the user message for one revision of a setup proposal."""
+    if not instruction.strip():
+        raise ValueError("the instruction is empty")
+    parts = [f"Exercise title: {title}"]
+    parts.append(f"Statement (text):\n{statement or '(none - see images)'}")
+    parts.append(f"Reference solution (text):\n{solution or '(none - see images)'}")
+    if n_stmt or n_sol:
+        parts.append(
+            f"Attached images: the first {n_stmt} show the statement, "
+            f"the next {n_sol} show the reference solution."
+        )
+    parts.append(f"Current proposal (JSON):\n{current.model_dump_json(indent=1)}")
+    parts.append(f"Teacher instruction:\n{instruction.strip()}")
     parts.append(language_rule(language))
     return "\n\n".join(parts)
 
