@@ -151,7 +151,7 @@ Each requirement has a stable id; tests and tasks cite it.
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
   problems" shows how many match. Search and filters run on the loaded list and are not saved.
 - **PL-44 Archive a problem** (owner request, 5 November 2026). An archive button on each row of
-  the Problems list and in the problem's header archives it; on an archived problem the same
+  the Problems list and below the problem's title archives it; on an archived problem the same
   button unarchives it, and the problem shows an "Archived" badge. Archiving only hides the problem
   from the default list (PL-42) and from "Add an existing problem" on an exam; its status, rubric
   versions, answers, grades and exams are kept, and it can still be opened.

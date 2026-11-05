@@ -49,12 +49,12 @@ export default function ProblemPage({ id }: { id: string }) {
                   onChange={(tags) => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { tags })))} />
             {p.archived && <Badge variant="secondary">{t("Archived")}</Badge>}
             {p.status === "ready" ? <Badge>{t("Ready · rubric v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
-            {/* PL-44: reversible; the problem and its answers are kept */}
-            <Button variant="outline" size="sm" disabled={edit.busy}
-                    onClick={() => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { archived: !p.archived })))}>
-              {p.archived ? <><ArchiveRestore /> {t("Unarchive")}</> : <><Archive /> {t("Archive")}</>}
-            </Button>
           </>}>
+      {/* PL-44: below the title; reversible, the problem and its answers are kept */}
+      <Button variant="outline" size="sm" className="-mt-2" disabled={edit.busy}
+              onClick={() => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { archived: !p.archived })))}>
+        {p.archived ? <><ArchiveRestore /> {t("Unarchive")}</> : <><Archive /> {t("Archive")}</>}
+      </Button>
       <ErrorText>{edit.error}</ErrorText>
       <nav aria-label={t("Problem screens")} className="flex gap-1 border-b">
         {tabs.map(([v, label]) => (
