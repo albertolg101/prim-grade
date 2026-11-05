@@ -105,3 +105,11 @@ def test_ai_output_uses_the_teachers_language(admin, monkeypatch):  # PL-37, AC-
     run = graded(admin, p["id"])["runs"][0]
     assert run["language"] == "es"
     assert len(prompts) == 2 and all("Spanish" in t for t in prompts)  # setup and grading
+
+
+def test_problem_answers_are_listed_newest_first(admin):  # PL-45, AC-P22
+    p = ready_problem(admin)
+    for label in ("A1", "A2", "A3"):
+        upload(admin, p["id"], label=label)
+    rows = admin.get(f"/api/problems/{p['id']}/answers").json()
+    assert [r["label"] for r in rows] == ["A3", "A2", "A1"]

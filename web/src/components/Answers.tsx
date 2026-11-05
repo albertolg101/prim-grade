@@ -4,17 +4,26 @@ import { ErrorText, StateBadge, pts, useAction, useLoad, when } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, pagesForm, type AnswerRow, type Page } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { navigate } from "@/lib/router";
 
-/** PL-20, PL-21 for one problem: add answers, grade the selected ones, open one to review. */
+type Sort = "newest" | "oldest" | "name";
+const SORTS: [Sort, string][] = [["newest", "Newest first"], ["oldest", "Oldest first"], ["name", "Name A–Z"]];
+const nameOf = (r: AnswerRow) => r.student_name || r.label || "";
+
+/** PL-20, PL-21, PL-45 for one problem: add answers, grade the selected ones, open one to review. */
 export default function Answers({ problemId, ready }: { problemId: string; ready: boolean }) {
   const rows = useLoad(() => api.get<AnswerRow[]>(`/api/problems/${problemId}/answers`), [problemId]);
   const [pages, setPages] = useState<Page[]>([]);
   const [label, setLabel] = useState("");
   const [name, setName] = useState("");
+  const [sort, setSort] = useState<Sort>("newest");  // the server lists newest first
   const act = useAction();
+  const shown = [...(rows.data ?? [])];
+  if (sort === "oldest") shown.reverse();
+  if (sort === "name") shown.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   const add = () => act.run(async () => {
     await api.form(`/api/problems/${problemId}/answers`, pagesForm(pages, { label, student_name: name }));
     setPages([]); setLabel(""); setName("");
@@ -36,7 +45,16 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
         </div>
       )}
       <ErrorText>{rows.error}</ErrorText>
-      {rows.data && <AnswerTable rows={rows.data} reload={rows.reload} ctx={`problem:${problemId}`} canGrade={ready} />}
+      {!!rows.data?.length && (
+        <div className="flex items-center gap-2">
+          <span id="answer-sort" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</span>
+          <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
+            <SelectTrigger size="sm" className="w-44" aria-labelledby="answer-sort"><SelectValue /></SelectTrigger>
+            <SelectContent position="popper">{SORTS.map(([id, label]) => <SelectItem key={id} value={id}>{t(label)}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+      )}
+      {rows.data && <AnswerTable rows={shown} reload={rows.reload} ctx={`problem:${problemId}`} canGrade={ready} />}
     </div>
   );
 }

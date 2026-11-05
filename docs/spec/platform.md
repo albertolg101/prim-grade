@@ -150,6 +150,13 @@ Each requirement has a stable id; tests and tasks cite it.
   The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
   problems" shows how many match. Search and filters run on the loaded list and are not saved.
+- **PL-45 Problem screens and what follows acceptance** (owner request, 5 November 2026). A problem
+  has three screens: 1 · Problem information, 2 · AI grader, 3 · Answers. Opened without a chosen
+  screen, a problem that has an AI grader or is being prepared opens on the AI grader; otherwise on
+  Problem information. Answers lists the problem's answers newest first by default (sort: newest,
+  oldest, name A–Z) and is where answers are added once the rubric is accepted. After accepting a
+  rubric version the teacher is asked where to go: the answers (default), the problem list, or stay
+  on the page. The back link from an answer returns to the Answers screen.
 - **PL-44 Archive a problem** (owner request, 5 November 2026). An archive button on each row of
   the Problems list and below the problem's title archives it; on an archived problem the same
   button unarchives it, and the problem shows an "Archived" badge. Archiving only hides the problem
@@ -303,6 +310,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P19 | PL-41 | Tags added to a problem are kept, merged case-insensitively, suggested on the teacher's other problems, and never shown to another teacher; empty or over-long tags are refused (`test_tags_are_kept_per_teacher_and_suggested`). |
 | AC-P20 | PL-43 | Preparing runs as a background job: the problem shows as preparing to every request of its owner and to no one else, a second preparation is refused while one runs, and a provider failure or a restart leaves an error and no proposal (`test_preparing_is_shared_and_runs_once`, `test_provider_failure_while_preparing_stores_no_proposal`). |
 | AC-P21 | PL-44 | Archiving a problem keeps its status and rubric version, it is still listed with `archived`, and unarchiving restores it (`test_archiving_a_problem_is_reversible_and_keeps_it`). |
+| AC-P22 | PL-45 | A problem's answers are listed newest first (`test_problem_answers_are_listed_newest_first`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 

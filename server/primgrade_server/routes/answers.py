@@ -109,7 +109,7 @@ async def upload_answer(
 def list_answers(problem_id: str, db: Db, user: Teacher) -> list[dict]:
     p = owned(db, models.Problem, problem_id, user)
     rows = db.scalars(select(models.Answer).where(models.Answer.problem_id == p.id)
-                      .order_by(models.Answer.created_at)).all()
+                      .order_by(models.Answer.created_at.desc())).all()  # PL-45: newest first
     return [answer_row(db, a) for a in rows]
 
 

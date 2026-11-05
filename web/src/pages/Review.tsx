@@ -24,7 +24,7 @@ const REASONS = [
 function context(ctx: string | null) {
   const [kind, a, b] = (ctx ?? "").split(":");
   if (kind === "exam") return { kind, back: `/exams/${a}?group=${b}`, list: () => api.get<{ answers: AnswerRow[] }>(`/api/exams/${a}/groups/${b}/answers`).then((r) => r.answers) };
-  if (kind === "problem") return { kind, back: `/problems/${a}`, list: () => api.get<AnswerRow[]>(`/api/problems/${a}/answers`) };
+  if (kind === "problem") return { kind, back: `/problems/${a}?view=answers`, list: () => api.get<AnswerRow[]>(`/api/problems/${a}/answers`) };
   return null;
 }
 

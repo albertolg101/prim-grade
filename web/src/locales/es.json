@@ -399,5 +399,14 @@
  "interrupted by a server restart; prepare it again": "interrumpido por un reinicio del servidor; prepáralo de nuevo",
  "Archived": "Archivado",
  "Archive {title}": "Archivar {title}",
- "Unarchive {title}": "Desarchivar {title}"
+ "Unarchive {title}": "Desarchivar {title}",
+ "3 · Answers": "3 · Respuestas",
+ "Accept the rubric on the AI grader screen before adding answers.": "Acepta la rúbrica en la pantalla del corrector de IA antes de añadir respuestas.",
+ "Go to the answers": "Ir a las respuestas",
+ "Go to the problem list": "Ir a la lista de problemas",
+ "Rubric v{n} accepted": "Rúbrica v{n} aceptada",
+ "Stay on this page": "Quedarme en esta página",
+ "The problem is ready for answers. Where do you want to go?": "El problema está listo para recibir respuestas. ¿Adónde quieres ir?",
+ "Newest first": "Más recientes primero",
+ "Oldest first": "Más antiguas primero"
 }

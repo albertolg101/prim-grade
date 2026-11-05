@@ -399,5 +399,14 @@
  "interrupted by a server restart; prepare it again": "прервано перезапуском сервера; подготовьте задачу ещё раз",
  "Archived": "В архиве",
  "Archive {title}": "Архивировать {title}",
- "Unarchive {title}": "Вернуть из архива {title}"
+ "Unarchive {title}": "Вернуть из архива {title}",
+ "3 · Answers": "3 · Ответы",
+ "Accept the rubric on the AI grader screen before adding answers.": "Примите рубрику на экране ИИ-проверки, прежде чем добавлять ответы.",
+ "Go to the answers": "Перейти к ответам",
+ "Go to the problem list": "Перейти к списку задач",
+ "Rubric v{n} accepted": "Рубрика v{n} принята",
+ "Stay on this page": "Остаться на этой странице",
+ "The problem is ready for answers. Where do you want to go?": "Задача готова к приёму ответов. Куда перейти?",
+ "Newest first": "Сначала новые",
+ "Oldest first": "Сначала старые"
 }

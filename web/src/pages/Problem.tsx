@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -20,26 +20,29 @@ import { generate, usePreparing } from "@/lib/preparing";
 import { navigate, query } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
-type View = "info" | "grader";
+type View = "info" | "grader" | "answers";
+const VIEWS: View[] = ["info", "grader", "answers"];
 type ProblemFile = Problem["files"][number];
 
-/** PL-15 to PL-20 on two screens: what the teacher gives, and what the AI generated from it. */
+/** PL-15 to PL-20 on three screens: what the teacher gives, what the AI generated from it, and the answers. */
 export default function ProblemPage({ id }: { id: string }) {
   const preparing = usePreparing().has(id);  // PL-43: the server's state, seen by every tab
   // loads again when a preparation starts or ends, so the proposal or the error shows by itself
   const prob = useLoad(() => api.get<Problem>(`/api/problems/${id}`), [id, preparing]);
   const p = prob.data;
   const from = query("exam");
-  const view: View = query("view") === "grader" ? "grader" : "info";
+  const asked = query("view") as View | null;
   const edit = useAction();  // rename and tags
   const go = (v: View) => {
     const q = new URLSearchParams(from ? { exam: from } : {});
-    if (v === "grader") q.set("view", "grader");
-    navigate(`/problems/${id}${q.size ? `?${q}` : ""}`);
+    q.set("view", v);
+    navigate(`/problems/${id}?${q}`);
   };
   if (!p) return <Page title={t("Problem")}><ErrorText>{prob.error}</ErrorText></Page>;
+  // PL-45: with no screen asked for, a problem with an AI grader (or one being prepared) opens on it
+  const view: View = asked && VIEWS.includes(asked) ? asked : p.proposal || preparing ? "grader" : "info";
   const set = (next: Problem) => prob.setData(next);
-  const tabs: [View, string][] = [["info", t("1 · Problem information")], ["grader", t("2 · AI grader")]];
+  const tabs: [View, string][] = [["info", t("1 · Problem information")], ["grader", t("2 · AI grader")], ["answers", t("3 · Answers")]];
   return (
     <Page title={p.title}
           onRename={(title) => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { title })))}
@@ -67,19 +70,17 @@ export default function ProblemPage({ id }: { id: string }) {
       </nav>
       {/* both stay mounted, so unsaved edits survive switching screens */}
       <div hidden={view !== "info"}><Sources p={p} preparing={preparing} onSaved={set} onGrader={() => go("grader")} /></div>
-      <div hidden={view !== "grader"} className="space-y-8">
-        <Grader p={p} preparing={preparing} onSaved={set} onInfo={() => go("info")} />
-        {(p.status === "ready" || p.answers > 0) && (
-          <section className="space-y-3">
-            <Separator />
-            <div>
-              <h2 className="text-lg font-semibold">{t("Answers")}</h2>
-              <p className="text-sm text-muted-foreground">{t("Add one answer per student (one or more pages). Grading only starts when you ask for it.")}</p>
-            </div>
-            <Answers problemId={p.id} ready={p.status === "ready"} />
-          </section>
-        )}
+      <div hidden={view !== "grader"}>
+        <Grader p={p} preparing={preparing} onSaved={set} onInfo={() => go("info")} onAnswers={() => go("answers")} />
       </div>
+      {/* PL-45: the answers, newest first */}
+      <section hidden={view !== "answers"} className="space-y-3 pt-2">
+        <p className="text-sm text-muted-foreground">
+          {p.status === "ready" ? t("Add one answer per student (one or more pages). Grading only starts when you ask for it.")
+            : t("Accept the rubric on the AI grader screen before adding answers.")}
+        </p>
+        <Answers problemId={p.id} ready={p.status === "ready"} />
+      </section>
     </Page>
   );
 }
@@ -257,7 +258,10 @@ function criterionErrors(c: Criterion, all: Criterion[]): string[] {
 }
 
 /** PL-16 to PL-19: generate, edit every field, improve by instruction, accept a version. */
-function Grader({ p, preparing, onSaved, onInfo }: { p: Problem; preparing: boolean; onSaved: (p: Problem) => void; onInfo: () => void }) {
+function Grader({ p, preparing, onSaved, onInfo, onAnswers }: {
+  p: Problem; preparing: boolean; onSaved: (p: Problem) => void; onInfo: () => void; onAnswers: () => void;
+}) {
+  const [accepted, setAccepted] = useState(false);  // PL-45: ask where to go next
   const [draft, setDraft] = useState<Proposal | null>(p.proposal);
   const [ack, setAck] = useState(false);
   const [instruction, setInstruction] = useState("");
@@ -372,10 +376,23 @@ function Grader({ p, preparing, onSaved, onInfo }: { p: Problem; preparing: bool
           <Button variant="outline" disabled={!dirty || act.busy} onClick={() => act.run(async () => onSaved(await api.put<Problem>(`/api/problems/${p.id}/proposal`, { proposal: d })))}>{t("Save edits")}</Button>
           <Button variant="ghost" disabled={!dirty} onClick={() => setDraft(p.proposal)}>{t("Undo edits")}</Button>
           <Button disabled={dirty || p.status === "ready" || act.busy || (d.issues.length > 0 && !ack)}
-                  onClick={() => act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/accept`, { issues_acknowledged: ack })))}>
-            {p.status === "ready" ? t("Accepted · v{n}", { n: p.rubric_version }) : t("Accept as rubric v{n}", { n: p.rubric_version + 1 })}
+                  onClick={() => act.run(async () => { onSaved(await api.post<Problem>(`/api/problems/${p.id}/accept`, { issues_acknowledged: ack })); setAccepted(true); })}>
+          {p.status === "ready" ? t("Accepted · v{n}", { n: p.rubric_version }) : t("Accept as rubric v{n}", { n: p.rubric_version + 1 })}
           </Button>
         </div>
+        <Dialog open={accepted} onOpenChange={setAccepted}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("Rubric v{n} accepted", { n: p.rubric_version })}</DialogTitle>
+              <DialogDescription>{t("The problem is ready for answers. Where do you want to go?")}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:justify-start">
+              <Button autoFocus onClick={() => { setAccepted(false); onAnswers(); }}>{t("Go to the answers")}</Button>
+              <Button variant="outline" onClick={() => { setAccepted(false); navigate("/problems"); }}>{t("Go to the problem list")}</Button>
+              <Button variant="ghost" onClick={() => setAccepted(false)}>{t("Stay on this page")}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <section className="space-y-2">
