@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, Loader2, Plus, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowDown, ArrowRight, ArrowUp, Loader2, Plus, Trash2, X } from "lucide-react";
 import Answers from "@/components/Answers";
 import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad } from "@/components/common";
@@ -47,7 +47,13 @@ export default function ProblemPage({ id }: { id: string }) {
           actions={<>
             <Tags tags={p.tags} busy={edit.busy}
                   onChange={(tags) => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { tags })))} />
+            {p.archived && <Badge variant="secondary">{t("Archived")}</Badge>}
             {p.status === "ready" ? <Badge>{t("Ready · rubric v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
+            {/* PL-44: reversible; the problem and its answers are kept */}
+            <Button variant="outline" size="sm" disabled={edit.busy}
+                    onClick={() => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { archived: !p.archived })))}>
+              {p.archived ? <><ArchiveRestore /> {t("Unarchive")}</> : <><Archive /> {t("Archive")}</>}
+            </Button>
           </>}>
       <ErrorText>{edit.error}</ErrorText>
       <nav aria-label={t("Problem screens")} className="flex gap-1 border-b">

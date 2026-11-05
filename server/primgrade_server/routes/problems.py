@@ -49,6 +49,7 @@ class ProblemEdit(BaseModel):
     solution_text: str | None = None
     rubric_text: str | None = None
     language: Language | None = None
+    archived: bool | None = None  # PL-44: reversible; answers, runs and exams are kept
 
 
 class ProposalEdit(BaseModel):
@@ -90,7 +91,7 @@ def problem_out(db, p: models.Problem) -> dict:
         "rubric_text": p.rubric_text, "proposal": p.proposal,
         "pending_proposal": p.pending_proposal, "pending_instruction": p.pending_instruction,
         "rubric_version": p.rubric_version, "rubric_errors": rubric_errors(p.proposal),
-        "tags": p.tags, "preparing": p.preparing_since is not None,
+        "tags": p.tags, "archived": p.archived, "preparing": p.preparing_since is not None,
         "prepare_error": p.prepare_error,
         "files": [{**file_out(f), "link_id": pf.id, "role": pf.role} for pf, f in
                   problem_files(db, p.id)],
@@ -103,7 +104,7 @@ def list_problems(db: Db, user: Teacher) -> list[dict]:
     rows = db.scalars(select(models.Problem).where(models.Problem.owner_id == user.id)
                       .order_by(models.Problem.updated_at.desc())).all()
     return [{"id": p.id, "title": p.title, "status": p.status, "rubric_version": p.rubric_version,
-             "tags": p.tags, "preparing": p.preparing_since is not None,
+             "tags": p.tags, "archived": p.archived, "preparing": p.preparing_since is not None,
              "updated_at": p.updated_at.isoformat()} for p in rows]
 
 

@@ -135,7 +135,9 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-42 Search and filter problems** (owner request, 5 November 2026). The Problems page has a
   search bar above the list and a filter sidebar on its right with:
   - **Sort by**: recently changed (default), least recently changed, name A–Z, name Z–A.
-  - **Status**: Draft and Ready checkboxes with counts; none checked shows both.
+  - **Status**: Draft, Ready and Archived checkboxes with counts. Draft and Ready are checked by
+    default, Archived is not. An archived problem shows only under Archived, whatever its status;
+    none checked shows nothing (PL-44).
   - **Tags**: never listed all at once. Clicking the field opens a menu with the first 8 tags and
     "Type to see {n} more"; typing searches them all (each with how many problems carry it); picking one, or Enter on a full tag name in any
     case, adds it as a chip with a remove button. A problem must carry every chosen tag. An unknown
@@ -144,10 +146,15 @@ Each requirement has a stable id; tests and tasks cite it.
   as the field, so they stay inside the panel; the typed part is bold, arrow keys move, Enter
   picks, Escape closes. On the problem header a name that is not a tag yet shows "Create …".
   Every scrollbar on the site is thin and drawn in the theme's colours (light and dark).
-  - **Clear** resets status and tags.
+  - **Clear** resets status to the default and removes the tags.
   The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
   problems" shows how many match. Search and filters run on the loaded list and are not saved.
+- **PL-44 Archive a problem** (owner request, 5 November 2026). An archive button on each row of
+  the Problems list and in the problem's header archives it; on an archived problem the same
+  button unarchives it, and the problem shows an "Archived" badge. Archiving only hides the problem
+  from the default list (PL-42) and from "Add an existing problem" on an exam; its status, rubric
+  versions, answers, grades and exams are kept, and it can still be opened.
 - **PL-43 Preparing shown everywhere** (owner request, 5 November 2026). While the AI grader of a
   problem is being prepared (Prepare, Prepare again from scratch), a spinner shows at the right
   edge of Problems in the sidebar and next to that problem's name in the Problems list, so the
@@ -295,6 +302,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P14 | PL-10, PL-11 | At 375 px and 1280 px, in light and dark, every tab is usable and uses the right primary colour. |
 | AC-P19 | PL-41 | Tags added to a problem are kept, merged case-insensitively, suggested on the teacher's other problems, and never shown to another teacher; empty or over-long tags are refused (`test_tags_are_kept_per_teacher_and_suggested`). |
 | AC-P20 | PL-43 | Preparing runs as a background job: the problem shows as preparing to every request of its owner and to no one else, a second preparation is refused while one runs, and a provider failure or a restart leaves an error and no proposal (`test_preparing_is_shared_and_runs_once`, `test_provider_failure_while_preparing_stores_no_proposal`). |
+| AC-P21 | PL-44 | Archiving a problem keeps its status and rubric version, it is still listed with `archived`, and unarchiving restores it (`test_archiving_a_problem_is_reversible_and_keeps_it`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 

@@ -14,7 +14,7 @@ import { api, pagesForm, type AnswerRow, type Exam, type Group, type Link, type 
 import { navigate, query } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
-type ProblemRow = { id: string; title: string; status: string };
+type ProblemRow = { id: string; title: string; status: string; archived: boolean };
 
 /** PL-26 to PL-28, PL-30: an exam's problems and groups, answers per group, upload links. */
 export default function ExamPage({ id }: { id: string }) {
@@ -73,7 +73,7 @@ function ExamProblems({ e, all, save, busy }: { e: Exam; all: ProblemRow[]; save
   const [pick, setPick] = useState("");
   const [title, setTitle] = useState("");
   const ids = e.problems.map((p) => p.id);
-  const others = all.filter((p) => !ids.includes(p.id));
+  const others = all.filter((p) => !ids.includes(p.id) && !p.archived);  // PL-44
   const move = (i: number, j: number) => { const n = [...ids]; [n[i], n[j]] = [n[j], n[i]]; save(() => api.put(`/api/exams/${e.id}/problems`, { problem_ids: n })); };
   return (
     <Card>

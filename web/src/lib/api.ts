@@ -74,6 +74,7 @@ export type Problem = {
   proposal: Proposal | null; pending_proposal: Proposal | null; pending_instruction: string | null;
   rubric_version: number; rubric_errors: string[]; tags: string[];
   preparing: boolean; prepare_error: string | null;  // PL-43
+  archived: boolean;  // PL-44
   files: (FileRef & { link_id: number; role: "statement" | "solution" })[]; answers: number;
 };
 export type AnswerState = "not_graded" | "running" | "proposed" | "review_required" | "failed" | "approved";

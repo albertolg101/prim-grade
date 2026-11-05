@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, Loader2, Search, X } from "lucide-react";
+import { Archive, ArchiveRestore, Filter, Loader2, Search, X } from "lucide-react";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,13 @@ import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
 type Status = "draft" | "ready";
+type State = Status | "archived";  // PL-44: an archived problem keeps its status but shows only under Archived
+const DEFAULT_STATES: State[] = ["draft", "ready"];
 type Sort = "updated-desc" | "updated-asc" | "name-asc" | "name-desc";
 const SORTS: [Sort, string][] = [
   ["updated-desc", "Recently changed"], ["updated-asc", "Least recently changed"], ["name-asc", "Name A–Z"], ["name-desc", "Name Z–A"],
 ];
-type Row = { id: string; title: string; status: Status; rubric_version: number; tags: string[]; updated_at: string };
+type Row = { id: string; title: string; status: Status; archived: boolean; rubric_version: number; tags: string[]; updated_at: string };
 const lower = (s: string) => s.toLocaleLowerCase();
 
 /** PL-15: a title is enough to save a problem; it starts as a draft. */
@@ -34,7 +36,7 @@ export default function Problems() {
   const act = useAction();
   // PL-42: search and filters run on the loaded list
   const [q, setQ] = useState("");
-  const [statuses, setStatuses] = useState<Status[]>([]);  // none checked: both
+  const [states, setStates] = useState<State[]>(DEFAULT_STATES);  // none checked: nothing shown
   const [tags, setTags] = useState<string[]>([]);
   const [sort, setSort] = useState<Sort>("updated-desc");
   const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens
@@ -43,11 +45,17 @@ export default function Problems() {
   const words = lower(q).split(/\s+/).filter(Boolean);
   const shown = rows.filter((r) =>
     words.every((w) => lower(r.title).includes(w) || r.tags.some((x) => lower(x).includes(w)))
-    && (!statuses.length || statuses.includes(r.status))
+    && states.includes(stateOf(r))
     && tags.every((x) => r.tags.some((y) => lower(y) === lower(x))))
     .sort((a, b) => sort.startsWith("name") ? a.title.localeCompare(b.title) * (sort === "name-asc" ? 1 : -1)
       : (a.updated_at < b.updated_at ? -1 : 1) * (sort === "updated-asc" ? 1 : -1));
-  const nFilters = statuses.length + tags.length;
+  const statesChanged = states.length !== DEFAULT_STATES.length || !DEFAULT_STATES.every((x) => states.includes(x));
+  const nFilters = (statesChanged ? 1 : 0) + tags.length;
+  const arch = useAction();
+  const archive = (r: Row) => arch.run(async () => {
+    await api.patch(`/api/problems/${r.id}`, { archived: !r.archived });
+    await list.reload();
+  });
 
   return (
     <Page title={t("Problems")} actions={
@@ -72,7 +80,7 @@ export default function Problems() {
         </DialogContent>
       </Dialog>
     }>
-      <ErrorText>{list.error}</ErrorText>
+      <ErrorText>{list.error ?? arch.error}</ErrorText>
       {list.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("No problems yet. Use New problem to start one.")}</p>}
       {rows.length > 0 && (<>
         <div className="flex gap-2">
@@ -92,8 +100,10 @@ export default function Problems() {
         {shown.length === 0 && <p className="text-sm text-muted-foreground">{t("No problem matches the search and filters.")}</p>}
       {shown.length > 0 && <Card className="divide-y gap-0 overflow-hidden py-0">
         {shown.map((p) => (
-          <a key={p.id} href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
-             className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent">
+          // the archive button sits next to the link, never inside it
+          <div key={p.id} className="flex items-center hover:bg-accent">
+          <a href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
+             className={cn("flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4", p.archived && "text-muted-foreground")}>
             <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <span className="min-w-0 truncate font-medium">{p.title}</span>
               {preparing.has(p.id) && (
@@ -103,9 +113,16 @@ export default function Problems() {
             </span>
             <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
               <span className="hidden sm:inline">{when(p.updated_at)}</span>
+              {p.archived && <Badge variant="secondary">{t("Archived")}</Badge>}
               {p.status === "ready" ? <Badge>{t("Ready · v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
             </span>
           </a>
+          <Button variant="ghost" size="icon" className="mx-2 size-8 shrink-0 text-muted-foreground" disabled={arch.busy}
+                  aria-label={t(p.archived ? "Unarchive {title}" : "Archive {title}", { title: p.title })}
+                  title={t(p.archived ? "Unarchive" : "Archive")} onClick={() => archive(p)}>
+            {p.archived ? <ArchiveRestore /> : <Archive />}
+          </Button>
+          </div>
         ))}
       </Card>}
       </div>
@@ -114,7 +131,7 @@ export default function Problems() {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("Filters")}</h2>
           <Button size="sm" variant="ghost" className="h-7" disabled={!nFilters}
-                  onClick={() => { setStatuses([]); setTags([]); }}>{t("Clear")}</Button>
+                  onClick={() => { setStates(DEFAULT_STATES); setTags([]); }}>{t("Clear")}</Button>
         </div>
         <div className="space-y-2">
           <p id="sort-label" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</p>
@@ -127,11 +144,11 @@ export default function Problems() {
         </div>
         <fieldset className="space-y-2">
           <legend className="mb-2 text-xs font-medium text-muted-foreground">{t("Status")}</legend>
-          {([["draft", t("Draft")], ["ready", t("Ready")]] as const).map(([s, label]) => (
+          {([["draft", t("Draft")], ["ready", t("Ready")], ["archived", t("Archived")]] as const).map(([s, label]) => (
             <label key={s} className="flex items-center gap-2 text-sm">
-              <Checkbox checked={statuses.includes(s)}
-                        onCheckedChange={() => setStatuses(statuses.includes(s) ? statuses.filter((x) => x !== s) : [...statuses, s])} />
-              {label} <span className="text-xs text-muted-foreground">{rows.filter((r) => r.status === s).length}</span>
+              <Checkbox checked={states.includes(s)}
+                        onCheckedChange={() => setStates(states.includes(s) ? states.filter((x) => x !== s) : [...states, s])} />
+              {label} <span className="text-xs text-muted-foreground">{rows.filter((r) => stateOf(r) === s).length}</span>
             </label>
           ))}
         </fieldset>
@@ -170,3 +187,5 @@ export default function Problems() {
     </Page>
   );
 }
+
+const stateOf = (r: Row): State => r.archived ? "archived" : r.status;

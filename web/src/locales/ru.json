@@ -396,5 +396,8 @@
  "The AI is preparing the grader on the server. You can leave this page; it keeps going.": "ИИ готовит проверку на сервере. Можно уйти с этой страницы — работа продолжится.",
  "The AI is preparing a fresh proposal on the server; it replaces this one when it is ready.": "ИИ готовит новое предложение на сервере; когда оно будет готово, оно заменит текущее.",
  "the AI is already preparing this problem": "ИИ уже готовит эту задачу",
- "interrupted by a server restart; prepare it again": "прервано перезапуском сервера; подготовьте задачу ещё раз"
+ "interrupted by a server restart; prepare it again": "прервано перезапуском сервера; подготовьте задачу ещё раз",
+ "Archived": "В архиве",
+ "Archive {title}": "Архивировать {title}",
+ "Unarchive {title}": "Вернуть из архива {title}"
 }

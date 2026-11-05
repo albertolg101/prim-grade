@@ -396,5 +396,8 @@
  "The AI is preparing the grader on the server. You can leave this page; it keeps going.": "La IA está preparando el corrector en el servidor. Puedes salir de esta página; el trabajo continúa.",
  "The AI is preparing a fresh proposal on the server; it replaces this one when it is ready.": "La IA está preparando una propuesta nueva en el servidor; sustituirá a esta cuando esté lista.",
  "the AI is already preparing this problem": "la IA ya está preparando este problema",
- "interrupted by a server restart; prepare it again": "interrumpido por un reinicio del servidor; prepáralo de nuevo"
+ "interrupted by a server restart; prepare it again": "interrumpido por un reinicio del servidor; prepáralo de nuevo",
+ "Archived": "Archivado",
+ "Archive {title}": "Archivar {title}",
+ "Unarchive {title}": "Desarchivar {title}"
 }

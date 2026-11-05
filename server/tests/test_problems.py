@@ -138,3 +138,13 @@ def test_tags_are_kept_per_teacher_and_suggested(admin, make_client):  # AC-P19
     assert admin.patch(f"/api/problems/{p['id']}", json={"tags": ["x" * 41]}).status_code == 422
     other = teacher(make_client, admin, "other@example.test")
     assert other.get("/api/problems/tags").json() == []  # a teacher never sees another's tags
+
+
+def test_archiving_a_problem_is_reversible_and_keeps_it(admin):  # AC-P21
+    p = ready_problem(admin)
+    r = admin.patch(f"/api/problems/{p['id']}", json={"archived": True}).json()
+    assert r["archived"] is True and r["status"] == "ready" and r["rubric_version"] == 1
+    assert admin.get("/api/problems").json()[0]["archived"] is True  # listed; the page filters it
+    r = admin.patch(f"/api/problems/{p['id']}", json={"archived": False}).json()
+    assert r["archived"] is False
+    assert admin.patch(f"/api/problems/{p['id']}", json={"archived": "maybe"}).status_code == 422
