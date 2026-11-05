@@ -26,8 +26,9 @@ const lower = (s: string) => s.toLocaleLowerCase();
 
 /** PL-15: a title is enough to save a problem; it starts as a draft. */
 export default function Problems() {
-  const list = useLoad(() => api.get<Row[]>("/api/problems"), []);
   const preparing = usePreparing();
+  // a finished preparation can change a row (a regenerated ready problem is a draft again)
+  const list = useLoad(() => api.get<Row[]>("/api/problems"), [preparing]);
   const stored = useLoad(() => api.get<string[]>("/api/problems/tags"), []);  // PL-41: used or not
   const [title, setTitle] = useState("");
   const act = useAction();

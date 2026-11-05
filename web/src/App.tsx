@@ -38,7 +38,6 @@ export default function App() {
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [prefError, setPrefError] = useState<string | null>(null);
   const [lang, setLangState] = useState<Lang>(getLang());
-  const preparing = usePreparing();
   const isStudent = student !== null;
 
   const signIn = (m: Me) => {
@@ -111,10 +110,7 @@ export default function App() {
                      : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
                 <Icon className="size-4" />
                 {t(label)}
-                {to === "/problems" && preparing.size > 0 && (
-                  <Loader2 className="ml-auto size-4 animate-spin text-muted-foreground" role="status"
-                           aria-label={t("AI graders being prepared: {n}", { n: preparing.size })} />
-                )}
+                {to === "/problems" && <PreparingSpinner />}
               </a>
             ))}
           </nav>
@@ -170,4 +166,12 @@ export default function App() {
       <ZoomFooter besideSidebar />
     </CrumbsContext.Provider>
   );
+}
+
+/** PL-43: shown on Problems while the server prepares any of the teacher's AI graders. */
+function PreparingSpinner() {
+  const preparing = usePreparing();
+  if (!preparing.size) return null;
+  return <Loader2 className="ml-auto size-4 animate-spin text-muted-foreground" role="status"
+                  aria-label={t("AI graders being prepared: {n}", { n: preparing.size })} />;
 }

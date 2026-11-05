@@ -3,9 +3,9 @@
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field, StringConstraints
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from grader.schemas import SetupProposal
 from grader.setup import (
@@ -18,6 +18,7 @@ from grader.setup import (
 )
 
 from .. import ai, files, models
+from .. import db as database
 from ..config import MODEL
 from ..deps import Config, Db, Teacher, owned
 
@@ -89,7 +90,8 @@ def problem_out(db, p: models.Problem) -> dict:
         "rubric_text": p.rubric_text, "proposal": p.proposal,
         "pending_proposal": p.pending_proposal, "pending_instruction": p.pending_instruction,
         "rubric_version": p.rubric_version, "rubric_errors": rubric_errors(p.proposal),
-        "tags": p.tags,
+        "tags": p.tags, "preparing": p.preparing_since is not None,
+        "prepare_error": p.prepare_error,
         "files": [{**file_out(f), "link_id": pf.id, "role": pf.role} for pf, f in
                   problem_files(db, p.id)],
         "answers": n_answers, "updated_at": p.updated_at.isoformat(),
@@ -101,7 +103,15 @@ def list_problems(db: Db, user: Teacher) -> list[dict]:
     rows = db.scalars(select(models.Problem).where(models.Problem.owner_id == user.id)
                       .order_by(models.Problem.updated_at.desc())).all()
     return [{"id": p.id, "title": p.title, "status": p.status, "rubric_version": p.rubric_version,
-             "tags": p.tags, "updated_at": p.updated_at.isoformat()} for p in rows]
+             "tags": p.tags, "preparing": p.preparing_since is not None,
+             "updated_at": p.updated_at.isoformat()} for p in rows]
+
+
+@router.get("/preparing")
+def list_preparing(db: Db, user: Teacher) -> list[str]:
+    """PL-43: the problems the AI is preparing now, polled by every open tab."""
+    return list(db.scalars(select(models.Problem.id).where(
+        models.Problem.owner_id == user.id, models.Problem.preparing_since.is_not(None))))
 
 
 @router.get("/tags")
@@ -209,29 +219,51 @@ def _images(db, p: models.Problem) -> tuple[list[Path], int, int]:
     return stmt + sol, len(stmt), len(sol)
 
 
-@router.post("/{problem_id}/generate")
-async def generate(problem_id: str, db: Db, user: Teacher, config: Config) -> dict:
-    """PL-16: the AI prepares the problem (grader GR-01–05)."""
+@router.post("/{problem_id}/generate", status_code=202)
+def generate(problem_id: str, db: Db, user: Teacher, config: Config,
+             tasks: BackgroundTasks) -> dict:
+    """PL-16, PL-43: the AI prepares the problem (grader GR-01–05) in the background; the problem
+    shows as preparing until the proposal or the error is stored."""
     p = owned(db, models.Problem, problem_id, user)
     images, n_stmt, n_sol = _images(db, p)
     if not (p.statement_text.strip() or n_stmt) or not (p.solution_text.strip() or n_sol):
         raise HTTPException(422, "add the statement and the reference solution (text or images)")
-    llm = ai.llm_for(config, user)
-    p.language = user.language  # PL-37: AI output follows the teacher's current language
+    llm = ai.llm_for(config, user)  # refuse at once when there is no key (PL-06)
+    # one preparation at a time per problem, even when two tabs ask at once
+    started = db.execute(update(models.Problem).where(
+        models.Problem.id == p.id, models.Problem.preparing_since.is_(None)
+    ).values(preparing_since=models.now(), prepare_error=None,
+             language=user.language)).rowcount  # PL-37: AI output follows the teacher's language
+    if not started:
+        db.rollback()
+        raise HTTPException(409, "the AI is already preparing this problem")
+    db.commit()
+    db.refresh(p)
     text = setup_text(p.title, p.statement_text, p.solution_text, p.rubric_text, n_stmt, n_sol,
                       p.language)
+    tasks.add_task(prepare, llm, user.id, p.id, text, images)
+    return problem_out(db, p)
+
+
+async def prepare(llm: ai.LLM, user_id: str, problem_id: str, text: str,
+                  images: list[Path]) -> None:
     try:
         out, usage = await llm(MODEL, SETUP_INSTRUCTIONS, text, images, SetupProposal)
     except Exception as e:  # provider failure: nothing is stored as a proposal (I2)
-        db.rollback()
-        raise HTTPException(
-            502, f"the AI could not prepare the problem: {type(e).__name__}: {e}"
-        ) from e
-    ai.record(db, user.id, "setup", usage, problem_id=p.id)
-    p.proposal, p.pending_proposal, p.pending_instruction = out.model_dump(), None, None
-    p.status = "draft"
-    db.commit()
-    return problem_out(db, p)
+        with database.session() as s:
+            p = s.get(models.Problem, problem_id)
+            if p is not None:
+                p.preparing_since = None
+                p.prepare_error = f"the AI could not prepare the problem: {type(e).__name__}: {e}"
+                s.commit()
+        return
+    with database.session() as s:
+        p = s.get(models.Problem, problem_id)  # None when deleted meanwhile; the cost still counts
+        ai.record(s, user_id, "setup", usage, problem_id=p and p.id)
+        if p is not None:
+            p.proposal, p.pending_proposal, p.pending_instruction = out.model_dump(), None, None
+            p.status, p.preparing_since = "draft", None
+        s.commit()
 
 
 @router.put("/{problem_id}/proposal")

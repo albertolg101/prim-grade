@@ -2,6 +2,8 @@
 
 from conftest import PNG, ready_problem, teacher, upload
 
+from grader.llm import LLMError
+
 
 def test_title_only_draft_is_listed(admin):  # AC-P04
     r = admin.post("/api/problems", json={"title": "  Inclined plane  "})
@@ -18,7 +20,48 @@ def test_generate_needs_statement_and_solution(admin):
                files=[("pages", ("s.png", PNG, "image/png"))])
     admin.patch(f"/api/problems/{p['id']}", json={"solution_text": "a = 2 m/s²"})
     r = admin.post(f"/api/problems/{p['id']}/generate")
-    assert r.status_code == 200 and r.json()["proposal"]["rubric"]["criteria"][0]["id"] == "C1"
+    assert r.status_code == 202 and r.json()["preparing"] is True  # PL-43: a background job
+    r = admin.get(f"/api/problems/{p['id']}").json()  # the test client runs it before returning
+    assert r["proposal"]["rubric"]["criteria"][0]["id"] == "C1"
+    assert not r["preparing"] and r["prepare_error"] is None
+    assert admin.get("/api/problems/preparing").json() == []
+
+
+def prepared_text(c, title="P"):
+    p = c.post("/api/problems", json={"title": title}).json()
+    c.patch(f"/api/problems/{p['id']}", json={"statement_text": "s", "solution_text": "a"})
+    return p
+
+
+def test_preparing_is_shared_and_runs_once(admin, make_client):  # AC-P20
+    from primgrade_server import db, grading, models
+
+    p = prepared_text(admin)
+    with db.session() as s:  # as if a job were still running (another tab started it)
+        s.get(models.Problem, p["id"]).preparing_since = models.now()
+        s.commit()
+    assert admin.get("/api/problems/preparing").json() == [p["id"]]
+    assert admin.get("/api/problems").json()[0]["preparing"] is True
+    r = admin.post(f"/api/problems/{p['id']}/generate")
+    assert r.status_code == 409
+    other = teacher(make_client, admin, "bo@example.test")
+    assert other.get("/api/problems/preparing").json() == []
+    grading.fail_interrupted()  # a restart: no job is running any more
+    r = admin.get(f"/api/problems/{p['id']}").json()
+    assert not r["preparing"] and "restart" in r["prepare_error"] and r["proposal"] is None
+
+
+def test_provider_failure_while_preparing_stores_no_proposal(admin, monkeypatch):  # AC-P20, I2
+    from primgrade_server import ai
+
+    async def broken(*args):
+        raise LLMError("provider down")
+
+    monkeypatch.setattr(ai, "llm_for", lambda settings, user: broken)
+    p = prepared_text(admin)
+    assert admin.post(f"/api/problems/{p['id']}/generate").status_code == 202
+    r = admin.get(f"/api/problems/{p['id']}").json()
+    assert r["proposal"] is None and not r["preparing"] and "provider down" in r["prepare_error"]
 
 
 def test_editing_a_ready_rubric_makes_a_new_version(admin):  # AC-P05

@@ -100,7 +100,7 @@ def ready_problem(c: TestClient, title: str = "P3 pallet") -> dict:
     p = c.post("/api/problems", json={"title": title}).json()
     c.patch(f"/api/problems/{p['id']}", json={"statement_text": "Pallet 80 kg, F = 350 N at 30°",
                                               "solution_text": "a = 0.69 m/s²"})
-    assert c.post(f"/api/problems/{p['id']}/generate").status_code == 200
+    assert c.post(f"/api/problems/{p['id']}/generate").status_code == 202
     r = c.post(f"/api/problems/{p['id']}/accept", json={"issues_acknowledged": False})
     assert r.status_code == 200, r.text
     return r.json()

@@ -151,8 +151,12 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-43 Preparing shown everywhere** (owner request, 5 November 2026). While the AI grader of a
   problem is being prepared (Prepare, Prepare again from scratch), a spinner shows at the right
   edge of Problems in the sidebar and next to that problem's name in the Problems list, so the
-  teacher can leave the page and still see it running. Only the browser tab that started it knows;
-  another tab or a reload does not show it.
+  teacher can leave the page and still see it running. Preparing is a server job: the request
+  returns at once (202), the problem is marked as preparing in the database, and every open tab
+  polls that state (every 2 s while something is preparing, 5 s otherwise), so another tab or a
+  reload shows it too. One preparation runs per problem at a time (a second request gets 409). A
+  provider failure stores an error and no proposal (I2); a server restart turns a preparation in
+  progress into that error ("prepare it again"), as for grading runs (ADR-0001).
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an
   optional rubric), the teacher asks the AI to prepare the problem: its reading of the statement and
   solution, final answers, assumptions, expected forces when a diagram is needed, a rubric with
@@ -290,6 +294,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P16 | PL-35, PL-31 | The bound student can submit other problems; repeat uploads for one problem remain versions. A shared-device conflict directs the student to the teacher, who can upload on their behalf. Cookie bypass is documented as an unresolved limitation, not treated as verified identity. |
 | AC-P14 | PL-10, PL-11 | At 375 px and 1280 px, in light and dark, every tab is usable and uses the right primary colour. |
 | AC-P19 | PL-41 | Tags added to a problem are kept, merged case-insensitively, suggested on the teacher's other problems, and never shown to another teacher; empty or over-long tags are refused (`test_tags_are_kept_per_teacher_and_suggested`). |
+| AC-P20 | PL-43 | Preparing runs as a background job: the problem shows as preparing to every request of its owner and to no one else, a second preparation is refused while one runs, and a provider failure or a restart leaves an error and no proposal (`test_preparing_is_shared_and_runs_once`, `test_provider_failure_while_preparing_stores_no_proposal`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 

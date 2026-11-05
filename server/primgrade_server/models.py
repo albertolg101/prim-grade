@@ -89,6 +89,9 @@ class Problem(Base):
     pending_instruction: Mapped[str | None] = mapped_column(Text)
     rubric_version: Mapped[int] = mapped_column(Integer, default=0)  # 0: never accepted
     tags: Mapped[list[str]] = mapped_column(Json, default=list)  # PL-41, the teacher's own labels
+    # PL-43: set while the AI prepares the grader in the background; every tab reads it
+    preparing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    prepare_error: Mapped[str | None] = mapped_column(Text)  # the last preparation failed (I2)
     created_at: Mapped[datetime] = ts()
     updated_at: Mapped[datetime] = ts(onupdate=now)
 

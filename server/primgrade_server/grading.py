@@ -65,10 +65,15 @@ async def grade_runs(settings: Settings, user_id: str, run_ids: list[str]) -> No
 
 
 def fail_interrupted() -> int:
-    """ADR-0001: runs left running by a restart become failed, never a score (I2)."""
+    """ADR-0001: runs left running by a restart become failed, never a score (I2); so do
+    problems left preparing (PL-43)."""
     with db.session() as s:
         n = s.execute(models.Run.__table__.update().where(models.Run.status == "running").values(
             status="failed", error="interrupted by a server restart; grade it again",
             finished_at=models.now())).rowcount
+        s.execute(models.Problem.__table__.update()
+                  .where(models.Problem.preparing_since.is_not(None))
+                  .values(preparing_since=None,
+                          prepare_error="interrupted by a server restart; prepare it again"))
         s.commit()
         return n

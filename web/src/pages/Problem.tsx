@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Loader2, Plus, Trash2, X } from "lucide-react";
 import Answers from "@/components/Answers";
 import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad } from "@/components/common";
@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { api, fileUrl, pagesForm, type Criterion, type Page as UploadPage, type Problem, type Proposal } from "@/lib/api";
 import { t } from "@/lib/i18n";
-import { generate } from "@/lib/preparing";
+import { generate, usePreparing } from "@/lib/preparing";
 import { navigate, query } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,9 @@ type ProblemFile = Problem["files"][number];
 
 /** PL-15 to PL-20 on two screens: what the teacher gives, and what the AI generated from it. */
 export default function ProblemPage({ id }: { id: string }) {
-  const prob = useLoad(() => api.get<Problem>(`/api/problems/${id}`), [id]);
+  const preparing = usePreparing().has(id);  // PL-43: the server's state, seen by every tab
+  // loads again when a preparation starts or ends, so the proposal or the error shows by itself
+  const prob = useLoad(() => api.get<Problem>(`/api/problems/${id}`), [id, preparing]);
   const p = prob.data;
   const from = query("exam");
   const view: View = query("view") === "grader" ? "grader" : "info";
@@ -58,9 +60,9 @@ export default function ProblemPage({ id }: { id: string }) {
         ))}
       </nav>
       {/* both stay mounted, so unsaved edits survive switching screens */}
-      <div hidden={view !== "info"}><Sources p={p} onSaved={set} onGrader={() => go("grader")} /></div>
+      <div hidden={view !== "info"}><Sources p={p} preparing={preparing} onSaved={set} onGrader={() => go("grader")} /></div>
       <div hidden={view !== "grader"} className="space-y-8">
-        <Grader p={p} onSaved={set} onInfo={() => go("info")} />
+        <Grader p={p} preparing={preparing} onSaved={set} onInfo={() => go("info")} />
         {(p.status === "ready" || p.answers > 0) && (
           <section className="space-y-3">
             <Separator />
@@ -173,7 +175,7 @@ function useRubricCap(field: React.RefObject<HTMLTextAreaElement | null>, screen
   }, [field, screen]);
 }
 
-function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) => void; onGrader: () => void }) {
+function Sources({ p, preparing, onSaved, onGrader }: { p: Problem; preparing: boolean; onSaved: (p: Problem) => void; onGrader: () => void }) {
   const [f, setF] = useState({ statement_text: p.statement_text, solution_text: p.solution_text, rubric_text: p.rubric_text });
   const act = useAction();
   const rubric = useRef<HTMLTextAreaElement>(null);
@@ -224,8 +226,8 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
         {p.proposal ? (
           <Button onClick={onGrader}>{t("Go to the AI grader")} <ArrowRight /></Button>
         ) : (
-          <Button disabled={!has("statement") || !has("solution") || act.busy} onClick={prepare}>
-            {act.busy ? t("Preparing…") : t("Prepare the grader with AI")}
+          <Button disabled={!has("statement") || !has("solution") || act.busy || preparing} onClick={prepare}>
+            {preparing ? <><Loader2 className="animate-spin" /> {t("Preparing…")}</> : t("Prepare the grader with AI")}
           </Button>
         )}
       </div>
@@ -249,7 +251,7 @@ function criterionErrors(c: Criterion, all: Criterion[]): string[] {
 }
 
 /** PL-16 to PL-19: generate, edit every field, improve by instruction, accept a version. */
-function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => void; onInfo: () => void }) {
+function Grader({ p, preparing, onSaved, onInfo }: { p: Problem; preparing: boolean; onSaved: (p: Problem) => void; onInfo: () => void }) {
   const [draft, setDraft] = useState<Proposal | null>(p.proposal);
   const [ack, setAck] = useState(false);
   const [instruction, setInstruction] = useState("");
@@ -265,11 +267,12 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
         {!has && <p className="text-sm">{t("Add the statement and the reference solution first.")}</p>}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={onInfo}>{t("Go to your information")}</Button>
-          <Button disabled={!has || act.busy} onClick={() => act.run(async () => onSaved(await generate(p.id)))}>
-            {act.busy ? t("Preparing…") : t("Prepare the grader with AI")}
+          <Button disabled={!has || act.busy || preparing} onClick={() => act.run(async () => onSaved(await generate(p.id)))}>
+            {preparing ? <><Loader2 className="animate-spin" /> {t("Preparing…")}</> : t("Prepare the grader with AI")}
           </Button>
         </div>
-        <ErrorText>{act.error}</ErrorText>
+        {preparing && <p className="text-sm text-muted-foreground" role="status">{t("The AI is preparing the grader on the server. You can leave this page; it keeps going.")}</p>}
+        <ErrorText>{act.error ?? (preparing ? null : p.prepare_error)}</ErrorText>
       </div>
     );
   }
@@ -379,10 +382,12 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
                   onClick={() => act.run(async () => { onSaved(await api.post<Problem>(`/api/problems/${p.id}/improve`, { instruction })); setInstruction(""); })}>
             {act.busy ? t("Asking the AI…") : t("Ask the AI to revise")}
           </Button>
-          <Button variant="ghost" disabled={act.busy} onClick={() => { if (confirm(t("Replace the whole proposal with a fresh one from the AI?"))) act.run(async () => onSaved(await generate(p.id))); }}>
-            {t("Prepare again from scratch")}
+          <Button variant="ghost" disabled={act.busy || preparing} onClick={() => { if (confirm(t("Replace the whole proposal with a fresh one from the AI?"))) act.run(async () => onSaved(await generate(p.id))); }}>
+            {preparing ? <><Loader2 className="animate-spin" /> {t("Preparing…")}</> : t("Prepare again from scratch")}
           </Button>
         </div>
+        {preparing && <p className="text-xs text-muted-foreground" role="status">{t("The AI is preparing a fresh proposal on the server; it replaces this one when it is ready.")}</p>}
+        {!preparing && p.prepare_error && <ErrorText>{p.prepare_error}</ErrorText>}
         {dirty && <p className="text-xs text-muted-foreground">{t("Save or undo your edits before asking the AI.")}</p>}
       </section>
     </div>
