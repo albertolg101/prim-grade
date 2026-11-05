@@ -3,10 +3,12 @@ import { Minus, Plus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fileUrl, type FileRef } from "@/lib/api";
 import { t } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 /** PL-22: the paper large, with zoom, pan and page switch; the raw capture of a scan is one click away (PL-14). */
-export default function ImageViewer({ pages, start = 0, boxClass }: {
+export default function ImageViewer({ pages, start = 0, boxClass, className }: {
   pages: FileRef[]; start?: number; boxClass?: string;  // boxClass: the image area's height (e.g. inside a dialog)
+  className?: string;
 }) {
   const [i, setI] = useState(start);
   const [raw, setRaw] = useState(false);
@@ -32,7 +34,7 @@ export default function ImageViewer({ pages, start = 0, boxClass }: {
 
   if (!page) return <p className="text-sm text-destructive">{t("This answer has no pages.")}</p>;
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", className)}>
       <div className="flex flex-wrap items-center gap-2">
         {pages.length > 1 && pages.map((p, j) => (
           <Button key={p.id} size="sm" variant={j === i ? "default" : "outline"} onClick={() => setI(j)}>{t("Page {n}", { n: j + 1 })}</Button>

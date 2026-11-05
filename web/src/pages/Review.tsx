@@ -56,7 +56,9 @@ export default function Review({ id }: { id: string }) {
   const go = (j: number) => navigate(`/answers/${ids[j]}${ctxParam ? `?ctx=${ctxParam}` : ""}`);
 
   return (
-    <div className="w-full space-y-3 px-4 py-4 sm:px-6">
+    // on a computer the page fits the screen (no page scrollbar): the paper takes the height left and the
+    // proposal column scrolls inside itself; on a phone the page scrolls as usual
+    <div className="w-full space-y-3 px-4 py-4 sm:px-6 lg:flex lg:h-[calc(var(--app-h)-3.25rem)] lg:flex-col">
       <div className="flex flex-wrap items-center gap-2">
         <div className="ml-auto flex items-center gap-1">
           {at >= 0 && <span className="text-sm text-muted-foreground">{t("{n} of {total}", { n: at + 1, total: ids.length })}</span>}
@@ -88,9 +90,10 @@ export default function Review({ id }: { id: string }) {
                 {t("Grade this version instead")}</Button>}
             </div>
           )}
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <div className="lg:sticky lg:top-16 lg:self-start"><ImageViewer pages={a.pages} /></div>
-            <div className="space-y-4">
+          <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+            <ImageViewer pages={a.pages} className="lg:flex lg:min-h-0 lg:flex-col"
+                         boxClass="h-[calc(var(--app-h)*0.6)] lg:h-auto lg:min-h-0 lg:flex-1" />
+            <div className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
               <Proposal a={a} run={run} onGrade={() => act.run(async () => { await api.post("/api/answers/grade", { answer_ids: [a.id] }); await ans.reload(); })} busy={act.busy} />
               <ErrorText>{act.error}</ErrorText>
               {a.rubric && <ApprovalForm key={`${a.id}-${run?.id ?? "none"}-${a.approval?.approved_at ?? ""}`} a={a} run={run}

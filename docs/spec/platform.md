@@ -204,6 +204,9 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-22 One answer at a time.** A review view shows one answer: the paper image large (zoom, pan,
   page switch) next to the AI's proposal (criteria, points, evidence, reasoning, confidence,
   feedback), with next and previous. A list view shows all answers with their state.
+  On a computer the review view fits the screen without a page scrollbar: the paper takes the
+  height left and the proposal and grade column scrolls inside itself (owner request, 6 November
+  2026).
 - **PL-23 Final grade.** The teacher sets the final points per criterion and the feedback, starting
   from the proposal, and approves. Approval is the only way a grade becomes final (I1). The AI's
   proposal is kept unchanged beside the approved grade.
