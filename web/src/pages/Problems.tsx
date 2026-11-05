@@ -87,7 +87,7 @@ export default function Problems() {
       <div className="min-w-0 flex-1 space-y-3">
         <p className="text-xs text-muted-foreground" aria-live="polite">{t("{n} of {total} problems", { n: shown.length, total: rows.length })}</p>
         {shown.length === 0 && <p className="text-sm text-muted-foreground">{t("No problem matches the search and filters.")}</p>}
-      {shown.length > 0 && <Card className="divide-y gap-0 py-0">
+      {shown.length > 0 && <Card className="divide-y gap-0 overflow-hidden py-0">
         {shown.map((p) => (
           <a key={p.id} href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent">

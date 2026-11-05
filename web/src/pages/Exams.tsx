@@ -23,7 +23,7 @@ export default function Exams() {
       </form>
       <ErrorText>{list.error ?? act.error}</ErrorText>
       {list.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("No exams yet.")}</p>}
-      <Card className="divide-y gap-0 py-0">
+      <Card className="divide-y gap-0 overflow-hidden py-0">
         {list.data?.map((e) => (
           <a key={e.id} href={`/exams/${e.id}`} onClick={(ev) => { ev.preventDefault(); navigate(`/exams/${e.id}`); }}
              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent">
