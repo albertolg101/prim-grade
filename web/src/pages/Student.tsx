@@ -1,13 +1,13 @@
 import { useState } from "react";
 import Capture from "@/components/Capture";
-import { ErrorText, useAction, useLoad, when } from "@/components/common";
+import { clock, ErrorText, useAction, useLoad, when } from "@/components/common";
 import { LanguageSelect, useLocalLang } from "@/components/Prefs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, pagesForm, type Page } from "@/lib/api";
-import { getLang, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 
 type LinkInfo = { exam_title: string; group_name: string; open: boolean; expires_at: string; cookie_note: string; problems: { id: string; title: string }[] };
 type Receipt = { version: number; pages: number; received_at: string };
@@ -33,7 +33,7 @@ export default function Student({ token }: { token: string }) {
         <>
           <div>
             <h2 className="text-lg font-semibold">{i.exam_title}</h2>
-            <p className="text-sm text-muted-foreground">{i.group_name} · {t("open until {time}", { time: new Date(i.expires_at).toLocaleTimeString(getLang()) })}</p>
+            <p className="text-sm text-muted-foreground">{i.group_name} · {t("open until {time}", { time: clock(new Date(i.expires_at)) })}</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="name">{t("Your full name")}</Label>

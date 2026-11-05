@@ -117,5 +117,14 @@ export function Page({ title, onRename, crumbs = [], actions, children }: {
 }
 
 export const usd = (n: number | null | undefined) => (n == null ? "—" : `$${n.toFixed(n < 1 ? 4 : 2)}`);
-export const when = (iso: string) => new Date(iso).toLocaleString(getLang());
+/** A time of day, 24-hour, no seconds: "14:05". */
+export const clock = (d: Date) => d.toLocaleTimeString(getLang(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+/** Today "14:05", yesterday "Yesterday", this year "6 Nov", earlier "6 Nov 2025" (owner request, 6 November 2026). */
+export function when(iso: string, now = new Date()): string {
+  const d = new Date(iso);
+  if (sameDay(d, now)) return clock(d);
+  if (sameDay(d, new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) return t("Yesterday");
+  return d.toLocaleDateString(getLang(), { day: "numeric", month: "short", ...(d.getFullYear() !== now.getFullYear() && { year: "numeric" }) });
+}
 export const pts = (n: number | null | undefined) => (n == null ? "—" : Number(n.toFixed(2)).toString());
