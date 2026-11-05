@@ -59,14 +59,16 @@ export default function Capture({ pages, onChange, disabled, children, after }: 
     <div className="space-y-2">
       {children ? (
         <div {...drop} className="relative space-y-2">
-          {children}
-          {buttons}
-          {after}
+          {/* first child: space-y gives every child but the last a bottom margin, so a cover added
+              last would push the block 0.5rem taller; out of the flow here, it moves nothing */}
           {over && (
             <div className="pointer-events-none absolute -inset-2 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-background/60 backdrop-blur-sm">
               <p className="text-sm font-medium text-primary">{t("Drop your images here")}</p>
             </div>
           )}
+          {children}
+          {buttons}
+          {after}
         </div>
       ) : (
         <div {...drop}
