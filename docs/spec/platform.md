@@ -207,6 +207,8 @@ Each requirement has a stable id; tests and tasks cite it.
   On a computer the review view fits the screen without a page scrollbar: the paper takes the
   height left and the proposal and grade column scrolls inside itself (owner request, 6 November
   2026).
+  A "Reset view" button (with the current zoom) puts the paper back at 100% and centred; whenever
+  the zoom returns to 100% by any path, the paper is centred again (owner request, 6 November 2026).
 - **PL-23 Final grade.** The teacher sets the final points per criterion and the feedback, starting
   from the proposal, and approves. Approval is the only way a grade becomes final (I1). The AI's
   proposal is kept unchanged beside the approved grade.

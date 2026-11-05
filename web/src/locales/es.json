@@ -193,7 +193,6 @@
  "Rename": "Renombrar",
  "Replace the whole proposal with a fresh one from the AI?": "¿Reemplazar toda la propuesta por una nueva de la IA?",
  "Required evidence": "Evidencia requerida",
- "Reset zoom": "Restablecer zoom",
  "Reset zoom ({pct})": "Restablecer zoom ({pct})",
  "Retake": "Repetir",
  "Review required": "Requiere revisión",
@@ -412,5 +411,6 @@
  "Group (optional)": "Grupo (opcional)",
  "No groups yet": "Aún no hay grupos",
  "No group matches “{q}”.": "Ningún grupo coincide con «{q}».",
- "Remove group {name}": "Quitar el grupo {name}"
+ "Remove group {name}": "Quitar el grupo {name}",
+ "Reset view": "Restablecer vista"
 }

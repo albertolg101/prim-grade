@@ -193,7 +193,6 @@
  "Rename": "Переименовать",
  "Replace the whole proposal with a fresh one from the AI?": "Заменить всё предложение новым от ИИ?",
  "Required evidence": "Требуемое обоснование",
- "Reset zoom": "Сбросить масштаб",
  "Reset zoom ({pct})": "Сбросить масштаб ({pct})",
  "Retake": "Переснять",
  "Review required": "Нужна проверка",
@@ -412,5 +411,6 @@
  "Group (optional)": "Группа (необязательно)",
  "No groups yet": "Групп пока нет",
  "No group matches “{q}”.": "Нет группы «{q}».",
- "Remove group {name}": "Убрать группу {name}"
+ "Remove group {name}": "Убрать группу {name}",
+ "Reset view": "Сбросить вид"
 }

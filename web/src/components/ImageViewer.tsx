@@ -5,6 +5,8 @@ import { fileUrl, type FileRef } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+const zoom = (v: number) => Math.min(6, v < 1.01 ? 1 : v);  // snap to 100% so float drift never leaves it at 100.0001%
+
 /** PL-22: the paper large, with zoom, pan and page switch; the raw capture of a scan is one click away (PL-14). */
 export default function ImageViewer({ pages, start = 0, boxClass, className }: {
   pages: FileRef[]; start?: number; boxClass?: string;  // boxClass: the image area's height (e.g. inside a dialog)
@@ -20,13 +22,14 @@ export default function ImageViewer({ pages, start = 0, boxClass, className }: {
   const id = raw && page?.derived_from ? page.derived_from : page?.id;
 
   useEffect(() => { setZ(1); setOff({ x: 0, y: 0 }); }, [i, raw]);
+  useEffect(() => { if (z === 1) setOff({ x: 0, y: 0 }); }, [z]);  // back at 100% the paper is centred again
   useEffect(() => {
     const el = box.current;
     if (!el) return;
     const wheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey && z === 1) return;  // let the page scroll unless zooming
       e.preventDefault();
-      setZ((v) => Math.min(6, Math.max(1, v * (e.deltaY < 0 ? 1.15 : 1 / 1.15))));
+      setZ((v) => zoom(v * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
     };
     el.addEventListener("wheel", wheel, { passive: false });
     return () => el.removeEventListener("wheel", wheel);
@@ -40,9 +43,10 @@ export default function ImageViewer({ pages, start = 0, boxClass, className }: {
           <Button key={p.id} size="sm" variant={j === i ? "default" : "outline"} onClick={() => setI(j)}>{t("Page {n}", { n: j + 1 })}</Button>
         ))}
         <div className="ml-auto flex gap-1">
-          <Button size="icon" variant="outline" aria-label={t("Zoom out")} disabled={z <= 1} onClick={() => setZ(Math.max(1, z / 1.4))}><Minus /></Button>
-          <Button size="icon" variant="outline" aria-label={t("Zoom in")} disabled={z >= 6} onClick={() => setZ(Math.min(6, z * 1.4))}><Plus /></Button>
-          <Button size="icon" variant="outline" aria-label={t("Reset zoom")} onClick={() => { setZ(1); setOff({ x: 0, y: 0 }); }}><RotateCcw /></Button>
+          <Button size="icon" variant="outline" aria-label={t("Zoom out")} disabled={z <= 1} onClick={() => setZ(zoom(z / 1.4))}><Minus /></Button>
+          <Button size="icon" variant="outline" aria-label={t("Zoom in")} disabled={z >= 6} onClick={() => setZ(zoom(z * 1.4))}><Plus /></Button>
+          <Button size="sm" variant="outline" title={t("Reset view")} disabled={z === 1 && !off.x && !off.y}
+                  onClick={() => { setZ(1); setOff({ x: 0, y: 0 }); }}><RotateCcw />{t("Reset view")} · {Math.round(z * 100)}%</Button>
         </div>
       </div>
       <div ref={box}
