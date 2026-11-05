@@ -32,6 +32,8 @@ time spent grading, with the teacher deciding every final grade.
 - **US.P08**: A teacher gives the final grade and records whether the AI was right, and why not.
 - **US.P09**: A teacher assembles an exam from existing problems, or new ones, for one class group.
 - **US.P10**: Students in a room upload their own answers from their phones during a short window.
+- **US.P12**: A student tries to submit answers under another student's name from the same browser;
+  the platform refuses that submission and directs legitimate shared-device users to the teacher.
 - **US.P11**: A teacher or the admin wants to know where the money went.
 
 ## Requirements
@@ -144,6 +146,26 @@ Each requirement has a stable id; tests and tasks cite it.
   as a new version, never overwriting the first. The teacher sees all versions and chooses which
   one to grade. Uploads after closing are refused, not stored.
 
+- **PL-35 Student submission integrity (US.P10, US.P12).** The upload link is for students
+  submitting their own answers. A typed name alone does not verify who is submitting: students
+  could impersonate classmates or submit the same work for different students. Proposed safeguard:
+  set an opaque first-party cookie when the student opens the link, then bind that browser session
+  server-side to the first submitted student name for that exam and group. Check this binding on
+  every submission, including through a newly opened link for the same exam and group. If the same
+  cookie is used with a different student name, refuse the submission before storing answer files
+  or starting grading, explain the conflict without exposing the previous student's name, and ask
+  the student to contact the teacher. Simultaneous submissions must not create two bindings.
+  Same-student repeat uploads follow PL-31: preserve versions, never silently overwrite or create
+  a second student record. Teacher uploads on a student's behalf remain available (PL-20).
+  The cookie contains no student name or answer data and is scoped to this submission flow;
+  use Secure, HttpOnly and SameSite protections. Explain its purpose on the upload page.
+  This is a browser-session check, not proof of student identity, physical location, authorship,
+  or absence of cheating. Clearing cookies, private browsing or another browser/device can bypass
+  it; shared devices and misspelled names can cause legitimate conflicts. Do not claim verified
+  identity or introduce IP tracking or device fingerprinting as a substitute. Cookie lifetime,
+  missing/blocked-cookie handling, name correction and stronger identity verification remain
+  design questions to resolve before implementation.
+
 ### Costs
 
 - **PL-32 Every AI call is recorded.** Each call stores model, input, cached, output and reasoning
@@ -197,12 +219,19 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P11 | PL-28, PL-30 | A link with a 1-minute lifetime refuses uploads after it expires; a closed link refuses at once. |
 | AC-P12 | PL-31 | Two uploads with the same name for one problem are both kept as versions. |
 | AC-P13 | PL-32, PL-33 | After one setup and two gradings, the problem, exam, group and exam+group totals add up to the recorded calls. |
+| AC-P15 | PL-35, US.P12 | Opening a link sets an opaque cookie; a first submission binds it server-side. A different student name with that cookie is refused without storing answer files or grading, including on a replacement link for the same exam/group. Concurrent attempts cannot bind two names. The refusal does not expose the bound name. |
+| AC-P16 | PL-35, PL-31 | The bound student can submit other problems; repeat uploads for one problem remain versions. A shared-device conflict directs the student to the teacher, who can upload on their behalf. Cookie bypass is documented as an unresolved limitation, not treated as verified identity. |
 | AC-P14 | PL-10, PL-11 | At 375 px and 1280 px, in light and dark, every tab is usable and uses the right primary colour. |
 
 ## Open questions (each with the default applied until answered, D10)
 
-1. *Student identity.* Students type a name, so a student can impersonate another. Default: accept
-   it, show all versions and the time of each upload, and let the teacher resolve disputes (PL-31).
+1. *Student identity and cheating.* Owner proposal, 5 November 2026: refuse different-student
+   submissions from the same cookie-bound browser session (PL-35), while preserving same-student
+   versions (PL-31). This reduces one impersonation route but does not verify identity or detect
+   copied answers. Default for legitimate conflicts: contact the teacher for a teacher upload.
+   Before implementation, agree cookie lifetime and missing/blocked-cookie handling, how a
+   student corrects a name, and whether stronger identity checks are needed. No device or
+   location tracking is authorized by this proposal.
 2. *Groups and rosters.* Default: a group has no pre-loaded roster; its students are the names that
    submitted. A roster for matching names comes later if teachers ask.
 3. *One answer, several problems.* Default: a student uploads one answer per problem and chooses
