@@ -72,7 +72,7 @@ export type Problem = {
   id: string; title: string; status: "draft" | "ready"; language: string;
   statement_text: string; solution_text: string; rubric_text: string;
   proposal: Proposal | null; pending_proposal: Proposal | null; pending_instruction: string | null;
-  rubric_version: number; rubric_errors: string[];
+  rubric_version: number; rubric_errors: string[]; tags: string[];
   files: (FileRef & { link_id: number; role: "statement" | "solution" })[]; answers: number;
 };
 export type AnswerState = "not_graded" | "running" | "proposed" | "review_required" | "failed" | "approved";

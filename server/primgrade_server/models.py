@@ -88,6 +88,7 @@ class Problem(Base):
     pending_proposal: Mapped[dict | None] = mapped_column(Json)  # PL-18, kept or discarded
     pending_instruction: Mapped[str | None] = mapped_column(Text)
     rubric_version: Mapped[int] = mapped_column(Integer, default=0)  # 0: never accepted
+    tags: Mapped[list[str]] = mapped_column(Json, default=list)  # PL-41, the teacher's own labels
     created_at: Mapped[datetime] = ts()
     updated_at: Mapped[datetime] = ts(onupdate=now)
 

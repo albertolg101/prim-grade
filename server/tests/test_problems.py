@@ -75,3 +75,19 @@ def test_problems_are_private_and_used_ones_are_not_deleted(admin, make_client):
     assert admin.delete(f"/api/problems/{p['id']}").status_code == 409
     q = admin.post("/api/problems", json={"title": "spare"}).json()
     assert admin.delete(f"/api/problems/{q['id']}").status_code == 204
+
+
+def test_tags_are_kept_per_teacher_and_suggested(admin, make_client):  # AC-P19
+    p = admin.post("/api/problems", json={"title": "P1"}).json()
+    assert p["tags"] == []
+    tags = [" Mechanics ", "mechanics", "Exam 1"]
+    r = admin.patch(f"/api/problems/{p['id']}", json={"tags": tags})
+    assert r.json()["tags"] == ["Mechanics", "Exam 1"] and r.json()["status"] == "draft"
+    q = admin.post("/api/problems", json={"title": "P2"}).json()
+    admin.patch(f"/api/problems/{q['id']}", json={"tags": ["Optics", "exam 1"]})
+    assert admin.get("/api/problems/tags").json() == ["Exam 1", "Mechanics", "Optics"]
+    assert admin.get("/api/problems").json()[0]["tags"] == ["Optics", "exam 1"]
+    assert admin.patch(f"/api/problems/{p['id']}", json={"tags": [""]}).status_code == 422
+    assert admin.patch(f"/api/problems/{p['id']}", json={"tags": ["x" * 41]}).status_code == 422
+    other = teacher(make_client, admin, "other@example.test")
+    assert other.get("/api/problems/tags").json() == []  # a teacher never sees another's tags

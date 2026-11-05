@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 from sqlalchemy import func, select
 
 from grader.schemas import SetupProposal
@@ -30,8 +30,20 @@ class NewProblem(BaseModel):
     title: str = Field(min_length=1, max_length=200)
 
 
+Tag = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+
+
+def unique_tags(tags: list[str]) -> list[str]:
+    """PL-41: the first spelling of a tag wins; 'Mechanics' and 'mechanics' are one tag."""
+    seen: dict[str, str] = {}
+    for t in tags:
+        seen.setdefault(t.casefold(), t)
+    return list(seen.values())
+
+
 class ProblemEdit(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
+    tags: list[Tag] | None = Field(default=None, max_length=20)
     statement_text: str | None = None
     solution_text: str | None = None
     rubric_text: str | None = None
@@ -77,6 +89,7 @@ def problem_out(db, p: models.Problem) -> dict:
         "rubric_text": p.rubric_text, "proposal": p.proposal,
         "pending_proposal": p.pending_proposal, "pending_instruction": p.pending_instruction,
         "rubric_version": p.rubric_version, "rubric_errors": rubric_errors(p.proposal),
+        "tags": p.tags,
         "files": [{**file_out(f), "link_id": pf.id, "role": pf.role} for pf, f in
                   problem_files(db, p.id)],
         "answers": n_answers, "updated_at": p.updated_at.isoformat(),
@@ -88,7 +101,14 @@ def list_problems(db: Db, user: Teacher) -> list[dict]:
     rows = db.scalars(select(models.Problem).where(models.Problem.owner_id == user.id)
                       .order_by(models.Problem.updated_at.desc())).all()
     return [{"id": p.id, "title": p.title, "status": p.status, "rubric_version": p.rubric_version,
-             "updated_at": p.updated_at.isoformat()} for p in rows]
+             "tags": p.tags, "updated_at": p.updated_at.isoformat()} for p in rows]
+
+
+@router.get("/tags")
+def list_tags(db: Db, user: Teacher) -> list[str]:
+    """PL-41: every tag on this teacher's problems, for the autocomplete."""
+    rows = db.scalars(select(models.Problem.tags).where(models.Problem.owner_id == user.id))
+    return sorted(unique_tags([t for tags in rows for t in tags]), key=str.casefold)
 
 
 def create(db, user: models.User, body: NewProblem) -> models.Problem:
@@ -115,7 +135,7 @@ def get_problem(problem_id: str, db: Db, user: Teacher) -> dict:
 def edit_problem(problem_id: str, body: ProblemEdit, db: Db, user: Teacher) -> dict:
     p = owned(db, models.Problem, problem_id, user)
     for k, v in body.model_dump(exclude_none=True).items():
-        setattr(p, k, v.strip() if k == "title" else v)
+        setattr(p, k, v.strip() if k == "title" else unique_tags(v) if k == "tags" else v)
     db.commit()
     return problem_out(db, p)
 

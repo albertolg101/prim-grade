@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Plus, Trash2, X } from "lucide-react";
 import Answers from "@/components/Answers";
 import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad } from "@/components/common";
@@ -27,7 +27,7 @@ export default function ProblemPage({ id }: { id: string }) {
   const p = prob.data;
   const from = query("exam");
   const view: View = query("view") === "grader" ? "grader" : "info";
-  const rename = useAction();
+  const edit = useAction();  // rename and tags
   const go = (v: View) => {
     const q = new URLSearchParams(from ? { exam: from } : {});
     if (v === "grader") q.set("view", "grader");
@@ -38,10 +38,14 @@ export default function ProblemPage({ id }: { id: string }) {
   const tabs: [View, string][] = [["info", t("1 · Problem information")], ["grader", t("2 · AI grader")]];
   return (
     <Page title={p.title}
-          onRename={(title) => rename.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { title })))}
+          onRename={(title) => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { title })))}
           crumbs={from ? [[t("Exams"), "/exams"], [t("Exam"), `/exams/${from}`]] : [[t("Problems"), "/problems"]]}
-          actions={p.status === "ready" ? <Badge>{t("Ready · rubric v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}>
-      <ErrorText>{rename.error}</ErrorText>
+          actions={<>
+            <Tags tags={p.tags} busy={edit.busy}
+                  onChange={(tags) => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { tags })))} />
+            {p.status === "ready" ? <Badge>{t("Ready · rubric v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
+          </>}>
+      <ErrorText>{edit.error}</ErrorText>
       <nav aria-label={t("Problem screens")} className="flex gap-1 border-b">
         {tabs.map(([v, label]) => (
           <button key={v} type="button" aria-current={view === v ? "page" : undefined} onClick={() => go(v)}
@@ -71,6 +75,53 @@ export default function ProblemPage({ id }: { id: string }) {
 }
 
 /** Uploaded statement or solution pages; a tap opens them large (PL-12, I4: the originals). */
+/** PL-41: the problem's tags; the plus opens a field that suggests the teacher's other tags and takes new ones. */
+function Tags({ tags, busy, onChange }: { tags: string[]; busy: boolean; onChange: (tags: string[]) => void }) {
+  const [text, setText] = useState<string | null>(null);  // null: the field is closed
+  const [known, setKnown] = useState<string[]>([]);
+  const has = (x: string) => tags.some((y) => y.toLowerCase() === x.toLowerCase());
+  const open = () => { setText(""); api.get<string[]>("/api/problems/tags").then(setKnown, () => setKnown([])); };
+  const add = (raw: string) => {
+    const tag = raw.trim();
+    if (tag && !has(tag)) onChange([...tags, tag]);
+    setText("");
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {tags.map((x) => (
+        <Badge key={x} variant="secondary" className="gap-0.5 pr-0.5">
+          {x}
+          <button type="button" aria-label={t("Remove tag {tag}", { tag: x })} disabled={busy}
+                  className="rounded-full p-0.5 hover:bg-background/60" onClick={() => onChange(tags.filter((y) => y !== x))}>
+            <X className="size-3" />
+          </button>
+        </Badge>
+      ))}
+      {text === null ? (
+        <Button size="icon" variant="ghost" className="size-7" aria-label={t("Add tag")} title={t("Add tag")} onClick={open}>
+          <Plus />
+        </Button>
+      ) : (
+        <form onSubmit={(e) => { e.preventDefault(); add(text); }}>
+          <Input autoFocus list="problem-tags" maxLength={40} aria-label={t("Add tag")} placeholder={t("Tag name")}
+                 className="h-7 w-40 text-sm" value={text}
+                 onChange={(e) => {
+                   // picking a suggestion adds it at once; typing a new name waits for Enter
+                   const picked = !(e.nativeEvent instanceof InputEvent) || e.nativeEvent.inputType === "insertReplacementText";
+                   if (picked && known.includes(e.target.value)) add(e.target.value);
+                   else setText(e.target.value);
+                 }}
+                 onKeyDown={(e) => { if (e.key === "Escape") setText(null); }}
+                 onBlur={() => { if (!text.trim()) setText(null); }} />
+          <datalist id="problem-tags">
+            {known.filter((x) => !has(x)).map((x) => <option key={x} value={x} />)}
+          </datalist>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function Thumbs({ files, onRemove, busy }: { files: ProblemFile[]; onRemove: (f: ProblemFile) => void; busy: boolean }) {
   const [open, setOpen] = useState<number | null>(null);
   if (!files.length) return null;
