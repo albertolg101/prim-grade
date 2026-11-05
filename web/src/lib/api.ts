@@ -1,3 +1,5 @@
+import type { Lang } from "./i18n";
+
 /** Thin fetch wrapper: cookies included, server `detail` surfaced as the error message. */
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -50,7 +52,7 @@ export function pagesForm(pages: Page[], extra: Record<string, string | undefine
   return f;
 }
 
-export type Me = { id: string; email: string; name: string; is_admin: boolean; theme: Theme; fake_llm: boolean };
+export type Me = { id: string; email: string; name: string; is_admin: boolean; theme: Theme; language: Lang; fake_llm: boolean };
 export type Theme = "system" | "light" | "dark";
 
 export type Criterion = {
@@ -90,7 +92,7 @@ export type Harness = {
 };
 export type RunOut = {
   id: string; status: AnswerState; total: number | null; max_points: number; rubric_version: number;
-  harness: Harness | null; error: string | null; started_at: string; finished_at: string | null;
+  harness: Harness | null; error: string | null; language: Lang | null; started_at: string; finished_at: string | null;
 };
 export type Approval = {
   run_id: string | null; scores: { criterion_id: string; points: number }[]; feedback: string;

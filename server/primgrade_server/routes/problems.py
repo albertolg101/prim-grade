@@ -28,7 +28,6 @@ Language = Literal["en", "es", "ru"]
 
 class NewProblem(BaseModel):
     title: str = Field(min_length=1, max_length=200)
-    language: Language = "en"
 
 
 class ProblemEdit(BaseModel):
@@ -93,7 +92,8 @@ def list_problems(db: Db, user: Teacher) -> list[dict]:
 
 
 def create(db, user: models.User, body: NewProblem) -> models.Problem:
-    p = models.Problem(owner_id=user.id, title=body.title.strip(), language=body.language)
+    p = models.Problem(owner_id=user.id, title=body.title.strip(),
+                       language=user.language)
     db.add(p)
     db.flush()
     return p
@@ -183,6 +183,7 @@ async def generate(problem_id: str, db: Db, user: Teacher, config: Config) -> di
     if not (p.statement_text.strip() or n_stmt) or not (p.solution_text.strip() or n_sol):
         raise HTTPException(422, "add the statement and the reference solution (text or images)")
     llm = ai.llm_for(config, user)
+    p.language = user.language  # PL-37: AI output follows the teacher's current language
     text = setup_text(p.title, p.statement_text, p.solution_text, p.rubric_text, n_stmt, n_sol,
                       p.language)
     try:
@@ -219,6 +220,7 @@ async def improve(problem_id: str, body: Instruction, db: Db, user: Teacher,
         raise HTTPException(409, "generate the grader first")
     images, n_stmt, n_sol = _images(db, p)
     llm = ai.llm_for(config, user)
+    p.language = user.language  # PL-37
     text = revise_text(p.title, p.statement_text, p.solution_text,
                        SetupProposal.model_validate(p.proposal), body.instruction, n_stmt, n_sol,
                        p.language)

@@ -85,3 +85,23 @@ def test_teacher_can_grade_without_ai(admin):
                    json={"scores": [{"criterion_id": "C1", "points": 0},
                                     {"criterion_id": "C2", "points": 0}], "feedback": "blank"})
     assert r.status_code == 200 and r.json()["approval"]["ai_verdict"] is None
+
+
+def test_ai_output_uses_the_teachers_language(admin, monkeypatch):  # PL-37, AC-P17
+    real, prompts = ai.llm_for, []
+
+    def spy(settings, user):
+        llm = real(settings, user)
+
+        async def call(model, instructions, text, *rest):
+            prompts.append(text)
+            return await llm(model, instructions, text, *rest)
+        return call
+
+    monkeypatch.setattr(ai, "llm_for", spy)
+    assert admin.put("/api/settings", json={"language": "es"}).status_code == 200
+    p = ready_problem(admin)
+    assert p["language"] == "es"
+    run = graded(admin, p["id"])["runs"][0]
+    assert run["language"] == "es"
+    assert len(prompts) == 2 and all("Spanish" in t for t in prompts)  # setup and grading

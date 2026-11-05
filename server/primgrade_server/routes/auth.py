@@ -33,7 +33,7 @@ class SignIn(BaseModel):
 
 def user_out(u: models.User) -> dict:
     return {"id": u.id, "email": u.email, "name": u.name, "status": u.status,
-            "is_admin": u.is_admin, "theme": u.theme}
+            "is_admin": u.is_admin, "theme": u.theme, "language": u.language}
 
 
 def _email(raw: str) -> str:

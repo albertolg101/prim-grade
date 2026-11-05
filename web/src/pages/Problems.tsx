@@ -7,6 +7,7 @@ import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, type Problem } from "@/lib/api";
+import { t } from "@/lib/i18n";
 import { navigate } from "@/lib/router";
 
 type Row = { id: string; title: string; status: "draft" | "ready"; rubric_version: number; updated_at: string };
@@ -18,30 +19,30 @@ export default function Problems() {
   const act = useAction();
 
   return (
-    <Page title="Problems" actions={
+    <Page title={t("Problems")} actions={
       <Dialog onOpenChange={(open) => { if (!open) { setTitle(""); act.setError(null); } }}>
-        <DialogTrigger asChild><Button>New Draft</Button></DialogTrigger>
+        <DialogTrigger asChild><Button>{t("New Draft")}</Button></DialogTrigger>
         <DialogContent>
           <form className="space-y-4" onSubmit={(e) => {
             e.preventDefault();
             act.run(async () => navigate(`/problems/${(await api.post<Problem>("/api/problems", { title })).id}`));
           }}>
-            <DialogHeader><DialogTitle>New draft</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("New draft")}</DialogTitle></DialogHeader>
             <div className="space-y-1.5">
-              <Label htmlFor="problem-name">Name</Label>
+              <Label htmlFor="problem-name">{t("Name")}</Label>
               <Input id="problem-name" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <ErrorText>{act.error}</ErrorText>
             <DialogFooter>
-              <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-              <Button type="submit" disabled={!title.trim() || act.busy}>Save draft</Button>
+              <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
+              <Button type="submit" disabled={!title.trim() || act.busy}>{t("Save draft")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     }>
       <ErrorText>{list.error}</ErrorText>
-      {list.data?.length === 0 && <p className="text-sm text-muted-foreground">No problems yet. Use New Draft to start one.</p>}
+      {list.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("No problems yet. Use New Draft to start one.")}</p>}
       {!!list.data?.length && <Card className="divide-y gap-0 py-0">
         {list.data.map((p) => (
           <a key={p.id} href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
@@ -49,7 +50,7 @@ export default function Problems() {
             <span className="min-w-0 truncate font-medium">{p.title}</span>
             <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
               <span className="hidden sm:inline">{when(p.updated_at)}</span>
-              {p.status === "ready" ? <Badge>Ready · v{p.rubric_version}</Badge> : <Badge variant="outline">Draft</Badge>}
+              {p.status === "ready" ? <Badge>{t("Ready · v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
             </span>
           </a>
         ))}

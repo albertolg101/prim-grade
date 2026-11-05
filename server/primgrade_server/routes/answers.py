@@ -137,6 +137,7 @@ def get_answer(answer_id: str, db: Db, user: Teacher) -> dict:
         "rubric_version": version, "rubric": rv.proposal["rubric"] if rv else None,
         "runs": [{"id": r.id, "status": r.status, "total": r.total, "max_points": r.max_points,
                   "rubric_version": r.rubric_version, "harness": r.harness, "error": r.error,
+                  "language": r.language,
                   "usage": r.usage, "started_at": r.started_at.isoformat(),
                   "finished_at": r.finished_at.isoformat() if r.finished_at else None}
                  for r in runs],

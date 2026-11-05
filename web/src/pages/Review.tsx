@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ImageViewer from "@/components/ImageViewer";
-import { Back, ErrorText, StateBadge, pts, useAction, useLoad, when } from "@/components/common";
+import { ErrorText, StateBadge, pts, useAction, useCrumbs, useLoad, when, type Crumb } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type AnswerDetail, type AnswerRow, type CriterionScore, type RunOut } from "@/lib/api";
+import { t } from "@/lib/i18n";
 import { navigate, query } from "@/lib/router";
 
 const REASONS = [
@@ -22,8 +23,8 @@ const REASONS = [
 /** Where the review came from, for next / previous and the way back. */
 function context(ctx: string | null) {
   const [kind, a, b] = (ctx ?? "").split(":");
-  if (kind === "exam") return { back: `/exams/${a}?group=${b}`, label: "Exam", list: () => api.get<{ answers: AnswerRow[] }>(`/api/exams/${a}/groups/${b}/answers`).then((r) => r.answers) };
-  if (kind === "problem") return { back: `/problems/${a}`, label: "Problem", list: () => api.get<AnswerRow[]>(`/api/problems/${a}/answers`) };
+  if (kind === "exam") return { kind, back: `/exams/${a}?group=${b}`, list: () => api.get<{ answers: AnswerRow[] }>(`/api/exams/${a}/groups/${b}/answers`).then((r) => r.answers) };
+  if (kind === "problem") return { kind, back: `/problems/${a}`, list: () => api.get<AnswerRow[]>(`/api/problems/${a}/answers`) };
   return null;
 }
 
@@ -39,9 +40,16 @@ export default function Review({ id }: { id: string }) {
 
   useEffect(() => {
     if (a?.state !== "running") return;
-    const t = setInterval(ans.reload, 2000);
-    return () => clearInterval(t);
+    const timer = setInterval(ans.reload, 2000);
+    return () => clearInterval(timer);
   }, [a?.state, ans.reload]);
+
+  // PL-38
+  const name = a ? a.student_name || a.label || t("Unnamed answer") : t("Answer");
+  const crumbs: Crumb[] = ctx?.kind === "exam"
+    ? [[t("Exams"), "/exams"], [t("Exam"), ctx.back], [name]]
+    : [[t("Problems"), "/problems"], [a?.problem_title ?? t("Problem"), ctx?.back ?? (a ? `/problems/${a.problem_id}` : undefined)], [name]];
+  useCrumbs(crumbs);
 
   const ids = (list.data ?? []).filter((r) => r.selected).map((r) => r.id);
   const at = ids.indexOf(id);
@@ -50,35 +58,34 @@ export default function Review({ id }: { id: string }) {
   return (
     <div className="mx-auto w-full max-w-[1500px] space-y-3 px-4 py-4">
       <div className="flex flex-wrap items-center gap-2">
-        {ctx && <Back to={ctx.back}>{ctx.label}</Back>}
         <div className="ml-auto flex items-center gap-1">
-          {at >= 0 && <span className="text-sm text-muted-foreground">{at + 1} of {ids.length}</span>}
-          <Button size="sm" variant="outline" aria-label="Previous answer" disabled={at <= 0} onClick={() => go(at - 1)}><ChevronLeft /> Prev</Button>
-          <Button size="sm" variant="outline" aria-label="Next answer" disabled={at < 0 || at >= ids.length - 1} onClick={() => go(at + 1)}>Next <ChevronRight /></Button>
+          {at >= 0 && <span className="text-sm text-muted-foreground">{t("{n} of {total}", { n: at + 1, total: ids.length })}</span>}
+          <Button size="sm" variant="outline" aria-label={t("Previous answer")} disabled={at <= 0} onClick={() => go(at - 1)}><ChevronLeft /> {t("Prev")}</Button>
+          <Button size="sm" variant="outline" aria-label={t("Next answer")} disabled={at < 0 || at >= ids.length - 1} onClick={() => go(at + 1)}>{t("Next")} <ChevronRight /></Button>
         </div>
       </div>
       <ErrorText>{ans.error}</ErrorText>
       {a && (
         <>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold">{a.student_name || a.label || "Unnamed answer"}</h1>
+            <h1 className="text-xl font-semibold">{name}</h1>
             <StateBadge state={a.state} />
             <span className="text-sm text-muted-foreground">
-              {a.problem_title} · {a.source === "student" ? "uploaded by the student" : "uploaded by you"} {when(a.created_at)} · rubric v{a.rubric_version}
+              {a.problem_title} · {a.source === "student" ? t("uploaded by the student") : t("uploaded by you")} {when(a.created_at)} · {t("rubric v{n}", { n: a.rubric_version })}
             </span>
           </div>
           {a.versions.length > 1 && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Versions:</span>
+              <span className="text-muted-foreground">{t("Versions:")}</span>
               {a.versions.map((v) => (
                 <Button key={v.id} size="sm" variant={v.id === a.id ? "default" : "outline"}
                         onClick={() => navigate(`/answers/${v.id}${ctxParam ? `?ctx=${ctxParam}` : ""}`)}>
-                  v{v.version} · {when(v.created_at)}{v.selected ? " · graded" : ""}
+                  v{v.version} · {when(v.created_at)}{v.selected ? ` · ${t("graded")}` : ""}
                 </Button>
               ))}
               {!a.selected && <Button size="sm" variant="secondary" disabled={act.busy}
                                       onClick={() => act.run(async () => { ans.setData(await api.post<AnswerDetail>(`/api/answers/${a.id}/select`)); await list.reload(); })}>
-                Grade this version instead</Button>}
+                {t("Grade this version instead")}</Button>}
             </div>
           )}
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
@@ -88,7 +95,7 @@ export default function Review({ id }: { id: string }) {
               <ErrorText>{act.error}</ErrorText>
               {a.rubric && <ApprovalForm key={`${a.id}-${run?.id ?? "none"}-${a.approval?.approved_at ?? ""}`} a={a} run={run}
                                          onDone={(next) => { ans.setData(next); list.reload(); }} />}
-              {!a.rubric && <p className="text-sm text-muted-foreground">Accept the problem's grader before grading this answer.</p>}
+              {!a.rubric && <p className="text-sm text-muted-foreground">{t("Accept the problem's grader before grading this answer.")}</p>}
             </div>
           </div>
         </>
@@ -114,32 +121,32 @@ function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; on
   return (
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-        <CardTitle>AI proposal <span className="text-sm font-normal text-muted-foreground">(a draft until you approve)</span></CardTitle>
-        {canGrade && <Button size="sm" variant={run ? "outline" : "default"} disabled={busy} onClick={onGrade}>{run ? "Grade again" : "Grade with AI"}</Button>}
+        <CardTitle>{t("AI proposal")} <span className="text-sm font-normal text-muted-foreground">{t("(a draft until you approve)")}</span></CardTitle>
+        {canGrade && <Button size="sm" variant={run ? "outline" : "default"} disabled={busy} onClick={onGrade}>{run ? t("Grade again") : t("Grade with AI")}</Button>}
       </CardHeader>
       <CardContent className="space-y-4">
-        {!run && <p className="text-sm text-muted-foreground">Not graded yet.</p>}
-        {run?.status === "running" && <p className="animate-pulse text-sm">The AI is reading this answer…</p>}
+        {!run && <p className="text-sm text-muted-foreground">{t("Not graded yet.")}</p>}
+        {run?.status === "running" && <p className="animate-pulse text-sm">{t("The AI is reading this answer…")}</p>}
         {run?.status === "failed" && (
           <p role="alert" className="rounded-md border border-destructive bg-destructive/10 p-2 text-sm">
-            Grading failed, so there is no score. {run.error}
+            {t("Grading failed, so there is no score.")} {run.error}
           </p>
         )}
         {run?.status === "review_required" && (
           <div role="alert" className="rounded-md border border-warning bg-warning/15 p-2 text-sm">
-            The AI did not propose a score: review this answer yourself.
+            {t("The AI did not propose a score: review this answer yourself.")}
             {h?.review_reasons.length ? <ul className="mt-1 list-disc pl-5">{h.review_reasons.map((r, i) => <li key={i}>{r}</li>)}</ul> : null}
           </div>
         )}
         {h && (
           <>
-            <Stage n={1} title="Transcription"><p className="whitespace-pre-wrap rounded bg-muted p-2 font-mono text-sm">{h.transcription || "—"}</p></Stage>
-            <Stage n={2} title="Physics interpretation">
+            <Stage n={1} title={t("Transcription")}><p className="whitespace-pre-wrap rounded bg-muted p-2 font-mono text-sm">{h.transcription || "—"}</p></Stage>
+            <Stage n={2} title={t("Physics interpretation")}>
               <p className="text-sm">{h.interpretation || "—"}</p>
-              {h.diagram_observations && <p className="text-sm text-muted-foreground">Diagram: {h.diagram_observations}</p>}
+              {h.diagram_observations && <p className="text-sm text-muted-foreground">{t("Diagram:")} {h.diagram_observations}</p>}
             </Stage>
             {run.status === "proposed" && (
-              <Stage n={3} title={`Proposed scores · ${pts(run.total)} / ${pts(run.max_points)}`}>
+              <Stage n={3} title={t("Proposed scores · {total} / {max}", { total: pts(run.total), max: pts(run.max_points) })}>
                 <ul className="space-y-2">
                   {h.criteria.map((c) => {
                     const rc = a.rubric?.criteria.find((x) => x.id === c.criterion_id);
@@ -149,14 +156,14 @@ function Proposal({ a, run, onGrade, busy }: { a: AnswerDetail; run?: RunOut; on
                           <span>{c.criterion_id} · {rc?.description}</span>
                           <span className="tabular-nums">{pts(c.points)} / {pts(rc?.max_points)}</span>
                         </div>
-                        <div><span className="text-muted-foreground">Evidence ({c.source}):</span> {c.evidence}</div>
-                        <div><span className="text-muted-foreground">Why:</span> {c.reasoning}</div>
-                        <Badge variant="outline" className="mt-1">confidence: {c.confidence}</Badge>
+                        <div><span className="text-muted-foreground">{t("Evidence ({source}):", { source: c.source })}</span> {c.evidence}</div>
+                        <div><span className="text-muted-foreground">{t("Why:")}</span> {c.reasoning}</div>
+                        <Badge variant="outline" className="mt-1">{t("confidence: {level}", { level: t(c.confidence) })}</Badge>
                       </li>
                     );
                   })}
                 </ul>
-                {h.feedback && <p className="text-sm"><span className="text-muted-foreground">Suggested feedback:</span> {h.feedback}</p>}
+                {h.feedback && <p className="text-sm"><span className="text-muted-foreground">{t("Suggested feedback:")}</span> {h.feedback}</p>}
               </Stage>
             )}
           </>
@@ -196,32 +203,32 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
   return (
     <Card className={a.approval ? "border-success" : "border-primary"}>
       <CardHeader>
-        <CardTitle>{a.approval ? `Approved · ${pts(a.approval.total)} / ${pts(max)}` : "Your grade"}</CardTitle>
-        {a.approval && <p className="text-sm text-muted-foreground">Approved {when(a.approval.approved_at)}. You can change it and approve again.</p>}
+        <CardTitle>{a.approval ? t("Approved · {total} / {max}", { total: pts(a.approval.total), max: pts(max) }) : t("Your grade")}</CardTitle>
+        {a.approval && <p className="text-sm text-muted-foreground">{t("Approved {when}. You can change it and approve again.", { when: when(a.approval.approved_at) })}</p>}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           {rubric.criteria.map((c) => (
             <label key={c.id} className="flex items-center gap-2 text-sm">
               <span className="min-w-0 flex-1">{c.id} · {c.description}</span>
-              {proposed[c.id] !== undefined && Number(scores[c.id]) !== proposed[c.id] && <Badge variant="outline">AI: {pts(proposed[c.id])}</Badge>}
-              <Input type="number" inputMode="decimal" step={0.5} min={0} max={c.max_points} className="w-20 text-right" aria-label={`${c.id} points`}
+              {proposed[c.id] !== undefined && Number(scores[c.id]) !== proposed[c.id] && <Badge variant="outline">{t("AI: {points}", { points: pts(proposed[c.id]) })}</Badge>}
+              <Input type="number" inputMode="decimal" step={0.5} min={0} max={c.max_points} className="w-20 text-right" aria-label={t("{criterion} points", { criterion: c.id })}
                      value={scores[c.id]} onChange={(e) => setScores({ ...scores, [c.id]: e.target.value })} />
               <span className="w-10 text-muted-foreground">/ {pts(c.max_points)}</span>
             </label>
           ))}
-          <div className="text-right text-sm font-semibold tabular-nums">Total {pts(total)} / {pts(max)}</div>
+          <div className="text-right text-sm font-semibold tabular-nums">{t("Total {total} / {max}", { total: pts(total), max: pts(max) })}</div>
         </div>
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Feedback for the student</span>
+          <span className="text-sm font-medium">{t("Feedback for the student")}</span>
           <Textarea rows={3} value={feedback} onChange={(e) => setFeedback(e.target.value)} />
         </label>
         {aiRan && (
           <fieldset className="space-y-2 rounded-lg border p-3">
-            <legend className="px-1 text-sm font-medium">Was the AI right? (for evaluation, never shown to students)</legend>
+            <legend className="px-1 text-sm font-medium">{t("Was the AI right? (for evaluation, never shown to students)")}</legend>
             <div className="flex gap-2">
-              <Button type="button" size="sm" variant={verdict === "correct" ? "default" : "outline"} aria-pressed={verdict === "correct"} onClick={() => setVerdict("correct")}>Correct</Button>
-              <Button type="button" size="sm" variant={verdict === "wrong" ? "destructive" : "outline"} aria-pressed={verdict === "wrong"} onClick={() => setVerdict("wrong")}>Wrong</Button>
+              <Button type="button" size="sm" variant={verdict === "correct" ? "default" : "outline"} aria-pressed={verdict === "correct"} onClick={() => setVerdict("correct")}>{t("Correct")}</Button>
+              <Button type="button" size="sm" variant={verdict === "wrong" ? "destructive" : "outline"} aria-pressed={verdict === "wrong"} onClick={() => setVerdict("wrong")}>{t("Wrong")}</Button>
             </div>
             {verdict === "wrong" && (
               <div className="space-y-2">
@@ -233,23 +240,23 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
                   ))}
                 </div>
                 <Select value={reason} onValueChange={setReason}>
-                  <SelectTrigger className="w-full sm:w-72" aria-label="Why the AI was wrong"><SelectValue placeholder="Why was it wrong?" /></SelectTrigger>
-                  <SelectContent>{REASONS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="w-full sm:w-72" aria-label={t("Why the AI was wrong")}><SelectValue placeholder={t("Why was it wrong?")} /></SelectTrigger>
+                  <SelectContent>{REASONS.map(([v, l]) => <SelectItem key={v} value={v}>{t(l)}</SelectItem>)}</SelectContent>
                 </Select>
-                <Input placeholder="Short note (optional if you ticked criteria)" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Note" />
+                <Input placeholder={t("Short note (optional if you ticked criteria)")} value={note} onChange={(e) => setNote(e.target.value)} aria-label={t("Note")} />
               </div>
             )}
           </fieldset>
         )}
         <ErrorText>{act.error}</ErrorText>
         <Button className="w-full" disabled={act.busy || missing || !!needVerdict || needWhy || a.state === "running"} onClick={submit}>
-          {a.approval ? "Approve again" : "Approve grade"}
+          {a.approval ? t("Approve again") : t("Approve grade")}
         </Button>
         {(missing || needVerdict || needWhy) && (
           <p className="text-xs text-muted-foreground">
-            {missing ? "Give points for every criterion, within its maximum. " : ""}
-            {needVerdict ? "Say whether the AI was correct or wrong. " : ""}
-            {needWhy ? "Say why the AI was wrong: a reason, and the criteria or a note." : ""}
+            {missing ? t("Give points for every criterion, within its maximum.") + " " : ""}
+            {needVerdict ? t("Say whether the AI was correct or wrong.") + " " : ""}
+            {needWhy ? t("Say why the AI was wrong: a reason, and the criteria or a note.") : ""}
           </p>
         )}
       </CardContent>

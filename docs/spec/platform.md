@@ -60,14 +60,26 @@ Each requirement has a stable id; tests and tasks cite it.
   and it never appears in logs, prompts or the admin view. AI actions are disabled, with a message
   pointing to Settings, until a key is saved.
 - **PL-07 Theme.** Follows the system light or dark setting by default; the teacher can choose
-  light, dark or system.
+  light, dark or system with three buttons on the right of the top bar, on every page.
+- **PL-37 Language** (owner request, 5 November 2026). A menu in the top bar, next to the theme
+  buttons, sets the language to English, Spanish or Russian. It changes every interface text at
+  once and is saved per teacher. Every AI call (problem setup, revision and grading) uses the
+  teacher's language at the time of the call through the grader's `language_rule`: explanations,
+  rubric and feedback are in that language; transcriptions and quotes stay as written. The problem
+  and each grading run record the language used. The sign-in page and the student page have the
+  same menu; their choice stays in that browser. Server messages that have a translation are shown
+  translated; the others stay in English.
 - **PL-08 Upload-link duration.** The default lifetime of a student upload link is 10 minutes. Each
   teacher can change their default.
 
 ### Look and navigation
 
 - **PL-09 Tabs.** A signed-in teacher moves between **Problems**, **Exams**, **Groups** and
-  **Settings**; admins also see **Admin**.
+  **Settings** in a left sidebar; admins also see **Admin**. On a phone the sidebar is a drawer
+  opened from the top bar.
+- **PL-38 Breadcrumbs** (owner request, 5 November 2026). The left of the top bar shows where the
+  teacher is (for example *Exams › Exam › Ana*); each earlier step is a link. On a phone only the
+  current page is shown.
 - **PL-10 Colours.** Dark mode uses yellow as the primary colour; light mode uses blue.
 - **PL-11 Phone and computer.** Every screen works on a phone (from 360 px wide, touch) and on a
   computer. On a phone the one-answer review (PL-22) stacks the image above the grade.
@@ -222,6 +234,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P15 | PL-35, US.P12 | Opening a link sets an opaque cookie; a first submission binds it server-side. A different student name with that cookie is refused without storing answer files or grading, including on a replacement link for the same exam/group. Concurrent attempts cannot bind two names. The refusal does not expose the bound name. |
 | AC-P16 | PL-35, PL-31 | The bound student can submit other problems; repeat uploads for one problem remain versions. A shared-device conflict directs the student to the teacher, who can upload on their behalf. Cookie bypass is documented as an unresolved limitation, not treated as verified identity. |
 | AC-P14 | PL-10, PL-11 | At 375 px and 1280 px, in light and dark, every tab is usable and uses the right primary colour. |
+| AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 
 ## Open questions (each with the default applied until answered, D10)
 

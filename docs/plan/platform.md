@@ -51,6 +51,12 @@ its test (D3). Ticks match commits.
 - *Student page after a refusal.* Open: the pages picked before a PL-35 refusal stay on the page and
   are sent with the next submission from that browser. Default for now: unchanged, since the student
   sees every page before sending (PL-29). Candidate for the first simulated-user wave.
+- *Which language AI output uses (PL-37).* Default: the teacher's language at the time of each call,
+  recorded on the problem and the run, so switching language never rewrites earlier output.
+- *Student page language (PL-37).* Default: the student's browser language or their own pick on the
+  page, not the teacher's, since a class can mix languages.
+- *Translating server messages.* Default: the fixed messages are translated in the web app by their
+  English text; messages with details (e.g. a provider error) stay in English.
 
 ## Resume point
 

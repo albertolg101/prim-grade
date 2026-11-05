@@ -47,6 +47,7 @@ class User(Base):
     api_key_enc: Mapped[str | None] = mapped_column(Text)
     api_key_last4: Mapped[str | None] = mapped_column(String(4))
     theme: Mapped[str] = mapped_column(String(8), default="system")  # system | light | dark
+    language: Mapped[str] = mapped_column(String(2), default="en", server_default="en")  # PL-37
     link_minutes: Mapped[int] = mapped_column(Integer, default=10)
     created_at: Mapped[datetime] = ts()
 
@@ -179,6 +180,7 @@ class Run(Base):
     max_points: Mapped[float] = mapped_column(Float)
     total: Mapped[float | None] = mapped_column(Float)
     harness: Mapped[dict | None] = mapped_column(Json)
+    language: Mapped[str | None] = mapped_column(String(2))  # PL-37, set when the run finishes
     usage: Mapped[dict | None] = mapped_column(Json)
     error: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime] = ts()

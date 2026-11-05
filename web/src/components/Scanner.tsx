@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Page } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 /* PL-13: camera → shutter → detect the page → Use / Retake / Adjust corners, several pages in a row.
    jscanify 1.4.3 (MIT) and its opencv.js are vendored in /vendor/jscanify and loaded on first use. */
@@ -86,7 +87,7 @@ export default function ScannerDialog({ onPage, onClose, count }: {
   const [adjust, setAdjust] = useState(false);
 
   useEffect(() => {
-    loadScanner().then(setScanner, (e) => setError(`Page detection is unavailable (${e.message}); the photo is kept as taken.`));
+    loadScanner().then(setScanner, (e) => setError(t("Page detection is unavailable ({error}); the photo is kept as taken.", { error: e.message })));
   }, []);
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function ScannerDialog({ onPage, onClose, count }: {
         if (video.current) video.current.srcObject = s;
         setCamera("on");
       }, () => setCamera("off"));
-    return () => stream?.getTracks().forEach((t) => t.stop());
+    return () => stream?.getTracks().forEach((track) => track.stop());
   }, []);
 
   const take = async (canvas: HTMLCanvasElement, raw: Blob) => {
@@ -134,18 +135,18 @@ export default function ScannerDialog({ onPage, onClose, count }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white" role="dialog" aria-label="Scan pages">
+    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white" role="dialog" aria-label={t("Scan pages")}>
       <div className="flex items-center justify-between gap-2 p-3">
-        <span className="text-sm">{count} page{count === 1 ? "" : "s"} scanned</span>
-        <Button variant="secondary" onClick={onClose}>Done</Button>
+        <span className="text-sm">{t("Pages scanned: {n}", { n: count })}</span>
+        <Button variant="secondary" onClick={onClose}>{t("Done")}</Button>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center">
         {shot ? (
           <Quad shot={shot} adjust={adjust} onChange={(corners) => setShot({ ...shot, corners })} />
         ) : camera === "off" ? (
           <div className="max-w-sm space-y-3 p-6 text-center">
-            <p>The live camera is not available here (it needs HTTPS or camera permission).</p>
-            <Button onClick={() => photo.current?.click()}>Take a photo</Button>
+            <p>{t("The live camera is not available here (it needs HTTPS or camera permission).")}</p>
+            <Button onClick={() => photo.current?.click()}>{t("Take a photo")}</Button>
           </div>
         ) : (
           <video ref={video} autoPlay playsInline muted className="max-h-full max-w-full" />
@@ -161,12 +162,12 @@ export default function ScannerDialog({ onPage, onClose, count }: {
       <div className="flex items-center justify-center gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {shot ? (
           <>
-            <Button variant="secondary" onClick={() => { URL.revokeObjectURL(shot.url); setShot(null); }}>Retake</Button>
-            <Button variant="secondary" aria-pressed={adjust} onClick={() => setAdjust(!adjust)}>{adjust ? "Done adjusting" : "Adjust corners"}</Button>
-            <Button onClick={use}>Use</Button>
+            <Button variant="secondary" onClick={() => { URL.revokeObjectURL(shot.url); setShot(null); }}>{t("Retake")}</Button>
+            <Button variant="secondary" aria-pressed={adjust} onClick={() => setAdjust(!adjust)}>{adjust ? t("Done adjusting") : t("Adjust corners")}</Button>
+            <Button onClick={use}>{t("Use")}</Button>
           </>
         ) : camera === "on" ? (
-          <button aria-label="Shutter" onClick={shutter} disabled={!scanner && !error}
+          <button aria-label={t("Shutter")} onClick={shutter} disabled={!scanner && !error}
                   className="size-16 rounded-full border-4 border-white bg-white/30 active:bg-white disabled:opacity-40" />
         ) : null}
       </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { api, pagesForm, type AnswerRow, type Page } from "@/lib/api";
+import { t } from "@/lib/i18n";
 import { navigate } from "@/lib/router";
 
 /** PL-20, PL-21 for one problem: add answers, grade the selected ones, open one to review. */
@@ -24,12 +25,12 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
     <div className="space-y-4">
       {ready && (
         <div className="space-y-2 rounded-lg border p-3">
-          <h3 className="text-sm font-semibold">Add an answer</h3>
-          <Capture pages={pages} onChange={setPages} label="answer pages" />
+          <h3 className="text-sm font-semibold">{t("Add an answer")}</h3>
+          <Capture pages={pages} onChange={setPages} label={t("answer pages")} />
           <div className="flex flex-wrap gap-2">
-            <Input className="w-full sm:w-48" placeholder="Student name (optional)" value={name} onChange={(e) => setName(e.target.value)} aria-label="Student name" />
-            <Input className="w-full sm:w-40" placeholder="Label (optional)" value={label} onChange={(e) => setLabel(e.target.value)} aria-label="Label" />
-            <Button disabled={!pages.length || act.busy} onClick={add}>Add answer ({pages.length} page{pages.length === 1 ? "" : "s"})</Button>
+            <Input className="w-full sm:w-48" placeholder={t("Student name (optional)")} value={name} onChange={(e) => setName(e.target.value)} aria-label={t("Student name")} />
+            <Input className="w-full sm:w-40" placeholder={t("Label (optional)")} value={label} onChange={(e) => setLabel(e.target.value)} aria-label={t("Label")} />
+            <Button disabled={!pages.length || act.busy} onClick={add}>{pages.length === 1 ? t("Add answer (1 page)") : t("Add answer ({n} pages)", { n: pages.length })}</Button>
           </div>
           <ErrorText>{act.error}</ErrorText>
         </div>
@@ -49,8 +50,8 @@ export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle }: {
   const running = rows.some((r) => r.state === "running");
   useEffect(() => {
     if (!running) return;
-    const t = setInterval(reload, 2000);
-    return () => clearInterval(t);
+    const timer = setInterval(reload, 2000);
+    return () => clearInterval(timer);
   }, [running, reload]);
 
   const gradable = rows.filter((r) => r.selected && r.state !== "running" && r.state !== "approved");
@@ -58,38 +59,38 @@ export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle }: {
   const grade = (ids: string[]) => act.run(async () => { await api.post("/api/answers/grade", { answer_ids: ids }); setPicked(new Set()); await reload(); });
   const done = rows.filter((r) => r.state !== "running" && r.state !== "not_graded").length;
 
-  if (!rows.length) return <p className="text-sm text-muted-foreground">No answers yet.</p>;
+  if (!rows.length) return <p className="text-sm text-muted-foreground">{t("No answers yet.")}</p>;
   return (
     <div className="space-y-2">
       {canGrade && (
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" disabled={!picked.size || act.busy} onClick={() => grade([...picked])}>Grade selected ({picked.size})</Button>
+          <Button size="sm" disabled={!picked.size || act.busy} onClick={() => grade([...picked])}>{t("Grade selected ({n})", { n: picked.size })}</Button>
           <Button size="sm" variant="outline" disabled={act.busy || !gradable.some((r) => r.state === "not_graded")}
                   onClick={() => grade(gradable.filter((r) => r.state === "not_graded").map((r) => r.id))}>
-            Grade all not graded
+            {t("Grade all not graded")}
           </Button>
-          {running && <span className="text-sm text-muted-foreground" aria-live="polite">Grading… {done} of {rows.length} have a result</span>}
+          {running && <span className="text-sm text-muted-foreground" aria-live="polite">{t("Grading… {done} of {total} have a result", { done, total: rows.length })}</span>}
         </div>
       )}
       <ErrorText>{act.error}</ErrorText>
       <ul className="divide-y rounded-lg border">
         {rows.map((r) => (
           <li key={r.id} className={`flex items-center gap-3 px-3 py-2 ${r.selected ? "" : "opacity-60"}`}>
-            {canGrade && <Checkbox aria-label={`Select ${r.student_name || r.label || "answer"}`} checked={picked.has(r.id)}
+            {canGrade && <Checkbox aria-label={t("Select {name}", { name: r.student_name || r.label || t("answer") })} checked={picked.has(r.id)}
                                    disabled={r.state === "running"} onCheckedChange={() => toggle(r.id)} />}
             <a href={`/answers/${r.id}?ctx=${ctx}`} onClick={(e) => { e.preventDefault(); navigate(`/answers/${r.id}?ctx=${ctx}`); }}
                className="min-w-0 flex-1 hover:underline">
               <div className="truncate font-medium">
-                {r.student_name || r.label || "Unnamed answer"}
+                {r.student_name || r.label || t("Unnamed answer")}
                 {problemTitle && <span className="font-normal text-muted-foreground"> · {problemTitle(r.problem_id)}</span>}
               </div>
               <div className="truncate text-xs text-muted-foreground">
-                {r.source === "student" ? "Uploaded by the student" : "Uploaded by you"} · {when(r.created_at)}
-                {r.version > 1 || !r.selected ? ` · version ${r.version}${r.selected ? " (graded)" : ""}` : ""}
+                {r.source === "student" ? t("Uploaded by the student") : t("Uploaded by you")} · {when(r.created_at)}
+                {r.version > 1 || !r.selected ? ` · ${r.selected ? t("version {n} (graded)", { n: r.version }) : t("version {n}", { n: r.version })}` : ""}
               </div>
             </a>
             <span className="hidden text-sm tabular-nums sm:inline">
-              {r.state === "approved" ? `${pts(r.approved_total)} / ${pts(r.max_points)}` : r.proposed_total != null ? `AI: ${pts(r.proposed_total)} / ${pts(r.max_points)}` : ""}
+              {r.state === "approved" ? `${pts(r.approved_total)} / ${pts(r.max_points)}` : r.proposed_total != null ? t("AI: {points}", { points: `${pts(r.proposed_total)} / ${pts(r.max_points)}` }) : ""}
             </span>
             <StateBadge state={r.state} />
           </li>

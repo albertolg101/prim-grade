@@ -1,4 +1,4 @@
-"""PL-06–08: the teacher's OpenAI key, theme and default upload-link lifetime."""
+"""PL-06–08, PL-37: the teacher's OpenAI key, theme, language and upload-link lifetime."""
 
 from typing import Literal
 
@@ -12,8 +12,10 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 
 class Prefs(BaseModel):
-    theme: Literal["system", "light", "dark"]
-    link_minutes: int = Field(ge=1, le=240)
+    """Only the fields sent are changed (the top bar sends theme or language alone)."""
+    theme: Literal["system", "light", "dark"] | None = None
+    language: Literal["en", "es", "ru"] | None = None
+    link_minutes: int | None = Field(default=None, ge=1, le=240)
 
 
 class ApiKey(BaseModel):
@@ -22,7 +24,7 @@ class ApiKey(BaseModel):
 
 def out(user) -> dict:
     # the key itself never leaves the server (PL-06, AC-P03)
-    return {"theme": user.theme, "link_minutes": user.link_minutes,
+    return {"theme": user.theme, "language": user.language, "link_minutes": user.link_minutes,
             "has_api_key": bool(user.api_key_enc), "api_key_last4": user.api_key_last4}
 
 
@@ -33,7 +35,8 @@ def get_settings(user: Teacher) -> dict:
 
 @router.put("")
 def put_settings(body: Prefs, user: Teacher, db: Db) -> dict:
-    user.theme, user.link_minutes = body.theme, body.link_minutes
+    for field, value in body.model_dump(exclude_none=True).items():
+        setattr(user, field, value)
     db.commit()
     return out(user)
 

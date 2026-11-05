@@ -1,4 +1,4 @@
-"""PL-06–08: AC-P03."""
+"""PL-06–08, PL-37: AC-P03, AC-P17."""
 
 from sqlalchemy import create_engine, text
 
@@ -7,8 +7,8 @@ KEY = "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789WXYZ"
 
 def test_key_is_never_returned_and_is_encrypted(admin, clean_db):  # AC-P03
     r = admin.put("/api/settings/api-key", json={"api_key": KEY})
-    assert r.json() == {"theme": "system", "link_minutes": 10, "has_api_key": True,
-                        "api_key_last4": "WXYZ"}
+    assert r.json() == {"theme": "system", "language": "en", "link_minutes": 10,
+                        "has_api_key": True, "api_key_last4": "WXYZ"}
     assert KEY not in admin.get("/api/settings").text
     assert KEY not in admin.get("/api/admin/users").text
     with create_engine(clean_db).connect() as c:
@@ -34,3 +34,11 @@ def test_theme_and_link_minutes(admin):
     assert r.json()["theme"] == "dark" and r.json()["link_minutes"] == 25
     assert admin.put("/api/settings", json={"theme": "blue", "link_minutes": 5}).status_code == 422
     assert admin.put("/api/settings", json={"theme": "light", "link_minutes": 0}).status_code == 422
+
+
+def test_settings_change_only_the_fields_sent(admin):  # PL-07, PL-37
+    admin.put("/api/settings", json={"theme": "dark", "link_minutes": 25})
+    r = admin.put("/api/settings", json={"language": "ru"})
+    assert (r.json()["theme"], r.json()["language"], r.json()["link_minutes"]) == ("dark", "ru", 25)
+    assert admin.get("/api/auth/me").json()["language"] == "ru"
+    assert admin.put("/api/settings", json={"language": "fr"}).status_code == 422

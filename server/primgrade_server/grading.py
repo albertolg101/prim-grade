@@ -24,6 +24,7 @@ async def grade_runs(settings: Settings, user_id: str, run_ids: list[str]) -> No
     with db.session() as s:
         user = s.get(models.User, user_id)
         llm = ai.llm_for(settings, user)
+        language = user.language  # PL-37: feedback in the teacher's language
     sem = asyncio.Semaphore(settings.concurrency)
 
     async def one(run_id: str) -> None:
@@ -38,7 +39,7 @@ async def grade_runs(settings: Settings, user_id: str, run_ids: list[str]) -> No
                 pages = pages_of(s, answer.id)
                 ex = ai.exercise(problem, version.proposal, version.version)
                 g = GraderRun(id=row.id, submission_id=answer.id, model=MODEL, mode="harness",
-                              language=problem.language, status="running",
+                              language=language, status="running",
                               rubric_version=row.rubric_version, max_points=row.max_points,
                               started_at=row.started_at.isoformat())
                 # only the anonymous answer id reaches the model, never the student's name
@@ -51,6 +52,7 @@ async def grade_runs(settings: Settings, user_id: str, run_ids: list[str]) -> No
                 row = s.get(models.Run, run_id)
                 answer = s.get(models.Answer, row.answer_id)
                 row.status, row.total, row.error = g.status, g.total, g.error
+                row.language = g.language
                 row.harness = g.harness.model_dump() if g.harness else None
                 row.usage = g.usage.model_dump() if g.usage else None
                 row.finished_at, row.duration_s = models.now(), g.duration_s
