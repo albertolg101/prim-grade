@@ -23,7 +23,9 @@ type Sort = "updated-desc" | "updated-asc" | "name-asc" | "name-desc";
 const SORTS: [Sort, string][] = [
   ["updated-desc", "Recently changed"], ["updated-asc", "Least recently changed"], ["name-asc", "Name A–Z"], ["name-desc", "Name Z–A"],
 ];
-type Row = { id: string; title: string; status: Status; archived: boolean; rubric_version: number; tags: string[]; updated_at: string };
+type Row = { id: string; title: string; status: Status; archived: boolean; rubric_version: number; tags: string[]; updated_at: string;
+  last_used_at: string | null;  // PL-47: last answer uploaded or graded
+};
 const lower = (s: string) => s.toLocaleLowerCase();
 
 /** PL-15: a title is enough to save a problem; it starts as a draft. */
@@ -49,6 +51,9 @@ export default function Problems() {
     && tags.every((x) => r.tags.some((y) => lower(y) === lower(x))))
     .sort((a, b) => sort.startsWith("name") ? a.title.localeCompare(b.title) * (sort === "name-asc" ? 1 : -1)
       : (a.updated_at < b.updated_at ? -1 : 1) * (sort === "updated-asc" ? 1 : -1));
+  // PL-47: the ten problems most recently used (an answer uploaded or graded), archived ones left out
+  const recent = rows.filter((r) => r.last_used_at && !r.archived)
+    .sort((a, b) => (a.last_used_at! < b.last_used_at! ? 1 : -1)).slice(0, 10);
   const statesChanged = states.length !== DEFAULT_STATES.length || !DEFAULT_STATES.every((x) => states.includes(x));
   const nFilters = (statesChanged ? 1 : 0) + tags.length;
   const arch = useAction();
@@ -82,7 +87,27 @@ export default function Problems() {
     }>
       <ErrorText>{list.error ?? arch.error}</ErrorText>
       {list.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("No problems yet. Use New problem to start one.")}</p>}
+      {recent.length > 0 && (
+        <section aria-labelledby="recent-title" className="space-y-2">
+          <h2 id="recent-title" className="text-sm font-semibold">{t("Recently used")}</h2>
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]">
+            {recent.map((p) => (
+              <li key={p.id}>
+                <a href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
+                   className="flex h-full flex-col gap-1 rounded-lg border bg-card p-3 hover:bg-accent">
+                  <span className="truncate font-medium" title={p.title}>{p.title}</span>
+                  <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">{when(p.last_used_at!)}</span>
+                    {p.status === "ready" ? <Badge>{t("Ready · v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {rows.length > 0 && (<>
+        {recent.length > 0 && <h2 className="pt-2 text-sm font-semibold">{t("All problems")}</h2>}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />

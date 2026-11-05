@@ -135,3 +135,22 @@ def test_an_answer_can_name_one_of_the_teachers_groups(admin, make_client):  # P
     r = admin.post(f"/api/problems/{p['id']}/answers", data={"exam_id": e["id"]},
                    files=[("pages", ("a.png", PNG, "image/png"))])
     assert r.status_code == 422  # an exam still needs its group
+
+
+def test_problems_show_when_an_answer_was_last_uploaded_or_graded(admin):  # PL-47, AC-P24
+    used = lambda: {r["id"]: r["last_used_at"] for r in admin.get("/api/problems").json()}  # noqa: E731
+    p, q = ready_problem(admin, "P1"), ready_problem(admin, "P2")
+    assert used()[p["id"]] is None  # no answer yet
+    a = upload(admin, p["id"], label="A1")
+    uploaded = used()[p["id"]]
+    assert uploaded == a["created_at"] and used()[q["id"]] is None
+    assert admin.post("/api/answers/grade", json={"answer_ids": [a["id"]]}).status_code == 202
+    graded = used()[p["id"]]
+    assert graded > uploaded
+    run = admin.get(f"/api/answers/{a['id']}").json()["runs"][0]
+    scores = [{"criterion_id": c["criterion_id"], "points": c["points"]}
+              for c in run["harness"]["criteria"]]
+    r = admin.post(f"/api/answers/{a['id']}/approve", json={
+        "run_id": run["id"], "scores": scores, "feedback": "", "ai_verdict": "correct"})
+    assert r.status_code == 200, r.text
+    assert used()[p["id"]] > graded

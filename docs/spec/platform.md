@@ -164,6 +164,10 @@ Each requirement has a stable id; tests and tasks cite it.
   (archived ones are not offered; with no groups the field says so); the picked group shows as a
   removable chip and stays for the next answer. The group shows next to the student's name in the
   list. A group given without an exam must be the teacher's own; an exam still needs its group.
+- **PL-47 Recently used problems** (owner request, 6 November 2026). Above the problem list, a
+  "Recently used" section shows the ten problems whose answers were most recently uploaded, graded
+  by the AI or approved, newest first, as cards that open the problem. Archived problems and
+  problems without answers are left out; the full list, its search and filters stay below.
 - **PL-44 Archive a problem** (owner request, 5 November 2026). An archive button on each row of
   the Problems list and below the problem's title archives it; on an archived problem the same
   button unarchives it, and the problem shows an "Archived" badge. Archiving only hides the problem
@@ -332,6 +336,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P21 | PL-44 | Archiving a problem keeps its status and rubric version, it is still listed with `archived`, and unarchiving restores it (`test_archiving_a_problem_is_reversible_and_keeps_it`). |
 | AC-P22 | PL-45 | A problem's answers are listed newest first (`test_problem_answers_are_listed_newest_first`). |
 | AC-P23 | PL-46 | An answer can carry one of the teacher's groups without an exam; another teacher's group is refused, and an exam without a group is refused (`test_an_answer_can_name_one_of_the_teachers_groups`). |
+| AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 
