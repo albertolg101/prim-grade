@@ -76,7 +76,7 @@ function Title({ title, onRename }: { title: string; onRename?: (title: string) 
   if (edit === null) {
     return (
       <div className="flex min-w-0 items-center gap-1">
-        <h1 className="min-w-0 break-words text-xl font-semibold sm:text-2xl">{title}</h1>
+        <h1 className="min-w-0 break-words text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
         {onRename && (
           <Button size="icon" variant="ghost" aria-label={t("Rename")} title={t("Rename")} onClick={() => { saving.current = false; setEdit(title); }}>
             <Pencil />
@@ -96,7 +96,7 @@ function Title({ title, onRename }: { title: string; onRename?: (title: string) 
     <form className="flex min-w-0 flex-1 items-center" onSubmit={(e) => { e.preventDefault(); done(); }}>
       <Input autoFocus onFocus={(e) => e.target.select()} aria-label={t("Title")} value={edit} onChange={(e) => setEdit(e.target.value)} onBlur={done}
              onKeyDown={(e) => { if (e.key === "Escape") { saving.current = true; setEdit(null); } }}
-             className="h-10 max-w-xl text-xl font-semibold md:text-xl sm:text-2xl" />
+             className="h-12 max-w-xl text-2xl font-bold tracking-tight sm:text-3xl md:text-3xl" />
     </form>
   );
 }

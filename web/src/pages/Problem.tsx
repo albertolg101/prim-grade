@@ -51,7 +51,7 @@ export default function ProblemPage({ id }: { id: string }) {
             {p.status === "ready" ? <Badge>{t("Ready · rubric v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
           </>}>
       {/* PL-44: below the title; reversible, the problem and its answers are kept */}
-      <Button variant="outline" size="sm" className="-mt-2" disabled={edit.busy}
+      <Button variant="ghost" size="sm" className="-mt-3 -ml-2 h-7 self-start px-2 text-xs font-normal text-muted-foreground" disabled={edit.busy}
               onClick={() => edit.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { archived: !p.archived })))}>
         {p.archived ? <><ArchiveRestore /> {t("Unarchive")}</> : <><Archive /> {t("Archive")}</>}
       </Button>
