@@ -1,5 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { AnswerState } from "@/lib/api";
 import { getLang, t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -66,14 +69,46 @@ export function useCrumbs(crumbs: Crumb[]) {
   useEffect(() => set(JSON.parse(key)), [key, set]);
 }
 
-export function Page({ title, crumbs = [], actions, children }: {
-  title: string; crumbs?: Crumb[]; actions?: React.ReactNode; children: React.ReactNode;
+/** The page title; with onRename, a pencil turns it into a text input (Enter or leaving saves, Esc cancels). */
+function Title({ title, onRename }: { title: string; onRename?: (title: string) => Promise<unknown> }) {
+  const [edit, setEdit] = useState<string | null>(null);
+  const saving = useRef(false);  // set while saving, and after Esc, so a late blur saves nothing
+  if (edit === null) {
+    return (
+      <div className="flex min-w-0 items-center gap-1">
+        <h1 className="min-w-0 break-words text-xl font-semibold sm:text-2xl">{title}</h1>
+        {onRename && (
+          <Button size="icon" variant="ghost" aria-label={t("Rename")} title={t("Rename")} onClick={() => { saving.current = false; setEdit(title); }}>
+            <Pencil />
+          </Button>
+        )}
+      </div>
+    );
+  }
+  const done = async () => {
+    if (saving.current) return;  // Enter and the blur that follows save once
+    saving.current = true;
+    const next = edit.trim();
+    if (next && next !== title) await onRename!(next);
+    setEdit(null);
+  };
+  return (
+    <form className="flex min-w-0 flex-1 items-center" onSubmit={(e) => { e.preventDefault(); done(); }}>
+      <Input autoFocus onFocus={(e) => e.target.select()} aria-label={t("Title")} value={edit} onChange={(e) => setEdit(e.target.value)} onBlur={done}
+             onKeyDown={(e) => { if (e.key === "Escape") { saving.current = true; setEdit(null); } }}
+             className="h-10 max-w-xl text-xl font-semibold md:text-xl sm:text-2xl" />
+    </form>
+  );
+}
+
+export function Page({ title, onRename, crumbs = [], actions, children }: {
+  title: string; onRename?: (title: string) => Promise<unknown>; crumbs?: Crumb[]; actions?: React.ReactNode; children: React.ReactNode;
 }) {
   useCrumbs([...crumbs, [title]]);
   return (
     <div className="w-full space-y-4 px-4 py-4 sm:px-6 sm:py-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="min-w-0 break-words text-xl font-semibold sm:text-2xl">{title}</h1>
+        <Title title={title} onRename={onRename} />
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
       {children}

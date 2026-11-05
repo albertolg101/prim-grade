@@ -109,10 +109,12 @@ Each requirement has a stable id; tests and tasks cite it.
   solution and rubric can be added later. The button is **New problem**, with **Create problem**
   in its dialog; the problem still starts as a draft.
 - **PL-40 Two problem screens** (owner request, 5 November 2026). A problem has two screens, with
-  no cards around them: **1 · Your information** (title, statement, reference solution, optional
-  rubric) and **2 · AI grader** (what the AI understood, the rubric with one card per criterion,
+  no cards around them: **1 · Your information** (statement and reference solution in one column
+  each, the optional rubric across both) and **2 · AI grader** (what the AI understood, the rubric with one card per criterion,
   accept and improve, then the problem's answers). Images added to the statement or solution are
   uploaded as soon as they are dropped, picked or scanned; tapping one opens it large in a dialog.
+  The title is not a form field: a pencil next to the page title turns it into a text input (Enter
+  or leaving saves, Esc cancels). Exams are renamed the same way.
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an
   optional rubric), the teacher asks the AI to prepare the problem: its reading of the statement and
   solution, final answers, assumptions, expected forces when a diagram is needed, a rubric with

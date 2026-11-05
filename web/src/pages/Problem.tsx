@@ -27,6 +27,7 @@ export default function ProblemPage({ id }: { id: string }) {
   const p = prob.data;
   const from = query("exam");
   const view: View = query("view") === "grader" ? "grader" : "info";
+  const rename = useAction();
   const go = (v: View) => {
     const q = new URLSearchParams(from ? { exam: from } : {});
     if (v === "grader") q.set("view", "grader");
@@ -37,8 +38,10 @@ export default function ProblemPage({ id }: { id: string }) {
   const tabs: [View, string][] = [["info", t("1 · Your information")], ["grader", t("2 · AI grader")]];
   return (
     <Page title={p.title}
+          onRename={(title) => rename.run(async () => set(await api.patch<Problem>(`/api/problems/${p.id}`, { title })))}
           crumbs={from ? [[t("Exams"), "/exams"], [t("Exam"), `/exams/${from}`]] : [[t("Problems"), "/problems"]]}
           actions={p.status === "ready" ? <Badge>{t("Ready · rubric v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}>
+      <ErrorText>{rename.error}</ErrorText>
       <nav aria-label={t("Problem screens")} className="flex gap-1 border-b">
         {tabs.map(([v, label]) => (
           <button key={v} type="button" aria-current={view === v ? "page" : undefined} onClick={() => go(v)}
@@ -97,11 +100,11 @@ function Thumbs({ files, onRemove, busy }: { files: ProblemFile[]; onRemove: (f:
   );
 }
 
-/** PL-15, PL-16 inputs: title, statement and solution as text and/or images, optional rubric. */
+/** PL-15, PL-16 inputs (the title is edited in the page header): statement and solution as text and/or images, optional rubric. */
 function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) => void; onGrader: () => void }) {
-  const [f, setF] = useState({ title: p.title, statement_text: p.statement_text, solution_text: p.solution_text, rubric_text: p.rubric_text });
+  const [f, setF] = useState({ statement_text: p.statement_text, solution_text: p.solution_text, rubric_text: p.rubric_text });
   const act = useAction();
-  const dirty = f.title !== p.title || f.statement_text !== p.statement_text || f.solution_text !== p.solution_text || f.rubric_text !== p.rubric_text;
+  const dirty = f.statement_text !== p.statement_text || f.solution_text !== p.solution_text || f.rubric_text !== p.rubric_text;
   const has = (role: "statement" | "solution") => !!f[`${role}_text`].trim() || p.files.some((x) => x.role === role);
   // pages go up as soon as they are dropped, picked or scanned: no extra step
   const upload = (role: "statement" | "solution", pages: UploadPage[]) => {
@@ -117,10 +120,6 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
   return (
     <div className="cols pt-2">
       <p className="col-full text-sm text-muted-foreground">{t("Type them, add images, or both. The AI reads all of it.")}</p>
-      <div className="col-full max-w-xl space-y-1.5">
-        <Label htmlFor="t">{t("Title")}</Label>
-        <Input id="t" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
-      </div>
       {(["statement", "solution"] as const).map((role) => (
         <div key={role} className="space-y-2">
           <Label htmlFor={role}>{role === "statement" ? t("Statement") : t("Reference solution")}</Label>
@@ -137,11 +136,11 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
       <div className="col-full space-y-2">
       <ErrorText>{act.error}</ErrorText>
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" disabled={!dirty || !f.title.trim() || act.busy} onClick={() => act.run(save)}>{t("Save")}</Button>
+        <Button variant="outline" disabled={!dirty || act.busy} onClick={() => act.run(save)}>{t("Save")}</Button>
         {p.proposal ? (
           <Button onClick={onGrader}>{t("Go to the AI grader")} <ArrowRight /></Button>
         ) : (
-          <Button disabled={!has("statement") || !has("solution") || !f.title.trim() || act.busy} onClick={prepare}>
+          <Button disabled={!has("statement") || !has("solution") || act.busy} onClick={prepare}>
             {act.busy ? t("Preparing…") : t("Prepare the grader with AI")}
           </Button>
         )}
