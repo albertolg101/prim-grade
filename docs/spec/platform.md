@@ -119,9 +119,10 @@ Each requirement has a stable id; tests and tasks cite it.
   The whole statement or solution block is the drop area: while an image is dragged over it, a
   dashed primary-colour border and a blurred cover read "Drop your images here". An empty text
   field reads "Click to type or drag your images here", centred and muted; Browse files and Scan
-  sit below it on the left. On a computer the rubric field grows with its text until the buttons
-  under it reach the bottom of the screen, then scrolls inside; it can always grow to 20 lines,
-  even on a short screen. On a phone it keeps growing with the text.
+  sit below it on the left. On a computer the rubric field grows with its text only while the
+  whole screen still fits without a page scrollbar (so the problem name and the screen tabs stay
+  in view), then scrolls inside; it can always grow to 15 lines, even on a short screen. On a
+  phone it keeps growing with the text.
   The title is not a form field: a pencil next to the page title turns it into a text input (Enter
   or leaving saves, Esc cancels). Exams are renamed the same way.
 - **PL-41 Problem tags** (owner request, 5 November 2026). A plus next to the problem's status

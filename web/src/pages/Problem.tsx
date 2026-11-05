@@ -141,37 +141,43 @@ function Thumbs({ files, onRemove, busy }: { files: ProblemFile[]; onRemove: (f:
 }
 
 /** PL-15, PL-16 inputs (the title is edited in the page header): statement and solution as text and/or images, optional rubric. */
-/** PL-40: on a computer the rubric grows with its text until the buttons below it reach the bottom
- * of the screen, then scrolls inside; on a short screen it still grows to 20 lines. A phone has no cap. */
-function useRubricCap(field: React.RefObject<HTMLTextAreaElement | null>, buttons: React.RefObject<HTMLElement | null>) {
+/** PL-40: on a computer the rubric grows with its text only while the whole screen still fits (no page
+ * scroll, so the problem name and the screen tabs stay in view), then scrolls inside; it can always
+ * grow to 15 lines, even on a short screen. A phone has no cap. */
+function useRubricCap(field: React.RefObject<HTMLTextAreaElement | null>, screen: React.RefObject<HTMLElement | null>) {
+  const refit = useRef<() => void>(undefined);
+  useLayoutEffect(() => refit.current?.());  // every render: typing above it, new images
   useLayoutEffect(() => {
-    const el = field.current, row = buttons.current;
-    if (!el || !row) return;
+    const el = field.current, end = screen.current;
+    if (!el || !end) return;
     const fit = () => {
       if (!el.offsetParent || !matchMedia("(min-width: 768px)").matches) { el.style.maxHeight = ""; return; }
       const cs = getComputedStyle(el);
       const extra = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
-      const twenty = 20 * parseFloat(cs.lineHeight) + extra;
-      const top = el.getBoundingClientRect().top + scrollY;
-      const below = row.getBoundingClientRect().bottom - el.getBoundingClientRect().bottom;  // label-free gap down to the buttons' bottom
-      const footer = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--footer-h")) || 0;
-      const pad = parseFloat(getComputedStyle(row.closest("main > *") ?? document.body).paddingBottom) || 0;
-      el.style.maxHeight = `${Math.max(twenty, innerHeight - footer - pad - below - top)}px`;
+      const fifteen = 15 * parseFloat(cs.lineHeight) + extra;
+      // how far the content (down to the room kept for the zoom footer) runs past the screen
+      const main = el.closest("main");
+      if (!main) return;
+      const room = parseFloat(getComputedStyle(main.parentElement!).paddingBottom) || 0;
+      const over = main.getBoundingClientRect().bottom + scrollY + room - innerHeight;
+      // floor: rounding must not leave a 1 px page scroll
+      el.style.maxHeight = `${Math.max(fifteen, Math.floor(el.offsetHeight - over))}px`;
     };
+    refit.current = fit;
     fit();
-    const ro = new ResizeObserver(fit);  // text above it, images, zoom and window size all move it
-    ro.observe(document.body);
+    const ro = new ResizeObserver(fit);  // zoom and anything else that changes this screen's size
+    ro.observe(end);
     addEventListener("resize", fit);
     return () => { ro.disconnect(); removeEventListener("resize", fit); };
-  }, [field, buttons]);
+  }, [field, screen]);
 }
 
 function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) => void; onGrader: () => void }) {
   const [f, setF] = useState({ statement_text: p.statement_text, solution_text: p.solution_text, rubric_text: p.rubric_text });
   const act = useAction();
   const rubric = useRef<HTMLTextAreaElement>(null);
-  const buttons = useRef<HTMLDivElement>(null);
-  useRubricCap(rubric, buttons);
+  const screen = useRef<HTMLDivElement>(null);
+  useRubricCap(rubric, screen);
   const dirty = f.statement_text !== p.statement_text || f.solution_text !== p.solution_text || f.rubric_text !== p.rubric_text;
   const has = (role: "statement" | "solution") => !!f[`${role}_text`].trim() || p.files.some((x) => x.role === role);
   // pages go up as soon as they are dropped, picked or scanned: no extra step
@@ -186,7 +192,7 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
   });
 
   return (
-    <div className="cols pt-2">
+    <div ref={screen} className="cols pt-2">
       <p className="col-full text-sm text-muted-foreground">{t("Type them, add images, or both. The AI reads all of it.")}</p>
       {(["statement", "solution"] as const).map((role) => (
         // the whole block is the drop area (PL-12); dropped images upload at once
@@ -212,7 +218,7 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
       </div>
       <div className="col-full space-y-2">
       <ErrorText>{act.error}</ErrorText>
-      <div ref={buttons} className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button variant="outline" disabled={!dirty || act.busy} onClick={() => act.run(save)}>{t("Save")}</Button>
         {p.proposal ? (
           <Button onClick={onGrader}>{t("Go to the AI grader")} <ArrowRight /></Button>
