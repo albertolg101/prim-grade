@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUp, Plus, Trash2, X } from "lucide-react";
 import Answers from "@/components/Answers";
 import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad } from "@/components/common";
 import ImageViewer from "@/components/ImageViewer";
+import TagInput from "@/components/TagInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -77,46 +78,34 @@ export default function ProblemPage({ id }: { id: string }) {
 /** Uploaded statement or solution pages; a tap opens them large (PL-12, I4: the originals). */
 /** PL-41: the problem's tags; the plus opens a field that suggests the teacher's other tags and takes new ones. */
 function Tags({ tags, busy, onChange }: { tags: string[]; busy: boolean; onChange: (tags: string[]) => void }) {
-  const [text, setText] = useState<string | null>(null);  // null: the field is closed
+  const [adding, setAdding] = useState(false);
   const [known, setKnown] = useState<string[]>([]);
-  const has = (x: string) => tags.some((y) => y.toLowerCase() === x.toLowerCase());
-  const open = () => { setText(""); api.get<string[]>("/api/problems/tags").then(setKnown, () => setKnown([])); };
-  const add = (raw: string) => {
-    const tag = raw.trim();
-    if (tag && !has(tag)) onChange([...tags, tag]);
-    setText("");
-  };
+  // two tags added before the first save returns: the second change must include the first
+  const latest = useRef(tags);
+  useEffect(() => { latest.current = tags; }, [tags]);
+  const change = (next: string[]) => { latest.current = next; onChange(next); };
+  const has = (x: string) => latest.current.some((y) => y.toLowerCase() === x.toLowerCase());
+  const open = () => { setAdding(true); api.get<string[]>("/api/problems/tags").then(setKnown, () => setKnown([])); };
   return (
     <div className="flex flex-wrap items-center gap-1">
       {tags.map((x) => (
         <Badge key={x} variant="secondary" className="gap-0.5 pr-0.5">
           {x}
           <button type="button" aria-label={t("Remove tag {tag}", { tag: x })} disabled={busy}
-                  className="rounded-full p-0.5 hover:bg-background/60" onClick={() => onChange(tags.filter((y) => y !== x))}>
+                  className="rounded-full p-0.5 hover:bg-background/60" onClick={() => change(latest.current.filter((y) => y !== x))}>
             <X className="size-3" />
           </button>
         </Badge>
       ))}
-      {text === null ? (
+      {adding ? (
+        <TagInput autoFocus allowNew label={t("Add tag")} placeholder={t("Tag name")} className="w-48"
+                  suggestions={known.filter((x) => !has(x)).map((value) => ({ value }))}
+                  onPick={(x) => { if (!has(x)) change([...latest.current, x]); }}
+                  onClose={() => setAdding(false)} />
+      ) : (
         <Button size="icon" variant="ghost" className="size-7" aria-label={t("Add tag")} title={t("Add tag")} onClick={open}>
           <Plus />
         </Button>
-      ) : (
-        <form onSubmit={(e) => { e.preventDefault(); add(text); }}>
-          <Input autoFocus list="problem-tags" maxLength={40} aria-label={t("Add tag")} placeholder={t("Tag name")}
-                 className="h-7 w-40 text-sm" value={text}
-                 onChange={(e) => {
-                   // picking a suggestion adds it at once; typing a new name waits for Enter
-                   const picked = !(e.nativeEvent instanceof InputEvent) || e.nativeEvent.inputType === "insertReplacementText";
-                   if (picked && known.includes(e.target.value)) add(e.target.value);
-                   else setText(e.target.value);
-                 }}
-                 onKeyDown={(e) => { if (e.key === "Escape") setText(null); }}
-                 onBlur={() => { if (!text.trim()) setText(null); }} />
-          <datalist id="problem-tags">
-            {known.filter((x) => !has(x)).map((x) => <option key={x} value={x} />)}
-          </datalist>
-        </form>
       )}
     </div>
   );

@@ -388,5 +388,6 @@
  "Filter by tag": "Filtrar por etiqueta",
  "Type a tag…": "Escribe una etiqueta…",
  "{n} problems": "{n} problemas",
- "No tag matches “{q}”.": "Ninguna etiqueta coincide con «{q}»."
+ "No tag matches “{q}”.": "Ninguna etiqueta coincide con «{q}».",
+ "Create “{tag}”": "Crear «{tag}»"
 }

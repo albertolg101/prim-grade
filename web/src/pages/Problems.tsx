@@ -4,9 +4,11 @@ import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import TagInput from "@/components/TagInput";
 import { Label } from "@/components/ui/label";
 import { api, type Problem } from "@/lib/api";
 import { t } from "@/lib/i18n";
@@ -29,9 +31,8 @@ export default function Problems() {
   const act = useAction();
   // PL-42: search and filters run on the loaded list
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<Status | "all">("all");  // set by the system, so one choice (a switch)
+  const [statuses, setStatuses] = useState<Status[]>([]);  // none checked: both
   const [tags, setTags] = useState<string[]>([]);
-  const [tagQ, setTagQ] = useState("");
   const [sort, setSort] = useState<Sort>("updated-desc");
   const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens
   const rows = list.data ?? [];
@@ -39,19 +40,11 @@ export default function Problems() {
   const words = lower(q).split(/\s+/).filter(Boolean);
   const shown = rows.filter((r) =>
     words.every((w) => lower(r.title).includes(w) || r.tags.some((x) => lower(x).includes(w)))
-    && (status === "all" || r.status === status)
+    && (!statuses.length || statuses.includes(r.status))
     && tags.every((x) => r.tags.some((y) => lower(y) === lower(x))))
     .sort((a, b) => sort.startsWith("name") ? a.title.localeCompare(b.title) * (sort === "name-asc" ? 1 : -1)
       : (a.updated_at < b.updated_at ? -1 : 1) * (sort === "updated-asc" ? 1 : -1));
-  const nFilters = (status === "all" ? 0 : 1) + tags.length;
-  // adds a tag filter when the text names one of the teacher's tags (any case); true when it did
-  const pickTag = (text: string) => {
-    const tag = allTags.find((x) => lower(x) === lower(text.trim()));
-    if (!tag) return false;
-    if (!tags.includes(tag)) setTags([...tags, tag]);
-    setTagQ("");
-    return true;
-  };
+  const nFilters = statuses.length + tags.length;
 
   return (
     <Page title={t("Problems")} actions={
@@ -115,7 +108,7 @@ export default function Problems() {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("Filters")}</h2>
           <Button size="sm" variant="ghost" className="h-7" disabled={!nFilters}
-                  onClick={() => { setStatus("all"); setTags([]); }}>{t("Clear")}</Button>
+                  onClick={() => { setStatuses([]); setTags([]); }}>{t("Clear")}</Button>
         </div>
         <div className="space-y-2">
           <p id="sort-label" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</p>
@@ -126,22 +119,16 @@ export default function Problems() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <p id="status-label" className="text-xs font-medium text-muted-foreground">{t("Status")}</p>
-          {/* the highlight slides to the chosen position */}
-          <div role="radiogroup" aria-labelledby="status-label" className="relative grid grid-cols-3 rounded-md border bg-muted/50 p-0.5">
-            <span aria-hidden className="absolute inset-y-0.5 left-0.5 w-[calc((100%-0.25rem)/3)] rounded bg-background shadow-sm transition-transform duration-200"
-                  style={{ transform: `translateX(${["all", "draft", "ready"].indexOf(status) * 100}%)` }} />
-            {([["all", t("All"), rows.length], ["draft", t("Draft"), rows.filter((r) => r.status === "draft").length],
-               ["ready", t("Ready"), rows.filter((r) => r.status === "ready").length]] as const).map(([s, label, n]) => (
-              <button key={s} type="button" role="radio" aria-checked={status === s} onClick={() => setStatus(s)}
-                      className={cn("relative z-10 rounded px-1 py-1 text-xs font-medium transition-colors",
-                        status === s ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                {label} <span className="font-normal text-muted-foreground">{n}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <fieldset className="space-y-2">
+          <legend className="mb-2 text-xs font-medium text-muted-foreground">{t("Status")}</legend>
+          {([["draft", t("Draft")], ["ready", t("Ready")]] as const).map(([s, label]) => (
+            <label key={s} className="flex items-center gap-2 text-sm">
+              <Checkbox checked={statuses.includes(s)}
+                        onCheckedChange={() => setStatuses(statuses.includes(s) ? statuses.filter((x) => x !== s) : [...statuses, s])} />
+              {label} <span className="text-xs text-muted-foreground">{rows.filter((r) => r.status === s).length}</span>
+            </label>
+          ))}
+        </fieldset>
         <fieldset className="min-w-0 space-y-2">
           <legend className="mb-2 text-xs font-medium text-muted-foreground">
             {t("Tags (all selected)")}{tags.length ? ` · ${tags.length}` : ""}
@@ -164,23 +151,11 @@ export default function Problems() {
           )}
           {allTags.length > 0 && (
             // PL-42: tags are picked from suggestions, so the panel never lists them all
-            <form onSubmit={(e) => { e.preventDefault(); pickTag(tagQ); }}>
-              <Input list="filter-tags" aria-label={t("Filter by tag")} placeholder={t("Type a tag…")} className="h-8 text-sm"
-                     value={tagQ}
-                     onChange={(e) => {
-                       // choosing a suggestion adds it at once; typing waits for Enter
-                       const picked = !(e.nativeEvent instanceof InputEvent) || e.nativeEvent.inputType === "insertReplacementText";
-                       if (!(picked && pickTag(e.target.value))) setTagQ(e.target.value);
-                     }} />
-              <datalist id="filter-tags">
-                {allTags.filter((x) => !tags.includes(x)).map((x) => (
-                  <option key={x} value={x} label={t("{n} problems", { n: rows.filter((r) => r.tags.some((y) => lower(y) === lower(x))).length })} />
-                ))}
-              </datalist>
-              {tagQ.trim() && !allTags.some((x) => lower(x).includes(lower(tagQ.trim()))) && (
-                <p className="mt-1 text-xs text-muted-foreground">{t("No tag matches “{q}”.", { q: tagQ.trim() })}</p>
-              )}
-            </form>
+            <TagInput label={t("Filter by tag")} placeholder={t("Type a tag…")}
+                      suggestions={allTags.filter((x) => !tags.includes(x)).map((x) => ({
+                        value: x, hint: String(rows.filter((r) => r.tags.some((y) => lower(y) === lower(x))).length),
+                      }))}
+                      onPick={(x) => setTags([...tags, x])} />
           )}
         </fieldset>
       </aside>
