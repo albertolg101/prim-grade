@@ -413,5 +413,6 @@
  "Proposed scores": "Puntuación propuesta",
  "Suggested feedback": "Comentario sugerido",
  "Recently used": "Usados recientemente",
- "Yesterday": "Ayer"
+ "Today {time}": "Hoy {time}",
+ "Yesterday {time}": "Ayer {time}"
 }

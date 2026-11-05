@@ -62,8 +62,8 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-07 Theme.** Follows the system light or dark setting by default; the teacher can choose
   light, dark or system with three buttons on the right of the top bar, on every page.
 - **PL-48 Dates** (owner request, 6 November 2026). Every date in the interface follows one rule,
-  in the interface language: today shows only the time, 24-hour without seconds ("14:05");
-  yesterday shows "Yesterday"; earlier this year shows day and month ("6 Nov"); before this year
+  in the interface language: today shows "Today" and the time, 24-hour without seconds
+  ("Today 14:05"); yesterday shows "Yesterday" and the time ("Yesterday 23:59"); earlier this year shows day and month ("6 Nov"); before this year
   adds the year ("31 Dec 2025").
 - **PL-37 Language** (owner request, 5 November 2026). A menu in the top bar, next to the theme
   buttons, sets the language to English, Spanish or Russian. It changes every interface text at

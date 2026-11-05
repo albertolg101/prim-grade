@@ -413,5 +413,6 @@
  "Proposed scores": "Предложенные баллы",
  "Suggested feedback": "Предложенный комментарий",
  "Recently used": "Недавно использованные",
- "Yesterday": "Вчера"
+ "Today {time}": "Сегодня {time}",
+ "Yesterday {time}": "Вчера {time}"
 }
