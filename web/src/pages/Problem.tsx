@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUp, Plus, Trash2, X } from "lucide-react";
 import Answers from "@/components/Answers";
 import Capture from "@/components/Capture";
@@ -141,9 +141,37 @@ function Thumbs({ files, onRemove, busy }: { files: ProblemFile[]; onRemove: (f:
 }
 
 /** PL-15, PL-16 inputs (the title is edited in the page header): statement and solution as text and/or images, optional rubric. */
+/** PL-40: on a computer the rubric grows with its text until the buttons below it reach the bottom
+ * of the screen, then scrolls inside; on a short screen it still grows to 20 lines. A phone has no cap. */
+function useRubricCap(field: React.RefObject<HTMLTextAreaElement | null>, buttons: React.RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const el = field.current, row = buttons.current;
+    if (!el || !row) return;
+    const fit = () => {
+      if (!el.offsetParent || !matchMedia("(min-width: 768px)").matches) { el.style.maxHeight = ""; return; }
+      const cs = getComputedStyle(el);
+      const extra = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+      const twenty = 20 * parseFloat(cs.lineHeight) + extra;
+      const top = el.getBoundingClientRect().top + scrollY;
+      const below = row.getBoundingClientRect().bottom - el.getBoundingClientRect().bottom;  // label-free gap down to the buttons' bottom
+      const footer = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--footer-h")) || 0;
+      const pad = parseFloat(getComputedStyle(row.closest("main > *") ?? document.body).paddingBottom) || 0;
+      el.style.maxHeight = `${Math.max(twenty, innerHeight - footer - pad - below - top)}px`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);  // text above it, images, zoom and window size all move it
+    ro.observe(document.body);
+    addEventListener("resize", fit);
+    return () => { ro.disconnect(); removeEventListener("resize", fit); };
+  }, [field, buttons]);
+}
+
 function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) => void; onGrader: () => void }) {
   const [f, setF] = useState({ statement_text: p.statement_text, solution_text: p.solution_text, rubric_text: p.rubric_text });
   const act = useAction();
+  const rubric = useRef<HTMLTextAreaElement>(null);
+  const buttons = useRef<HTMLDivElement>(null);
+  useRubricCap(rubric, buttons);
   const dirty = f.statement_text !== p.statement_text || f.solution_text !== p.solution_text || f.rubric_text !== p.rubric_text;
   const has = (role: "statement" | "solution") => !!f[`${role}_text`].trim() || p.files.some((x) => x.role === role);
   // pages go up as soon as they are dropped, picked or scanned: no extra step
@@ -180,11 +208,11 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
       ))}
       <div className="col-full space-y-1.5">
         <Label htmlFor="rubric">{t("Your rubric (optional)")}</Label>
-        <Textarea id="rubric" rows={3} placeholder={t("Leave empty and the AI proposes one.")} value={f.rubric_text} onChange={(e) => setF({ ...f, rubric_text: e.target.value })} />
+        <Textarea ref={rubric} id="rubric" rows={3} placeholder={t("Leave empty and the AI proposes one.")} value={f.rubric_text} onChange={(e) => setF({ ...f, rubric_text: e.target.value })} />
       </div>
       <div className="col-full space-y-2">
       <ErrorText>{act.error}</ErrorText>
-      <div className="flex flex-wrap gap-2">
+      <div ref={buttons} className="flex flex-wrap gap-2">
         <Button variant="outline" disabled={!dirty || act.busy} onClick={() => act.run(save)}>{t("Save")}</Button>
         {p.proposal ? (
           <Button onClick={onGrader}>{t("Go to the AI grader")} <ArrowRight /></Button>
