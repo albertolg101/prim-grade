@@ -148,6 +148,11 @@ Each requirement has a stable id; tests and tasks cite it.
   The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
   problems" shows how many match. Search and filters run on the loaded list and are not saved.
+- **PL-43 Preparing shown everywhere** (owner request, 5 November 2026). While the AI grader of a
+  problem is being prepared (Prepare, Prepare again from scratch), a spinner shows at the right
+  edge of Problems in the sidebar and next to that problem's name in the Problems list, so the
+  teacher can leave the page and still see it running. Only the browser tab that started it knows;
+  another tab or a reload does not show it.
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an
   optional rubric), the teacher asks the AI to prepare the problem: its reading of the statement and
   solution, final answers, assumptions, expected forces when a diagram is needed, a rubric with

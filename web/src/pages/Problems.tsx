@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, Search, X } from "lucide-react";
+import { Filter, Loader2, Search, X } from "lucide-react";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import TagInput from "@/components/TagInput";
 import { Label } from "@/components/ui/label";
 import { api, type Problem } from "@/lib/api";
 import { t } from "@/lib/i18n";
+import { usePreparing } from "@/lib/preparing";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const lower = (s: string) => s.toLocaleLowerCase();
 /** PL-15: a title is enough to save a problem; it starts as a draft. */
 export default function Problems() {
   const list = useLoad(() => api.get<Row[]>("/api/problems"), []);
+  const preparing = usePreparing();
   const stored = useLoad(() => api.get<string[]>("/api/problems/tags"), []);  // PL-41: used or not
   const [title, setTitle] = useState("");
   const act = useAction();
@@ -93,6 +95,9 @@ export default function Problems() {
              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent">
             <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <span className="min-w-0 truncate font-medium">{p.title}</span>
+              {preparing.has(p.id) && (
+                <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" role="status" aria-label={t("Preparing the AI grader")} />
+              )}
               {p.tags.map((x) => <Badge key={x} variant="secondary" className="font-normal">{x}</Badge>)}
             </span>
             <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">

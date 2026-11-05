@@ -390,5 +390,7 @@
  "{n} problems": "задач: {n}",
  "No tag matches “{q}”.": "Нет метки, похожей на «{q}».",
  "Create “{tag}”": "Создать «{tag}»",
- "Type to see {n} more": "Введите текст, чтобы увидеть ещё {n}"
+ "Type to see {n} more": "Введите текст, чтобы увидеть ещё {n}",
+ "Preparing the AI grader": "Готовится проверка ИИ",
+ "AI graders being prepared: {n}": "Готовятся проверки ИИ: {n}"
 }

@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { api, fileUrl, pagesForm, type Criterion, type Page as UploadPage, type Problem, type Proposal } from "@/lib/api";
 import { t } from "@/lib/i18n";
+import { generate } from "@/lib/preparing";
 import { navigate, query } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
@@ -187,7 +188,7 @@ function Sources({ p, onSaved, onGrader }: { p: Problem; onSaved: (p: Problem) =
   const save = async () => { if (dirty) onSaved(await api.patch<Problem>(`/api/problems/${p.id}`, f)); };
   const prepare = () => act.run(async () => {
     await save();
-    onSaved(await api.post<Problem>(`/api/problems/${p.id}/generate`));
+    onSaved(await generate(p.id));
     onGrader();
   });
 
@@ -264,7 +265,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
         {!has && <p className="text-sm">{t("Add the statement and the reference solution first.")}</p>}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={onInfo}>{t("Go to your information")}</Button>
-          <Button disabled={!has || act.busy} onClick={() => act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/generate`)))}>
+          <Button disabled={!has || act.busy} onClick={() => act.run(async () => onSaved(await generate(p.id)))}>
             {act.busy ? t("Preparing…") : t("Prepare the grader with AI")}
           </Button>
         </div>
@@ -378,7 +379,7 @@ function Grader({ p, onSaved, onInfo }: { p: Problem; onSaved: (p: Problem) => v
                   onClick={() => act.run(async () => { onSaved(await api.post<Problem>(`/api/problems/${p.id}/improve`, { instruction })); setInstruction(""); })}>
             {act.busy ? t("Asking the AI…") : t("Ask the AI to revise")}
           </Button>
-          <Button variant="ghost" disabled={act.busy} onClick={() => { if (confirm(t("Replace the whole proposal with a fresh one from the AI?"))) act.run(async () => onSaved(await api.post<Problem>(`/api/problems/${p.id}/generate`))); }}>
+          <Button variant="ghost" disabled={act.busy} onClick={() => { if (confirm(t("Replace the whole proposal with a fresh one from the AI?"))) act.run(async () => onSaved(await generate(p.id))); }}>
             {t("Prepare again from scratch")}
           </Button>
         </div>

@@ -1,11 +1,12 @@
 import { Fragment, useEffect, useState } from "react";
-import { BookOpen, ChevronRight, ClipboardList, LogOut, Menu, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
+import { BookOpen, ChevronRight, ClipboardList, Loader2, LogOut, Menu, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
 import { CrumbsContext, type Crumb } from "@/components/common";
 import { LanguageSelect, ThemeButtons } from "@/components/Prefs";
 import ZoomFooter from "@/components/ZoomFooter";
 import { Button } from "@/components/ui/button";
 import { api, type Me, type Theme } from "@/lib/api";
 import { getLang, setLang, t, type Lang } from "@/lib/i18n";
+import { usePreparing } from "@/lib/preparing";
 import { match, navigate, useLocation } from "@/lib/router";
 import { applyTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ export default function App() {
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [prefError, setPrefError] = useState<string | null>(null);
   const [lang, setLangState] = useState<Lang>(getLang());
+  const preparing = usePreparing();
   const isStudent = student !== null;
 
   const signIn = (m: Me) => {
@@ -109,6 +111,10 @@ export default function App() {
                      : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
                 <Icon className="size-4" />
                 {t(label)}
+                {to === "/problems" && preparing.size > 0 && (
+                  <Loader2 className="ml-auto size-4 animate-spin text-muted-foreground" role="status"
+                           aria-label={t("AI graders being prepared: {n}", { n: preparing.size })} />
+                )}
               </a>
             ))}
           </nav>

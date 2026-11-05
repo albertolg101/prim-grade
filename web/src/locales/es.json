@@ -390,5 +390,7 @@
  "{n} problems": "{n} problemas",
  "No tag matches “{q}”.": "Ninguna etiqueta coincide con «{q}».",
  "Create “{tag}”": "Crear «{tag}»",
- "Type to see {n} more": "Escribe para ver {n} más"
+ "Type to see {n} more": "Escribe para ver {n} más",
+ "Preparing the AI grader": "Preparando el corrector de IA",
+ "AI graders being prepared: {n}": "Correctores de IA en preparación: {n}"
 }
