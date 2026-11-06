@@ -170,14 +170,16 @@ Each requirement has a stable id; tests and tasks cite it.
   list. A group given without an exam must be the teacher's own; an exam still needs its group.
 - **PL-49 Sort and filter a problem's answers** (owner request, 6 November 2026). On the Answers
   screen a panel on the right of the list, its top level with the list's top, replaces the old sort
-  menu. It has **Sort by** (newest, oldest, name A–Z), **Uploaded** (All time, Today, Yesterday,
+  menu. It has **Sort by** (newest, oldest, name A–Z), **Status** (three checkboxes with counts, all
+  checked by default, none checked shows nothing: Review required covers draft proposals, review
+  required and failed answers; Approved; Not graded covers not graded and grading in progress), **Uploaded** (All time, Today, Yesterday,
   Last 7 days, Last 30 days, This month, This year, or a Custom range, both days included, in local
   calendar days; the range is picked on a one-month calendar in the site's own popover, weeks from
   Monday: the first click sets the start, the second the end, and today shows in the primary colour), **Group** and **Exam** checkboxes with counts, including
   "No group" and "No exam" (a facet with a single value is not shown), and **Label**, picked like
   the problem tags (PL-42): an autocomplete with counts adds each label as a removable chip.
   Within a facet any picked value matches; facets combine; nothing picked means every answer.
-  **Clear** resets the filters, not the sort. "{n} of {total} answers" shows how many match; on a
+  **Clear** resets the filters (all three statuses checked), not the sort. "{n} of {total} answers" shows how many match; on a
   phone a Filters button opens the panel above the list. Grading selected answers grades only the
   ones still shown. Filters run on the loaded list and are not saved.
 - **PL-47 Recently used problems** (owner request, 6 November 2026). Above the problem list, a

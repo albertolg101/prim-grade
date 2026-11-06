@@ -26,6 +26,10 @@ const RANGES: [Range, string][] = [
 type Facet = "group" | "exam" | "label";
 const keyOf = (r: AnswerRow, f: Facet) => (f === "group" ? r.group_id : f === "exam" ? r.exam_id : r.label) || "";
 const NO_FILTER: Record<Facet, string[]> = { group: [], exam: [], label: [] };
+// PL-49: three status boxes over the six answer states; drafts and failures need the teacher too
+type Status = "review" | "approved" | "not_graded";
+const STATUSES: [Status, string][] = [["review", "Review required"], ["approved", "Approved"], ["not_graded", "Not graded"]];
+const statusOf = (r: AnswerRow): Status => r.state === "approved" ? "approved" : r.state === "not_graded" || r.state === "running" ? "not_graded" : "review";
 
 /** [from, to) of a range; null is no bound. A custom range includes both of its days. */
 function bounds(r: Range, from: string, to: string, now = new Date()): [Date | null, Date | null] {
@@ -56,6 +60,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   const [sort, setSort] = useState<Sort>("newest");  // the server lists newest first
   // PL-49: filters run on the loaded list and are not saved; an empty facet means every value
   const [picked, setPicked] = useState(NO_FILTER);
+  const [statuses, setStatuses] = useState<Status[]>(STATUSES.map(([s]) => s));  // all checked; none checked shows nothing
   const [range, setRange] = useState<Range>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -65,13 +70,13 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   const [lo, hi] = bounds(range, from, to);
   const shown = all.filter((r) => {
     const at = new Date(r.created_at);
-    return (!lo || at >= lo) && (!hi || at < hi)
+    return statuses.includes(statusOf(r)) && (!lo || at >= lo) && (!hi || at < hi)
       && (["group", "exam", "label"] as Facet[]).every((f) => !picked[f].length || picked[f].includes(keyOf(r, f)));
   });
   if (sort === "oldest") shown.reverse();
   if (sort === "name") shown.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   const labels = [...new Set(all.map((r) => r.label).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  const nFilters = picked.group.length + picked.exam.length + picked.label.length + (range === "all" ? 0 : 1);
+  const nFilters = picked.group.length + picked.exam.length + picked.label.length + (range === "all" ? 0 : 1) + (statuses.length === STATUSES.length ? 0 : 1);
   const facetName = (f: Facet, k: string) => !k ? t(f === "group" ? "No group" : "No exam")
     : f === "group" ? groupName(k) ?? "…" : exams.data?.find((e) => e.id === k)?.title ?? "…";
   const add = () => act.run(async () => {
@@ -117,7 +122,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">{t("Filters")}</h2>
               <Button size="sm" variant="ghost" className="h-7" disabled={!nFilters}
-                      onClick={() => { setPicked(NO_FILTER); setRange("all"); setFrom(""); setTo(""); }}>{t("Clear")}</Button>
+                      onClick={() => { setPicked(NO_FILTER); setStatuses(STATUSES.map(([s]) => s)); setRange("all"); setFrom(""); setTo(""); }}>{t("Clear")}</Button>
             </div>
             <div className="space-y-2">
               <p id="answer-sort" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</p>
@@ -126,6 +131,16 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
                 <SelectContent position="popper">{SORTS.map(([id, label]) => <SelectItem key={id} value={id}>{t(label)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            <fieldset className="space-y-2">
+              <legend className="mb-2 text-xs font-medium text-muted-foreground">{t("Status")}</legend>
+              {STATUSES.map(([st, label]) => (
+                <label key={st} className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={statuses.includes(st)}
+                            onCheckedChange={() => setStatuses(statuses.includes(st) ? statuses.filter((x) => x !== st) : [...statuses, st])} />
+                  {t(label)} <span className="text-xs text-muted-foreground">{all.filter((r) => statusOf(r) === st).length}</span>
+                </label>
+              ))}
+            </fieldset>
             <div className="space-y-2">
               <p id="answer-date" className="text-xs font-medium text-muted-foreground">{t("Uploaded")}</p>
               <Select value={range} onValueChange={(v) => setRange(v as Range)}>
