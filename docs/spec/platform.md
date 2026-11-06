@@ -273,11 +273,11 @@ Each requirement has a stable id; tests and tasks cite it.
   **Sort by** (recently used, recently created, name A–Z, Z–A), **Status** (Active checked,
   Archived not) and **Created** (the PL-49 date filter). Archiving hides a group only from these
   defaults and from the answer group pickers; its answers and exams are kept.
-  Opening a group shows its name (pencil to rename), archive, the students who have submitted, the
+  Opening a group shows its name (pencil to rename), archive, the
   exams given to it (each opens the exam on this group), and its problems: those in its exams and
   those with an answer from this group. They use the Problems search and filter panel; each row
   shows this group's answers and approved answers, and on a ready problem **Add answer(s)** (PL-50,
-  the group fixed to this one) and **Grade (n)**, which grades this group's answers not graded yet.
+  the group fixed to this one); grading happens on the problem's answers.
   Opening a problem from here shows its answers with the Group filter (PL-49) already set to
   this group; the filter can be removed, and moving between the problem's tabs keeps it.
 - **PL-52 New exam with its problems** (owner request, 6 November 2026). **New exam** on the Exams
