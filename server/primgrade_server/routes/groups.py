@@ -1,11 +1,13 @@
-"""PL-25: groups (a class or a section); their students are the names that submitted."""
+"""PL-25, PL-51: groups (a class or a section); their students are the names that submitted."""
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select, union_all
 
 from .. import models
 from ..deps import Db, Teacher, owned
+from .answers import state
+from .exams import exam_out
 
 router = APIRouter(prefix="/api/groups", tags=["groups"])
 
@@ -19,19 +21,37 @@ class GroupEdit(BaseModel):
     archived: bool | None = None
 
 
-def group_out(db, g: models.Group) -> dict:
+def last_used(db, owner_id: str) -> dict:
+    """PL-51: per group, when an answer in it was last uploaded, graded by the AI or approved."""
+    a = models.Answer
+    events = union_all(
+        select(a.group_id, a.created_at.label("at")),
+        select(a.group_id, models.Run.started_at).join(models.Run, models.Run.answer_id == a.id),
+        select(a.group_id, models.Approval.approved_at)
+        .join(models.Approval, models.Approval.answer_id == a.id),
+    ).subquery()
+    return dict(db.execute(
+        select(events.c.group_id, func.max(events.c.at))
+        .join(models.Group, models.Group.id == events.c.group_id)
+        .where(models.Group.owner_id == owner_id).group_by(events.c.group_id)).all())
+
+
+def group_out(db, g: models.Group, used=None) -> dict:
     students = db.scalars(select(models.Answer.student_name).distinct().where(
         models.Answer.group_id == g.id, models.Answer.student_name != "")
         .order_by(models.Answer.student_name)).all()
+    # PL-51: a group counts as used when it is created, and when an answer in it is used
+    used = max(g.created_at, used) if used else g.created_at
     return {"id": g.id, "name": g.name, "archived": g.archived, "students": students,
-            "created_at": g.created_at.isoformat()}  # PL-49: answer filters list the newest first
+            "created_at": g.created_at.isoformat(), "last_used_at": used.isoformat()}
 
 
 @router.get("")
 def list_groups(db: Db, user: Teacher) -> list[dict]:
     rows = db.scalars(select(models.Group).where(models.Group.owner_id == user.id)
                       .order_by(models.Group.archived, models.Group.name)).all()
-    return [group_out(db, g) for g in rows]
+    used = last_used(db, user.id)
+    return [group_out(db, g, used.get(g.id)) for g in rows]
 
 
 @router.post("", status_code=201)
@@ -51,3 +71,39 @@ def edit_group(group_id: str, body: GroupEdit, db: Db, user: Teacher) -> dict:
         g.archived = body.archived
     db.commit()
     return group_out(db, g)
+
+
+@router.get("/{group_id}")
+def get_group(group_id: str, db: Db, user: Teacher) -> dict:
+    """PL-51: a group with its exams and its problems: those in its exams and those with answers
+    in it, each with the group's answers counted by state and the ones ready to grade."""
+    g = owned(db, models.Group, group_id, user)
+    exams = db.scalars(select(models.Exam).join(models.ExamGroup,
+                                                models.ExamGroup.exam_id == models.Exam.id)
+                       .where(models.ExamGroup.group_id == g.id)
+                       .order_by(models.Exam.created_at.desc())).all()
+    in_exams = select(models.ExamProblem.problem_id).join(
+        models.ExamGroup, models.ExamGroup.exam_id == models.ExamProblem.exam_id).where(
+        models.ExamGroup.group_id == g.id)
+    answered = select(models.Answer.problem_id).where(models.Answer.group_id == g.id)
+    problems = db.scalars(select(models.Problem).where(
+        models.Problem.owner_id == user.id,
+        models.Problem.id.in_(in_exams.union(answered).scalar_subquery()))
+        .order_by(models.Problem.updated_at.desc())).all()
+    answers = db.scalars(select(models.Answer).where(models.Answer.group_id == g.id)).all()
+    by_problem: dict[str, dict] = {p.id: {"answers": 0, "approved": 0, "to_grade": []}
+                                   for p in problems}
+    for a in answers:
+        row = by_problem[a.problem_id]
+        st = state(db, a)["state"]
+        row["answers"] += 1
+        row["approved"] += st == "approved"
+        if a.selected and st == "not_graded":
+            row["to_grade"].append(a.id)
+    used = last_used(db, user.id)
+    return {**group_out(db, g, used.get(g.id)),
+            "exams": [exam_out(db, e) for e in exams],
+            "problems": [{"id": p.id, "title": p.title, "status": p.status,
+                          "rubric_version": p.rubric_version, "tags": p.tags,
+                          "archived": p.archived, "updated_at": p.updated_at.isoformat(),
+                          **by_problem[p.id]} for p in problems]}

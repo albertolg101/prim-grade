@@ -19,6 +19,10 @@ class ExamIn(BaseModel):
     title: str = Field(min_length=1, max_length=200)
 
 
+class NewExam(ExamIn):
+    problem_ids: list[str] = []  # PL-52: existing problems, in exam order
+
+
 class AddProblem(BaseModel):
     problem_id: str
 
@@ -60,9 +64,16 @@ def list_exams(db: Db, user: Teacher) -> list[dict]:
 
 
 @router.post("/exams", status_code=201)
-def new_exam(body: ExamIn, db: Db, user: Teacher) -> dict:
+def new_exam(body: NewExam, db: Db, user: Teacher) -> dict:
+    if len(set(body.problem_ids)) != len(body.problem_ids):
+        raise HTTPException(422, "a problem can be in an exam only once")
+    for pid in body.problem_ids:
+        owned(db, models.Problem, pid, user)
     e = models.Exam(owner_id=user.id, title=body.title.strip())
     db.add(e)
+    db.flush()
+    for i, pid in enumerate(body.problem_ids):
+        db.add(models.ExamProblem(exam_id=e.id, problem_id=pid, position=i))
     db.commit()
     return exam_out(db, e)
 

@@ -106,7 +106,15 @@ export type AnswerDetail = AnswerRow & {
   runs: RunOut[]; approval: Approval | null;
   versions: { id: string; version: number; selected: boolean; created_at: string }[];
 };
-export type Group = { id: string; name: string; archived: boolean; students: string[]; created_at: string };
+export type Group = { id: string; name: string; archived: boolean; students: string[]; created_at: string;
+  last_used_at: string;  // PL-51: created, or an answer in it uploaded, graded or approved
+};
+/** PL-51: a group's page; each problem counts the group's answers and lists those ready to grade. */
+export type GroupDetail = Group & {
+  exams: Exam[];
+  problems: { id: string; title: string; status: string; archived: boolean; rubric_version: number; tags: string[]; updated_at: string;
+    answers: number; approved: number; to_grade: string[] }[];
+};
 export type Exam = {
   id: string; title: string; created_at: string;
   problems: { id: string; title: string; status: string }[]; groups: { id: string; name: string }[];

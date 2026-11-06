@@ -63,6 +63,11 @@ function DialogContent({
           className
         )}
         {...props}
+        // an open autocomplete (TagInput) inside takes Escape for itself: it closes its list, not the dialog
+        onEscapeKeyDown={(e) => {
+          if (document.activeElement?.getAttribute("aria-expanded") === "true") e.preventDefault()
+          props.onEscapeKeyDown?.(e)
+        }}
       >
         {children}
         {showCloseButton && (

@@ -1,33 +1,18 @@
 import { useState } from "react";
-import { Archive, ArchiveRestore, Filter, Loader2, Search, X } from "lucide-react";
+import { Archive, ArchiveRestore, Loader2 } from "lucide-react";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import TagInput from "@/components/TagInput";
-import { ALL_TIME, DateFilter, bounds } from "@/components/DateRange";
 import { Label } from "@/components/ui/label";
+import ProblemBrowser, { type ProblemRow } from "@/components/ProblemBrowser";
 import { api, type Problem } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { usePreparing } from "@/lib/preparing";
 import { navigate } from "@/lib/router";
-import { cn } from "@/lib/utils";
 
-type Status = "draft" | "ready";
-type State = Status | "archived";  // PL-44: an archived problem keeps its status but shows only under Archived
-const DEFAULT_STATES: State[] = ["draft", "ready"];
-type Sort = "updated-desc" | "updated-asc" | "name-asc" | "name-desc";
-const SORTS: [Sort, string][] = [
-  ["updated-desc", "Recently changed"], ["updated-asc", "Least recently changed"], ["name-asc", "Name A–Z"], ["name-desc", "Name Z–A"],
-];
-type Row = { id: string; title: string; status: Status; archived: boolean; rubric_version: number; tags: string[]; updated_at: string;
-  last_used_at: string | null;  // PL-47: last answer uploaded or graded
-};
-const lower = (s: string) => s.toLocaleLowerCase();
+type Row = ProblemRow & { last_used_at: string | null };  // PL-47: last answer uploaded or graded
 
 /** PL-15: a title is enough to save a problem; it starts as a draft. */
 export default function Problems() {
@@ -37,29 +22,10 @@ export default function Problems() {
   const stored = useLoad(() => api.get<string[]>("/api/problems/tags"), []);  // PL-41: used or not
   const [title, setTitle] = useState("");
   const act = useAction();
-  // PL-42: search and filters run on the loaded list
-  const [q, setQ] = useState("");
-  const [states, setStates] = useState<State[]>(DEFAULT_STATES);  // none checked: nothing shown
-  const [tags, setTags] = useState<string[]>([]);
-  const [sort, setSort] = useState<Sort>("updated-desc");
-  const [changed, setChanged] = useState(ALL_TIME);  // by updated_at, the date the list shows
-  const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens
   const rows = list.data ?? [];
-  const allTags = stored.data ?? [];
-  const words = lower(q).split(/\s+/).filter(Boolean);
-  const [lo, hi] = bounds(changed);
-  const shown = rows.filter((r) =>
-    (!lo || new Date(r.updated_at) >= lo) && (!hi || new Date(r.updated_at) < hi) &&
-    words.every((w) => lower(r.title).includes(w) || r.tags.some((x) => lower(x).includes(w)))
-    && states.includes(stateOf(r))
-    && tags.every((x) => r.tags.some((y) => lower(y) === lower(x))))
-    .sort((a, b) => sort.startsWith("name") ? a.title.localeCompare(b.title) * (sort === "name-asc" ? 1 : -1)
-      : (a.updated_at < b.updated_at ? -1 : 1) * (sort === "updated-asc" ? 1 : -1));
   // PL-47: the ten problems most recently used (an answer uploaded or graded), archived ones left out
   const recent = rows.filter((r) => r.last_used_at && !r.archived)
     .sort((a, b) => (a.last_used_at! < b.last_used_at! ? 1 : -1)).slice(0, 10);
-  const statesChanged = states.length !== DEFAULT_STATES.length || !DEFAULT_STATES.every((x) => states.includes(x));
-  const nFilters = (statesChanged ? 1 : 0) + tags.length + (changed.range === "all" ? 0 : 1);
   const arch = useAction();
   const archive = (r: Row) => arch.run(async () => {
     await api.patch(`/api/problems/${r.id}`, { archived: !r.archived });
@@ -112,110 +78,19 @@ export default function Problems() {
       )}
       {rows.length > 0 && (<>
         {recent.length > 0 && <h2 className="pt-2 text-sm font-semibold">{t("All problems")}</h2>}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input type="search" aria-label={t("Search problems")} placeholder={t("Search by name or tag")}
-                   className="pl-8" value={q} onChange={(e) => setQ(e.target.value)} />
-          </div>
-          <Button variant="outline" className="lg:hidden" aria-expanded={showFilters} aria-controls="problem-filters"
-                  onClick={() => setShowFilters(!showFilters)}>
-            <Filter /> {t("Filters")}{nFilters ? ` · ${nFilters}` : ""}
-          </Button>
-        </div>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <div className="min-w-0 flex-1 space-y-3">
-        <p className="text-xs text-muted-foreground" aria-live="polite">{t("{n} of {total} problems", { n: shown.length, total: rows.length })}</p>
-        {shown.length === 0 && <p className="text-sm text-muted-foreground">{t("No problem matches the search and filters.")}</p>}
-      {shown.length > 0 && <Card className="divide-y gap-0 overflow-hidden py-0">
-        {shown.map((p) => (
-          // the archive button sits next to the link, never inside it
-          <div key={p.id} className="flex items-center hover:bg-accent">
-          <a href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
-             className={cn("flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4", p.archived && "text-muted-foreground")}>
-            <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="min-w-0 truncate font-medium">{p.title}</span>
-              {preparing.has(p.id) && (
-                <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" role="status" aria-label={t("Preparing the AI grader")} />
-              )}
-              {p.tags.map((x) => <Badge key={x} variant="secondary" className="font-normal">{x}</Badge>)}
-            </span>
-            <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-              <span className="hidden sm:inline">{when(p.updated_at)}</span>
-              {p.archived && <Badge variant="secondary">{t("Archived")}</Badge>}
-              {p.status === "ready" ? <Badge>{t("Ready · v{n}", { n: p.rubric_version })}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
-            </span>
-          </a>
-          <Button variant="ghost" size="icon" className="mx-2 size-8 shrink-0 text-muted-foreground" disabled={arch.busy}
-                  aria-label={t(p.archived ? "Unarchive {title}" : "Archive {title}", { title: p.title })}
-                  title={t(p.archived ? "Unarchive" : "Archive")} onClick={() => archive(p)}>
-            {p.archived ? <ArchiveRestore /> : <Archive />}
-          </Button>
-          </div>
-        ))}
-      </Card>}
-      </div>
-      <aside id="problem-filters" aria-label={t("Filters")}
-             className={cn("order-first space-y-4 rounded-lg border p-4 lg:order-last lg:sticky lg:top-17 lg:block lg:w-60 lg:shrink-0", !showFilters && "hidden")}>
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">{t("Filters")}</h2>
-          <Button size="sm" variant="ghost" className="h-7" disabled={!nFilters}
-                  onClick={() => { setStates(DEFAULT_STATES); setTags([]); setChanged(ALL_TIME); }}>{t("Clear")}</Button>
-        </div>
-        <div className="space-y-2">
-          <p id="sort-label" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</p>
-          <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-            <SelectTrigger size="sm" className="w-full" aria-labelledby="sort-label"><SelectValue /></SelectTrigger>
-            <SelectContent position="popper">
-              {SORTS.map(([id, label]) => <SelectItem key={id} value={id}>{t(label)}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <fieldset className="space-y-2">
-          <legend className="mb-2 text-xs font-medium text-muted-foreground">{t("Status")}</legend>
-          {([["draft", t("Draft")], ["ready", t("Ready")], ["archived", t("Archived")]] as const).map(([s, label]) => (
-            <label key={s} className="flex items-center gap-2 text-sm">
-              <Checkbox checked={states.includes(s)}
-                        onCheckedChange={() => setStates(states.includes(s) ? states.filter((x) => x !== s) : [...states, s])} />
-              {label} <span className="text-xs text-muted-foreground">{rows.filter((r) => stateOf(r) === s).length}</span>
-            </label>
-          ))}
-        </fieldset>
-        <DateFilter title={t("Changed")} value={changed} onChange={setChanged} />
-        <fieldset className="min-w-0 space-y-2">
-          <legend className="mb-2 text-xs font-medium text-muted-foreground">
-            {t("Tags (all selected)")}{tags.length ? ` · ${tags.length}` : ""}
-          </legend>
-          {allTags.length === 0 && <p className="text-xs text-muted-foreground">{t("No tags yet. Add them with the plus on a problem.")}</p>}
-          {tags.length > 0 && (
-            <ul className="flex flex-wrap gap-1">
-              {tags.map((x) => (
-                <li key={x}>
-                  <Badge variant="secondary" className="max-w-full gap-0.5 pr-0.5">
-                    <span className="truncate" title={x}>{x}</span>
-                    <button type="button" aria-label={t("Remove tag {tag}", { tag: x })}
-                            className="rounded-full p-0.5 hover:bg-background/60" onClick={() => setTags(tags.filter((y) => y !== x))}>
-                      <X className="size-3" />
-                    </button>
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+        <ProblemBrowser rows={rows} allTags={stored.data ?? []}
+          afterTitle={(p) => preparing.has(p.id) && (
+            <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" role="status" aria-label={t("Preparing the AI grader")} />
           )}
-          {allTags.length > 0 && (
-            // PL-42: tags are picked from suggestions, so the panel never lists them all
-            <TagInput label={t("Filter by tag")} placeholder={t("Type a tag…")}
-                      suggestions={allTags.filter((x) => !tags.includes(x)).map((x) => ({
-                        value: x, hint: String(rows.filter((r) => r.tags.some((y) => lower(y) === lower(x))).length),
-                      }))}
-                      onPick={(x) => setTags([...tags, x])} />
-          )}
-        </fieldset>
-      </aside>
-      </div>
+          meta={(p) => <span className="hidden sm:inline">{when(p.updated_at)}</span>}
+          actions={(p) => (
+            <Button variant="ghost" size="icon" className="size-8 text-muted-foreground" disabled={arch.busy}
+                    aria-label={t(p.archived ? "Unarchive {title}" : "Archive {title}", { title: p.title })}
+                    title={t(p.archived ? "Unarchive" : "Archive")} onClick={() => archive(p)}>
+              {p.archived ? <ArchiveRestore /> : <Archive />}
+            </Button>
+          )} />
       </>)}
     </Page>
   );
 }
-
-const stateOf = (r: Row): State => r.archived ? "archived" : r.status;

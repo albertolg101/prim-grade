@@ -95,6 +95,9 @@
   "Label",
   "No label matches “{q}”.",
   "No exam matches “{q}”.",
-  "No group matches “{q}”."
+  "No group matches “{q}”.",
+  "Recently created",
+  "Recently used",
+  "No problem matches “{q}”."
  ]
 }

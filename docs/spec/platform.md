@@ -266,6 +266,23 @@ Each requirement has a stable id; tests and tasks cite it.
 
 - **PL-25 Groups.** A teacher creates, renames and archives groups (a class or a section) and sees
   the students who have submitted in each.
+- **PL-51 Groups page and a group's page** (owner request, 6 November 2026). The Groups page works
+  like Problems (PL-42, PL-47): a **New group** button opens a dialog; "Recently used" shows the ten
+  unarchived groups most recently created or with an answer uploaded, graded or approved; below, a
+  search bar (group or student name), the list with an archive button per row, and a filter panel:
+  **Sort by** (recently used, recently created, name A–Z, Z–A), **Status** (Active checked,
+  Archived not) and **Created** (the PL-49 date filter). Archiving hides a group only from these
+  defaults and from the answer group pickers; its answers and exams are kept.
+  Opening a group shows its name (pencil to rename), archive, the students who have submitted, the
+  exams given to it (each opens the exam on this group), and its problems: those in its exams and
+  those with an answer from this group. They use the Problems search and filter panel; each row
+  shows this group's answers and approved answers, and on a ready problem **Add answer(s)** (PL-50,
+  the group fixed to this one) and **Grade (n)**, which grades this group's answers not graded yet.
+- **PL-52 New exam with its problems** (owner request, 6 November 2026). **New exam** on the Exams
+  page opens a dialog with the title and, optionally, existing unarchived problems picked with an
+  autocomplete, shown numbered and put in order with up and down arrows. The exam is created with
+  those problems in that order in one request; a problem twice is refused (422) and another
+  teacher's problem is not found (404), with no exam created.
 - **PL-26 Exams.** A teacher creates an exam with a title, adds existing problems, or creates a new
   problem from inside the exam, which is added to it automatically. They can reorder and remove
   problems, and assign one or more groups. Each exam and group pair is reviewed and costed
@@ -369,6 +386,8 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P21 | PL-44 | Archiving a problem keeps its status and rubric version, it is still listed with `archived`, and unarchiving restores it (`test_archiving_a_problem_is_reversible_and_keeps_it`). |
 | AC-P22 | PL-45 | A problem's answers are listed newest first (`test_problem_answers_are_listed_newest_first`). |
 | AC-P23 | PL-46 | An answer can carry one of the teacher's groups without an exam; another teacher's group is refused, and an exam without a group is refused (`test_an_answer_can_name_one_of_the_teachers_groups`). |
+| AC-P25 | PL-51 | A group's page lists the exams given to it and the problems in them or answered in the group, each with the group's answers counted and those ready to grade; groups say when they were last used; another teacher gets 404 (`test_group_page_lists_its_exams_and_problems_with_answers_to_grade`). |
+| AC-P26 | PL-52 | An exam created with problems keeps their order; a repeated problem or another teacher's problem is refused and creates nothing (`test_an_exam_is_created_with_problems_in_the_given_order`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

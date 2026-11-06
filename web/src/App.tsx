@@ -15,6 +15,7 @@ import Auth from "@/pages/Auth";
 import ExamPage from "@/pages/Exam";
 import Exams from "@/pages/Exams";
 import Groups from "@/pages/Groups";
+import GroupPage from "@/pages/GroupPage";
 import ProblemPage from "@/pages/Problem";
 import Problems from "@/pages/Problems";
 import Review from "@/pages/Review";
@@ -77,6 +78,7 @@ export default function App() {
   if ((m = match("/problems/:id", path))) page = <ProblemPage key={m.id} id={m.id} />;
   else if ((m = match("/answers/:id", path))) page = <Review key={m.id} id={m.id} />;
   else if ((m = match("/exams/:id", path))) page = <ExamPage key={m.id} id={m.id} />;
+  else if ((m = match("/groups/:id", path))) page = <GroupPage key={m.id} id={m.id} />;
   else if (path === "/exams") page = <Exams />;
   else if (path === "/groups") page = <Groups />;
   else if (path === "/settings")

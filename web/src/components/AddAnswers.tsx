@@ -34,8 +34,10 @@ export function studentsInFolder(files: File[]): { students: Student[]; skipped:
 }
 
 /** PL-20, PL-50: the "Add answer(s)" button and its dialog, for one student or a folder of students. */
-export default function AddAnswers({ problemId, groups, group, onGroup, onAdded }: {
+export default function AddAnswers({ problemId, groups, group, onGroup, onAdded, lockGroup, trigger }: {
   problemId: string; groups: Group[]; group: Group | null; onGroup: (g: Group | null) => void; onAdded: () => Promise<unknown>;
+  lockGroup?: boolean;  // PL-51: on a group's page the group is that group
+  trigger?: string;  // the button's text when it should say more than "Add answer(s)"
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"one" | "folder">("one");
@@ -78,7 +80,7 @@ export default function AddAnswers({ problemId, groups, group, onGroup, onAdded 
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}><Plus /> {t("Add answer(s)")}</Button>
+      <Button size="sm" onClick={() => setOpen(true)} aria-label={trigger}><Plus /> {t("Add answer(s)")}</Button>
       <Dialog open={open} onOpenChange={close}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
@@ -135,7 +137,7 @@ export default function AddAnswers({ problemId, groups, group, onGroup, onAdded 
           )}
           <div className="grid gap-2 sm:grid-cols-2">
             <Input placeholder={t("Label (optional)")} value={label} onChange={(e) => setLabel(e.target.value)} aria-label={t("Label")} />
-            <GroupPick groups={groups.filter((g) => !g.archived)} value={group} onChange={onGroup} />
+            <GroupPick groups={groups.filter((g) => !g.archived)} value={group} onChange={onGroup} locked={lockGroup} />
           </div>
           <ErrorText>{act.error}</ErrorText>
           <DialogFooter>
@@ -159,13 +161,13 @@ export default function AddAnswers({ problemId, groups, group, onGroup, onAdded 
 
 /** PL-46: an optional group, picked from the teacher's groups with an autocomplete; once picked it
  * shows as a chip that can be removed. */
-function GroupPick({ groups, value, onChange }: { groups: Group[]; value: Group | null; onChange: (g: Group | null) => void }) {
+function GroupPick({ groups, value, onChange, locked }: { groups: Group[]; value: Group | null; onChange: (g: Group | null) => void; locked?: boolean }) {
   if (value) {
     return (
       <div className="flex h-9 items-center justify-between gap-2 rounded-md border px-3 text-sm">
         <span className="min-w-0 truncate" title={value.name}>{value.name}</span>
-        <button type="button" aria-label={t("Remove group {name}", { name: value.name })} className="rounded-full p-0.5 hover:bg-accent"
-                onClick={() => onChange(null)}><X className="size-3.5" /></button>
+        {!locked && <button type="button" aria-label={t("Remove group {name}", { name: value.name })} className="rounded-full p-0.5 hover:bg-accent"
+                onClick={() => onChange(null)}><X className="size-3.5" /></button>}
       </div>
     );
   }
