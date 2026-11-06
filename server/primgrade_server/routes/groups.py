@@ -24,7 +24,7 @@ def group_out(db, g: models.Group) -> dict:
         models.Answer.group_id == g.id, models.Answer.student_name != "")
         .order_by(models.Answer.student_name)).all()
     return {"id": g.id, "name": g.name, "archived": g.archived, "students": students,
-            "created_at": g.created_at.isoformat()}  # PL-49: the answer filter offers the newest first
+            "created_at": g.created_at.isoformat()}  # PL-49: answer filters list the newest first
 
 
 @router.get("")
