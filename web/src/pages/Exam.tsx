@@ -54,7 +54,7 @@ export default function ExamPage({ id }: { id: string }) {
               </button>
             ))}
           </div>
-          {group && <ExamGroup key={group} e={e} groupId={group} />}
+          {group && <ExamGroup key={group} e={e} groupId={group} onUploads={exam.reload} />}
         </div>
       )}
     </Page>
@@ -158,8 +158,15 @@ function ExamGroups({ e, all, save, busy }: { e: Exam; all: Group[]; save: (fn: 
 }
 
 /** One exam and group: upload links with QR codes, answers per problem and student, teacher uploads. */
-function ExamGroup({ e, groupId }: { e: Exam; groupId: string }) {
+function ExamGroup({ e, groupId, onUploads }: { e: Exam; groupId: string; onUploads: () => Promise<unknown> }) {
   const answers = useLoad(() => api.get<{ answers: AnswerRow[] }>(`/api/exams/${e.id}/groups/${groupId}/answers`).then((r) => r.answers), [e.id, groupId]);
+  const { reload } = answers;
+  // PL-27: students upload while this page is on screen, so their answers (and the group counts) show up by themselves
+  // ponytail: polls every 5 s while the tab is visible; push updates if many teachers watch at once
+  useEffect(() => {
+    const tick = setInterval(() => { if (!document.hidden) { reload(); onUploads(); } }, 5000);
+    return () => clearInterval(tick);
+  }, [reload, onUploads]);
   const title = (pid: string) => e.problems.find((p) => p.id === pid)?.title ?? "";
   const ready = e.problems.every((p) => p.status === "ready");
   return (
