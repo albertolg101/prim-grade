@@ -32,18 +32,25 @@ def costs(db: Db, user: Teacher, since: datetime | None = None,
     exams = dict(db.execute(select(models.Exam.id, models.Exam.title)
                             .where(models.Exam.owner_id == user.id)).all())
     per_problem: dict[str, dict] = {}
-    for pid, purpose, usd, tokens, _calls in _sum(
+    for pid, purpose, usd, tokens, calls in _sum(
             db, user.id, [models.AiCall.problem_id, models.AiCall.purpose],
             models.AiCall.problem_id.is_not(None), *when):
         row = per_problem.setdefault(pid, {"id": pid, "title": titles.get(pid, "(deleted)"),
-                                           "setup_usd": 0.0, "grading_usd": 0.0, "tokens": 0})
+                                           "setup_usd": 0.0, "grading_usd": 0.0, "tokens": 0,
+                                           "graded": 0})
         row["grading_usd" if purpose == "grading" else "setup_usd"] += usd
         row["tokens"] += tokens
+        if purpose == "grading":
+            row["graded"] += calls
     grading = models.AiCall.purpose == "grading"
+    # PL-63: the period's total, split into creating graders (setup and improve) and grading
+    by_purpose = {g: usd for g, usd, _t, _c in _sum(db, user.id, [grading.label("g")], *when)}
     return {
-        "total_usd": db.scalar(select(func.coalesce(func.sum(models.AiCall.cost_usd), 0.0))
-                               .where(models.AiCall.user_id == user.id, *when)),
-        "problems": list(per_problem.values()),
+        "total_usd": sum(by_purpose.values(), 0.0),
+        "setup_usd": by_purpose.get(False, 0.0),
+        "grading_usd": by_purpose.get(True, 0.0),
+        "problems": sorted(per_problem.values(),
+                           key=lambda r: -(r["setup_usd"] + r["grading_usd"])),
         "groups": [{"id": g, "name": groups.get(g, ""), "usd": usd, "tokens": t, "calls": c}
                    for g, usd, t, c in _sum(db, user.id, [models.AiCall.group_id], grading, *when,
                                             models.AiCall.group_id.is_not(None))],

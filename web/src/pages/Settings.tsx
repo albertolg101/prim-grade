@@ -14,7 +14,8 @@ import { navigate } from "@/lib/router";
 type Prefs = { link_minutes: number; export_format: "xlsx" | "csv"; has_api_key: boolean; api_key_last4: string | null };
 type Row = { id: string; usd: number; tokens: number; calls: number };
 type Costs = {
-  total_usd: number;
+  total_usd: number; setup_usd: number; grading_usd: number;  // PL-63: the period's total and its split
+  problems: { id: string; title: string; setup_usd: number; grading_usd: number; graded: number }[];
   groups: (Row & { name: string })[];
   exams: (Row & { title: string })[];
   exam_groups: (Row & { exam_title: string; group_name: string })[];
@@ -109,15 +110,13 @@ export default function Settings({ onSignOut }: { onSignOut: () => void }) {
       <Card>
         <CardHeader>
           <CardTitle>{t("Spending")}</CardTitle>
-          <CardDescription>
-            {t("Estimated from token counts and published prices (prices.json). Total:")} <strong>{usd(costs.data?.total_usd)}</strong>
-          </CardDescription>
+          <CardDescription>{t("Estimated from token counts and published prices (prices.json).")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex flex-wrap items-end gap-3">
             <div className="relative min-w-48 flex-1">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input type="search" className="h-8 pl-8" aria-label={t("Search spending")} placeholder={t("Search by exam or group")}
+              <Input type="search" className="h-8 pl-8" aria-label={t("Search spending")} placeholder={t("Search by problem, exam or group")}
                      value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
             <div className="w-48"><DateFilter title={t("Period")} value={period} onChange={setPeriod} /></div>
@@ -125,12 +124,23 @@ export default function Settings({ onSignOut }: { onSignOut: () => void }) {
           <ErrorText>{costs.error}</ErrorText>
           {costs.data && (
             <>
-              <CostTable title={t("Per exam and group")} head={[t("Exam"), t("Group")]}
-                         rows={costs.data.exam_groups.filter((r) => hit(r.exam_title, r.group_name)).map((r) => [[r.exam_title, r.group_name], r.calls, r.usd])} />
-              <CostTable title={t("Per exam")} head={[t("Exam")]}
-                         rows={costs.data.exams.filter((r) => hit(r.title)).map((r) => [[r.title], r.calls, r.usd])} />
-              <CostTable title={t("Per group")} head={[t("Group")]}
-                         rows={costs.data.groups.filter((r) => hit(r.name)).map((r) => [[r.name], r.calls, r.usd])} />
+              {/* PL-63: what the period cost, and how much went to creating graders versus grading */}
+              <dl className="grid grid-cols-3 gap-2">
+                {([[t("Total in this period"), costs.data.total_usd], [t("Creating graders"), costs.data.setup_usd], [t("Grading"), costs.data.grading_usd]] as const).map(([label, v], i) => (
+                  <div key={label} className="min-w-0 rounded-lg border p-2 sm:p-3">
+                    <dt className="text-xs text-muted-foreground">{label}</dt>
+                    <dd className={`tabular-nums ${i === 0 ? "text-base font-bold sm:text-2xl" : "text-base font-semibold sm:text-xl"}`}>{usd(v)}</dd>
+                  </div>
+                ))}
+              </dl>
+              <CostTable title={t("Per problem")} head={[t("Problem")]} nums={[t("Creating grader"), t("Grading"), t("Total")]}
+                         rows={costs.data.problems.filter((r) => hit(r.title)).map((r) => [[r.title], usd(r.setup_usd), usd(r.grading_usd), usd(r.setup_usd + r.grading_usd)])} />
+              <CostTable title={t("Per exam and group")} head={[t("Exam"), t("Group")]} nums={[t("Answers graded"), t("Cost")]}
+                         rows={costs.data.exam_groups.filter((r) => hit(r.exam_title, r.group_name)).map((r) => [[r.exam_title, r.group_name], r.calls, usd(r.usd)])} />
+              <CostTable title={t("Per exam")} head={[t("Exam")]} nums={[t("Answers graded"), t("Cost")]}
+                         rows={costs.data.exams.filter((r) => hit(r.title)).map((r) => [[r.title], r.calls, usd(r.usd)])} />
+              <CostTable title={t("Per group")} head={[t("Group")]} nums={[t("Answers graded"), t("Cost")]}
+                         rows={costs.data.groups.filter((r) => hit(r.name)).map((r) => [[r.name], r.calls, usd(r.usd)])} />
             </>
           )}
         </CardContent>
@@ -139,31 +149,38 @@ export default function Settings({ onSignOut }: { onSignOut: () => void }) {
   );
 }
 
-/** PL-62: every spending table has the same columns at the same widths, so the numbers line up. */
-function CostTable({ title, head, rows }: { title: string; head: string[]; rows: [string[], number, number][] }) {
+const FIRST = 10;  // PL-63: long tables show the first rows; the rest are one click away
+
+/** PL-62: every spending table has the same column widths, so the numbers line up. */
+function CostTable({ title, head, nums, rows }: { title: string; head: string[]; nums: string[]; rows: [string[], ...(string | number)[]][] }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? rows : rows.slice(0, FIRST);
   return (
     <section className="space-y-1">
       <h3 className="text-sm font-medium">{title}</h3>
       {rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Nothing spent in this period.")}</p> : (
         <table className="w-full table-fixed text-sm">
-          <colgroup>{head.map((h) => <col key={h} />)}<col className="w-28 sm:w-36" /><col className="w-24" /></colgroup>
+          <colgroup>{head.map((h) => <col key={h} />)}{nums.map((h) => <col key={h} className="w-[4.5rem] sm:w-36" />)}</colgroup>
           <thead>
             <tr className="text-left text-xs text-muted-foreground">
               {head.map((h) => <th key={h} className="pb-1 font-normal">{h}</th>)}
-              <th className="pb-1 text-right font-normal">{t("Answers graded")}</th>
-              <th className="pb-1 text-right font-normal">{t("Cost")}</th>
+              {nums.map((h) => <th key={h} className="truncate pb-1 text-right font-normal" title={h}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
-            {rows.map(([names, calls, cost], i) => (
+            {shown.map(([names, ...cells], i) => (
               <tr key={i} className="border-t">
-                {names.map((n, j) => <td key={j} className="truncate py-1.5 pr-3" title={n}>{n}</td>)}
-                <td className="py-1.5 text-right tabular-nums">{calls}</td>
-                <td className="py-1.5 text-right tabular-nums">{usd(cost)}</td>
+                {names.map((n, j) => <td key={j} className="py-1.5 pr-2 break-words sm:truncate sm:pr-3" title={n}>{n}</td>)}
+                {cells.map((c, j) => <td key={j} className={`py-1.5 text-right tabular-nums ${j === cells.length - 1 ? "font-medium" : ""}`}>{c}</td>)}
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+      {rows.length > FIRST && (
+        <Button size="sm" variant="ghost" onClick={() => setAll(!all)}>
+          {all ? t("Show the first {n}", { n: FIRST }) : t("Show all {n}", { n: rows.length })}
+        </Button>
       )}
     </section>
   );

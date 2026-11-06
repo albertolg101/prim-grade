@@ -21,6 +21,8 @@ def test_totals_add_up(admin):  # AC-P13
     [row] = c["problems"]
     assert row["setup_usd"] > 0 and row["grading_usd"] == pytest.approx(2 * row["setup_usd"])
     assert c["total_usd"] == pytest.approx(row["setup_usd"] + row["grading_usd"])
+    assert c["setup_usd"] == pytest.approx(row["setup_usd"])  # PL-63, AC-P35
+    assert c["grading_usd"] == pytest.approx(row["grading_usd"]) and row["graded"] == 2
     for key in ("groups", "exams", "exam_groups"):
         [r] = c[key]
         assert r["usd"] == pytest.approx(row["grading_usd"]) and r["calls"] == 2

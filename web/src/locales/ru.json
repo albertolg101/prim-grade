@@ -67,7 +67,6 @@
  "Draft proposal": "Черновое предложение",
  "Drop images here, or": "Перетащите изображения сюда или",
  "Email": "Эл. почта",
- "Estimated from token counts and published prices (prices.json). Total:": "Оценка по числу токенов и опубликованным ценам (prices.json). Итого:",
  "Every field is editable. Saving an edit to a ready problem makes it a draft; accepting creates the next rubric version, and earlier grades keep theirs.": "Все поля можно редактировать. Сохранение правки в готовой задаче делает её черновиком; принятие создаёт следующую версию критериев, а прежние оценки сохраняют свою.",
  "Evidence ({source}):": "Доказательство ({source}):",
  "Exam": "Экзамен",
@@ -510,10 +509,17 @@
  "Export marks as": "Экспортировать оценки как",
  "Open sidebar": "Показать боковую панель",
  "Search spending": "Поиск расходов",
- "Search by exam or group": "Поиск по экзамену или группе",
  "Period": "Период",
  "Per exam and group": "По экзамену и группе",
  "Per exam": "По экзаменам",
  "Per group": "По группам",
- "Nothing spent in this period.": "За этот период расходов нет."
+ "Nothing spent in this period.": "За этот период расходов нет.",
+ "Estimated from token counts and published prices (prices.json).": "Оценка по числу токенов и опубликованным ценам (prices.json).",
+ "Search by problem, exam or group": "Поиск по задаче, экзамену или группе",
+ "Total in this period": "Всего за период",
+ "Creating graders": "Создание проверяющих",
+ "Creating grader": "Создание проверяющего",
+ "Show the first {n}": "Показать первые {n}",
+ "Show all {n}": "Показать все {n}",
+ "Total": "Итого"
 }

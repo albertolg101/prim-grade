@@ -67,7 +67,6 @@
  "Draft proposal": "Propuesta borrador",
  "Drop images here, or": "Suelta las imágenes aquí, o",
  "Email": "Correo electrónico",
- "Estimated from token counts and published prices (prices.json). Total:": "Estimado a partir de los tokens y los precios publicados (prices.json). Total:",
  "Every field is editable. Saving an edit to a ready problem makes it a draft; accepting creates the next rubric version, and earlier grades keep theirs.": "Todos los campos se pueden editar. Guardar un cambio en un problema listo lo vuelve borrador; al aceptar se crea la siguiente versión de la rúbrica, y las notas anteriores conservan la suya.",
  "Evidence ({source}):": "Evidencia ({source}):",
  "Exam": "Examen",
@@ -510,10 +509,17 @@
  "Export marks as": "Exportar notas como",
  "Open sidebar": "Abrir la barra lateral",
  "Search spending": "Buscar gastos",
- "Search by exam or group": "Buscar por examen o grupo",
  "Period": "Periodo",
  "Per exam and group": "Por examen y grupo",
  "Per exam": "Por examen",
  "Per group": "Por grupo",
- "Nothing spent in this period.": "Sin gastos en este periodo."
+ "Nothing spent in this period.": "Sin gastos en este periodo.",
+ "Estimated from token counts and published prices (prices.json).": "Estimado a partir del número de tokens y los precios publicados (prices.json).",
+ "Search by problem, exam or group": "Buscar por problema, examen o grupo",
+ "Total in this period": "Total en este periodo",
+ "Creating graders": "Creación de calificadores",
+ "Creating grader": "Crear calificador",
+ "Show the first {n}": "Mostrar los primeros {n}",
+ "Show all {n}": "Mostrar los {n}",
+ "Total": "Total"
 }
