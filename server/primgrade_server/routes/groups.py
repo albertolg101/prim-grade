@@ -23,7 +23,8 @@ def group_out(db, g: models.Group) -> dict:
     students = db.scalars(select(models.Answer.student_name).distinct().where(
         models.Answer.group_id == g.id, models.Answer.student_name != "")
         .order_by(models.Answer.student_name)).all()
-    return {"id": g.id, "name": g.name, "archived": g.archived, "students": students}
+    return {"id": g.id, "name": g.name, "archived": g.archived, "students": students,
+            "created_at": g.created_at.isoformat()}  # PL-49: the answer filter offers the newest first
 
 
 @router.get("")

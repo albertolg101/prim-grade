@@ -43,3 +43,14 @@ def test_teacher_upload_needs_exam_and_group_together(admin):
     r = admin.post(f"/api/problems/{p['id']}/answers", data={"exam_id": e["id"]},
                    files=[("pages", ("a.png", b"\x89PNG..", "image/png"))])
     assert r.status_code == 422
+
+
+def test_groups_and_exams_say_when_they_were_created(admin):  # PL-49
+    a = admin.post("/api/groups", json={"name": "B first"}).json()
+    b = admin.post("/api/groups", json={"name": "A second"}).json()
+    assert a["created_at"] <= b["created_at"]
+    groups = {g["id"]: g["created_at"] for g in admin.get("/api/groups").json()}
+    assert groups == {a["id"]: a["created_at"], b["id"]: b["created_at"]}
+    admin.post("/api/exams", json={"title": "Older"})
+    admin.post("/api/exams", json={"title": "Newer"})
+    assert [e["title"] for e in admin.get("/api/exams").json()] == ["Newer", "Older"]

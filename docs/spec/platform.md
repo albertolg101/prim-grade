@@ -175,10 +175,11 @@ Each requirement has a stable id; tests and tasks cite it.
   required and failed answers; Approved; Not graded covers not graded and grading in progress), **Uploaded** (All time, Today, Yesterday,
   Last 7 days, Last 30 days, This month, This year, or a Custom range, both days included, in local
   calendar days; the range is picked on a one-month calendar in the site's own popover, weeks from
-  Monday: the first click sets the start, the second the end, and today shows in the primary colour), **Group** and **Exam** checkboxes with counts, including
-  "No group" and "No exam" (a facet with a single value is not shown), and **Label**, picked like
-  the problem tags (PL-42): an autocomplete with counts adds each label as a removable chip.
-  Within a facet any picked value matches; facets combine; nothing picked means every answer.
+  Monday: the first click sets the start, the second the end, and today shows in the primary colour), **Group**, **Exam** and **Label**,
+  each picked like the problem tags (PL-42): clicking the field opens an autocomplete with the most
+  recently created groups and exams first (labels: the most recently used), each with how many of
+  the problem's answers carry it, and typing searches them all; a pick shows as a removable chip.
+  A section with nothing to pick says so ("No groups yet"). Within a facet any picked value matches; facets combine; nothing picked means every answer.
   **Clear** resets the filters (all three statuses checked), not the sort. "{n} of {total} answers" shows how many match; on a
   phone a Filters button opens the panel above the list. Grading selected answers grades only the
   ones still shown. Filters run on the loaded list and are not saved.

@@ -93,6 +93,8 @@
   "Group",
   "Exam",
   "Label",
-  "No label matches “{q}”."
+  "No label matches “{q}”.",
+  "No exam matches “{q}”.",
+  "No group matches “{q}”."
  ]
 }

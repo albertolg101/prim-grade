@@ -106,7 +106,7 @@ export type AnswerDetail = AnswerRow & {
   runs: RunOut[]; approval: Approval | null;
   versions: { id: string; version: number; selected: boolean; created_at: string }[];
 };
-export type Group = { id: string; name: string; archived: boolean; students: string[] };
+export type Group = { id: string; name: string; archived: boolean; students: string[]; created_at: string };
 export type Exam = {
   id: string; title: string; created_at: string;
   problems: { id: string; title: string; status: string }[]; groups: { id: string; name: string }[];

@@ -424,8 +424,6 @@
  "This year": "Este año",
  "Custom range": "Rango personalizado",
  "Uploaded": "Subida",
- "No group": "Sin grupo",
- "No exam": "Sin examen",
  "{n} of {total} answers": "{n} de {total} respuestas",
  "No answer matches the filters.": "Ninguna respuesta coincide con los filtros.",
  "Filter by label": "Filtrar por etiqueta",
@@ -434,5 +432,13 @@
  "Remove label {label}": "Quitar la etiqueta {label}",
  "Pick dates": "Elegir fechas",
  "Previous month": "Mes anterior",
- "Next month": "Mes siguiente"
+ "Next month": "Mes siguiente",
+ "No exams yet": "Aún no hay exámenes",
+ "No labels yet": "Aún no hay etiquetas",
+ "Remove exam {name}": "Quitar el examen {name}",
+ "No exam matches “{q}”.": "Ningún examen coincide con “{q}”.",
+ "Filter by group": "Filtrar por grupo",
+ "Filter by exam": "Filtrar por examen",
+ "Type a group…": "Escribe un grupo…",
+ "Type an exam…": "Escribe un examen…"
 }

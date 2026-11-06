@@ -424,8 +424,6 @@
  "This year": "Этот год",
  "Custom range": "Свой период",
  "Uploaded": "Загружено",
- "No group": "Без группы",
- "No exam": "Без экзамена",
  "{n} of {total} answers": "{n} из {total} ответов",
  "No answer matches the filters.": "Нет ответов, подходящих под фильтры.",
  "Filter by label": "Фильтр по метке",
@@ -434,5 +432,13 @@
  "Remove label {label}": "Убрать метку {label}",
  "Pick dates": "Выбрать даты",
  "Previous month": "Предыдущий месяц",
- "Next month": "Следующий месяц"
+ "Next month": "Следующий месяц",
+ "No exams yet": "Экзаменов пока нет",
+ "No labels yet": "Меток пока нет",
+ "Remove exam {name}": "Убрать экзамен {name}",
+ "No exam matches “{q}”.": "Нет экзаменов, подходящих под «{q}».",
+ "Filter by group": "Фильтр по группе",
+ "Filter by exam": "Фильтр по экзамену",
+ "Type a group…": "Введите группу…",
+ "Type an exam…": "Введите экзамен…"
 }

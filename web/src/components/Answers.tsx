@@ -26,6 +26,8 @@ const RANGES: [Range, string][] = [
 type Facet = "group" | "exam" | "label";
 const keyOf = (r: AnswerRow, f: Facet) => (f === "group" ? r.group_id : f === "exam" ? r.exam_id : r.label) || "";
 const NO_FILTER: Record<Facet, string[]> = { group: [], exam: [], label: [] };
+type Option = { key: string; name: string };
+const nameIn = (options: Option[], key: string) => options.find((o) => o.key === key)?.name ?? "…";
 // PL-49: three status boxes over the six answer states; drafts and failures need the teacher too
 type Status = "review" | "approved" | "not_graded";
 const STATUSES: [Status, string][] = [["review", "Review required"], ["approved", "Approved"], ["not_graded", "Not graded"]];
@@ -75,10 +77,19 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   });
   if (sort === "oldest") shown.reverse();
   if (sort === "name") shown.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
-  const labels = [...new Set(all.map((r) => r.label).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  // PL-49: each autocomplete opens on the newest: groups and exams by creation, labels by their latest answer
+  const facets: { f: Facet; title: string; options: Option[]; empty: string; field: string; typeHint: string; noMatch: string; remove: (name: string) => string }[] = [
+    { f: "group", title: t("Group"), empty: t("No groups yet"), field: t("Filter by group"), typeHint: t("Type a group…"), noMatch: "No group matches “{q}”.",
+      remove: (name) => t("Remove group {name}", { name }),
+      options: [...(groups.data ?? [])].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).map((g) => ({ key: g.id, name: g.name })) },
+    { f: "exam", title: t("Exam"), empty: t("No exams yet"), field: t("Filter by exam"), typeHint: t("Type an exam…"), noMatch: "No exam matches “{q}”.",
+      remove: (name) => t("Remove exam {name}", { name }),
+      options: (exams.data ?? []).map((e) => ({ key: e.id, name: e.title })) },  // the server lists the newest first
+    { f: "label", title: t("Label"), empty: t("No labels yet"), field: t("Filter by label"), typeHint: t("Type a label…"), noMatch: "No label matches “{q}”.",
+      remove: (label) => t("Remove label {label}", { label }),
+      options: [...new Set(all.map((r) => r.label).filter(Boolean))].map((x) => ({ key: x, name: x })) },  // rows come newest first
+  ];
   const nFilters = picked.group.length + picked.exam.length + picked.label.length + (range === "all" ? 0 : 1) + (statuses.length === STATUSES.length ? 0 : 1);
-  const facetName = (f: Facet, k: string) => !k ? t(f === "group" ? "No group" : "No exam")
-    : f === "group" ? groupName(k) ?? "…" : exams.data?.find((e) => e.id === k)?.title ?? "…";
   const add = () => act.run(async () => {
     await api.form(`/api/problems/${problemId}/answers`,
       pagesForm(pages, { label, student_name: name, group_id: group?.id }));
@@ -149,38 +160,18 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
               </Select>
               {range === "custom" && <DateRange from={from} to={to} onChange={(f, t2) => { setFrom(f); setTo(t2); }} />}
             </div>
-            {([["group", "Group"], ["exam", "Exam"]] as [Facet, string][]).map(([f, title]) => {
-              const keys = [...new Set(all.map((r) => keyOf(r, f)))]
-                .sort((a, b) => (a ? 0 : 1) - (b ? 0 : 1) || facetName(f, a).localeCompare(facetName(f, b)));
-              if (keys.length < 2 && !picked[f].length) return null;  // one value: nothing to filter
-              return (
-                <fieldset key={f} className="min-w-0 space-y-2">
-                  <legend className="mb-2 text-xs font-medium text-muted-foreground">{t(title)}</legend>
-                  <div className="max-h-48 space-y-2 overflow-y-auto">
-                    {keys.map((k) => (
-                      <label key={k} className="flex min-w-0 items-center gap-2 text-sm">
-                        <Checkbox checked={picked[f].includes(k)}
-                                  onCheckedChange={() => setPicked({ ...picked, [f]: picked[f].includes(k) ? picked[f].filter((x) => x !== k) : [...picked[f], k] })} />
-                        <span className={cn("truncate", !k && "text-muted-foreground")} title={facetName(f, k)}>{facetName(f, k)}</span>
-                        <span className="text-xs text-muted-foreground">{all.filter((r) => keyOf(r, f) === k).length}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              );
-            })}
-            {labels.length > 0 && (
-              // like the problem tags (PL-42): picked from an autocomplete, so the panel never lists them all
-              <fieldset className="min-w-0 space-y-2">
-                <legend className="mb-2 text-xs font-medium text-muted-foreground">{t("Label")}{picked.label.length ? ` · ${picked.label.length}` : ""}</legend>
-                {picked.label.length > 0 && (
+            {/* like the problem tags (PL-42): picked from an autocomplete that opens on the newest first */}
+            {facets.map(({ f, title, options, empty, field, typeHint, noMatch, remove }) => (
+              <fieldset key={f} className="min-w-0 space-y-2">
+                <legend className="mb-2 text-xs font-medium text-muted-foreground">{title}{picked[f].length ? ` · ${picked[f].length}` : ""}</legend>
+                {picked[f].length > 0 && (
                   <ul className="flex flex-wrap gap-1">
-                    {picked.label.map((x) => (
-                      <li key={x}>
+                    {picked[f].map((k) => (
+                      <li key={k} className="max-w-full">
                         <Badge variant="secondary" className="max-w-full gap-0.5 pr-0.5">
-                          <span className="truncate" title={x}>{x}</span>
-                          <button type="button" aria-label={t("Remove label {label}", { label: x })} className="rounded-full p-0.5 hover:bg-background/60"
-                                  onClick={() => setPicked({ ...picked, label: picked.label.filter((y) => y !== x) })}>
+                          <span className="truncate" title={nameIn(options, k)}>{nameIn(options, k)}</span>
+                          <button type="button" aria-label={remove(nameIn(options, k))} className="rounded-full p-0.5 hover:bg-background/60"
+                                  onClick={() => setPicked({ ...picked, [f]: picked[f].filter((y) => y !== k) })}>
                             <X className="size-3" />
                           </button>
                         </Badge>
@@ -188,11 +179,14 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
                     ))}
                   </ul>
                 )}
-                <TagInput label={t("Filter by label")} placeholder={t("Type a label…")} noMatch="No label matches “{q}”."
-                          suggestions={labels.filter((x) => !picked.label.includes(x)).map((x) => ({ value: x, hint: String(all.filter((r) => r.label === x).length) }))}
-                          onPick={(x) => setPicked({ ...picked, label: [...picked.label, x] })} />
+                {options.length ? (
+                  <TagInput label={field} placeholder={typeHint} noMatch={noMatch}
+                            suggestions={options.filter((o) => !picked[f].includes(o.key)).map((o) => ({ value: o.name, hint: String(all.filter((r) => keyOf(r, f) === o.key).length) }))}
+                            // ponytail: two groups or exams with one name pick the newest; show more detail if teachers reuse names
+                            onPick={(name) => { const o = options.find((x) => x.name === name); if (o) setPicked({ ...picked, [f]: [...picked[f], o.key] }); }} />
+                ) : <p className="text-xs text-muted-foreground">{empty}</p>}
               </fieldset>
-            )}
+            ))}
           </aside>
         </div>
       </>)}
