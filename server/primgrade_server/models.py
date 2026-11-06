@@ -144,6 +144,8 @@ class Exam(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String(200))
+    archived: Mapped[bool] = mapped_column(Boolean, default=False)  # PL-56: hidden by default
+    opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # PL-56
     created_at: Mapped[datetime] = ts()
 
 

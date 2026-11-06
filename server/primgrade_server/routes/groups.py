@@ -2,10 +2,11 @@
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select, union_all
+from sqlalchemy import select
 
 from .. import models
 from ..deps import Db, Teacher, owned
+from ..usage import last_used
 from .answers import state
 from .exams import exam_out
 
@@ -19,24 +20,6 @@ class GroupIn(BaseModel):
 class GroupEdit(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     archived: bool | None = None
-
-
-def last_used(db, owner_id: str) -> dict:
-    """PL-51, PL-54: per group, when it was last opened, or an answer in it last uploaded, graded
-    by the AI or approved."""
-    a = models.Answer
-    events = union_all(
-        select(models.Group.id.label("group_id"), models.Group.opened_at.label("at"))
-        .where(models.Group.opened_at.is_not(None)),
-        select(a.group_id, a.created_at),
-        select(a.group_id, models.Run.started_at).join(models.Run, models.Run.answer_id == a.id),
-        select(a.group_id, models.Approval.approved_at)
-        .join(models.Approval, models.Approval.answer_id == a.id),
-    ).subquery()
-    return dict(db.execute(
-        select(events.c.group_id, func.max(events.c.at))
-        .join(models.Group, models.Group.id == events.c.group_id)
-        .where(models.Group.owner_id == owner_id).group_by(events.c.group_id)).all())
 
 
 def group_out(db, g: models.Group, used=None) -> dict:
@@ -53,7 +36,7 @@ def group_out(db, g: models.Group, used=None) -> dict:
 def list_groups(db: Db, user: Teacher) -> list[dict]:
     rows = db.scalars(select(models.Group).where(models.Group.owner_id == user.id)
                       .order_by(models.Group.archived, models.Group.name)).all()
-    used = last_used(db, user.id)
+    used = last_used(db, models.Group, models.Answer.group_id, user.id)
     return [group_out(db, g, used.get(g.id)) for g in rows]
 
 
@@ -110,7 +93,7 @@ def get_group(group_id: str, db: Db, user: Teacher) -> dict:
         row["approved"] += st == "approved"
         if a.selected and st == "not_graded":
             row["to_grade"].append(a.id)
-    used = last_used(db, user.id)
+    used = last_used(db, models.Group, models.Answer.group_id, user.id)
     return {**group_out(db, g, used.get(g.id)),
             "exams": [exam_out(db, e) for e in exams],
             "problems": [{"id": p.id, "title": p.title, "status": p.status,

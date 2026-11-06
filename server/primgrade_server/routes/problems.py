@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field, StringConstraints
-from sqlalchemy import func, select, union_all, update
+from sqlalchemy import func, select, update
 
 from grader.schemas import SetupProposal
 from grader.setup import (
@@ -21,6 +21,7 @@ from .. import ai, files, models
 from .. import db as database
 from ..config import MODEL
 from ..deps import Config, Db, Teacher, owned
+from ..usage import last_used
 
 router = APIRouter(prefix="/api/problems", tags=["problems"])
 
@@ -99,29 +100,11 @@ def problem_out(db, p: models.Problem) -> dict:
     }
 
 
-def last_used(db, owner_id: str) -> dict:
-    """PL-47, PL-54: per problem, when it was last opened, or an answer to it last uploaded, graded
-    by the AI or approved."""
-    a = models.Answer
-    events = union_all(
-        select(models.Problem.id.label("problem_id"), models.Problem.opened_at.label("at"))
-        .where(models.Problem.opened_at.is_not(None)),
-        select(a.problem_id, a.created_at),
-        select(a.problem_id, models.Run.started_at).join(models.Run, models.Run.answer_id == a.id),
-        select(a.problem_id, models.Approval.approved_at)
-        .join(models.Approval, models.Approval.answer_id == a.id),
-    ).subquery()
-    return dict(db.execute(
-        select(events.c.problem_id, func.max(events.c.at))
-        .join(models.Problem, models.Problem.id == events.c.problem_id)
-        .where(models.Problem.owner_id == owner_id).group_by(events.c.problem_id)).all())
-
-
 @router.get("")
 def list_problems(db: Db, user: Teacher) -> list[dict]:
     rows = db.scalars(select(models.Problem).where(models.Problem.owner_id == user.id)
                       .order_by(models.Problem.updated_at.desc())).all()
-    used = last_used(db, user.id)
+    used = last_used(db, models.Problem, models.Answer.problem_id, user.id)
     return [{"id": p.id, "title": p.title, "status": p.status, "rubric_version": p.rubric_version,
              "tags": p.tags, "archived": p.archived, "preparing": p.preparing_since is not None,
              "updated_at": p.updated_at.isoformat(),

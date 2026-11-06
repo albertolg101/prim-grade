@@ -495,5 +495,10 @@
  "Students can pick it on the upload link": "Los estudiantes pueden elegirlo en el enlace de subida",
  "Students who uploaded an answer, in all and per problem (by its number).": "Estudiantes que subieron una respuesta, en total y por problema (por su número).",
  "min": "min",
- "{title} active": "{title} activo"
+ "{title} active": "{title} activo",
+ "All exams": "Todos los exámenes",
+ "No exam matches the search and filters.": "Ningún examen coincide con la búsqueda y los filtros.",
+ "Search by exam, problem or group": "Buscar por examen, problema o grupo",
+ "Search exams": "Buscar exámenes",
+ "{n} of {total} exams": "{n} de {total} exámenes"
 }

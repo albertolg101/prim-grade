@@ -1,6 +1,6 @@
 """PL-25–27, PL-55: groups and exam answers."""
 
-from conftest import PNG, ready_problem
+from conftest import PNG, ready_problem, teacher
 from fastapi.testclient import TestClient
 
 
@@ -74,3 +74,18 @@ def test_an_exams_problem_is_switched_off_not_removed(admin):  # PL-55, AC-P29
     other = admin.post("/api/exams", json={"title": "Other"}).json()
     assert admin.patch(f"/api/exams/{other['id']}/problems/{p1['id']}",
                        json={"active": True}).status_code == 404
+
+
+def test_exams_are_archived_and_opening_one_makes_it_recently_used(admin, make_client):  # AC-P30
+    first = admin.post("/api/exams", json={"title": "First"}).json()
+    second = admin.post("/api/exams", json={"title": "Second"}).json()
+    assert first["archived"] is False and first["last_used_at"] == first["created_at"]
+    assert admin.post(f"/api/exams/{first['id']}/opened").status_code == 204
+    used = {x["title"]: x["last_used_at"] for x in admin.get("/api/exams").json()}
+    assert used["First"] > used["Second"] == second["created_at"]
+    r = admin.patch(f"/api/exams/{first['id']}", json={"archived": True})
+    assert r.json()["archived"] is True and r.json()["title"] == "First"
+    assert admin.patch(f"/api/exams/{first['id']}", json={"title": "Renamed"}).json()["archived"]
+    theirs = teacher(make_client, admin, "other@example.test")
+    assert theirs.post(f"/api/exams/{first['id']}/opened").status_code == 404
+    assert theirs.patch(f"/api/exams/{first['id']}", json={"archived": False}).status_code == 404

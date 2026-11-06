@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { ArrowDown, ArrowUp, Copy, Maximize2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Copy, Maximize2, X } from "lucide-react";
 import { AnswerTable } from "@/components/Answers";
 import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
@@ -22,6 +22,7 @@ type ProblemRow = { id: string; title: string; status: string; archived: boolean
 /** PL-26 to PL-28, PL-30: an exam's problems and groups, answers per group, upload links. */
 export default function ExamPage({ id }: { id: string }) {
   const exam = useLoad(() => api.get<Exam>(`/api/exams/${id}`), [id]);
+  useEffect(() => { void api.post(`/api/exams/${id}/opened`); }, [id]);  // PL-56: now recently used
   const problems = useLoad(() => api.get<ProblemRow[]>("/api/problems"), []);
   const groups = useLoad(() => api.get<Group[]>("/api/groups"), []);
   const [group, setGroup] = useState<string | null>(query("group"));
@@ -34,7 +35,12 @@ export default function ExamPage({ id }: { id: string }) {
   return (
     <Page title={e.title} crumbs={[[t("Exams"), "/exams"]]}
           onRename={(title) => save(() => api.patch(`/api/exams/${id}`, { title }))}
->
+          actions={e.archived && <Badge variant="secondary">{t("Archived")}</Badge>}>
+      {/* PL-56: like a group (PL-51): reversible, its answers, groups and links are kept */}
+      <Button variant="ghost" size="sm" className="-mt-3 -ml-2 h-7 self-start px-2 text-xs font-normal text-muted-foreground" disabled={act.busy}
+              onClick={() => save(() => api.patch(`/api/exams/${id}`, { archived: !e.archived }))}>
+        {e.archived ? <><ArchiveRestore /> {t("Unarchive")}</> : <><Archive /> {t("Archive")}</>}
+      </Button>
       <ErrorText>{act.error}</ErrorText>
       <ExamProblems e={e} all={problems.data ?? []} save={save} busy={act.busy} />
       <ExamGroups e={e} all={groups.data ?? []} save={save} busy={act.busy} />

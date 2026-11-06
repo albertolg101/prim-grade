@@ -303,6 +303,14 @@ Each requirement has a stable id; tests and tasks cite it.
   uploaded an answer to it; a group without answers can be taken out. The exam's answers list has
   no problem dropdown. The link's lifetime is one "Open for" field with a "min" unit, level with
   **Open a link**.
+- **PL-56 Exams page like Problems and Groups** (owner request, 6 November 2026). The Exams page
+  shows "Recently used" (the ten unarchived exams most recently created, opened, or with an answer
+  uploaded, graded or approved), then a search bar (exam, problem or group name), the list with an
+  archive button per row, and a filter panel: **Sort by** (recently used, recently created, name
+  A–Z, Z–A), **Status** (Active checked, Archived not), **Created** (the PL-49 date filter) and
+  **Group** (an autocomplete; an exam given to any picked group). Opening an exam makes it recently
+  used (PL-54). An exam is archived from its row or its page; it is reversible and keeps its
+  answers, groups and links.
 - **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
   autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
   autocomplete. Each exam and group pair is reviewed and costed
@@ -411,6 +419,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P27 | PL-53 | A teacher's upload changes name, label and group; an exam answer keeps its name and group but its label changes; another teacher's answer or group is not found (`test_teacher_edits_an_answers_name_label_and_group`, `test_an_exam_answers_name_and_group_are_kept_but_its_label_can_change`). |
 | AC-P28 | PL-54 | Opening a problem or a group sets its last-used time without changing the problem's updated time; another teacher's gets 404 (`test_opening_a_problem_or_group_makes_it_recently_used`). |
 | AC-P29 | PL-55 | An exam's problem cannot be removed or created from the exam; switched off, the link neither offers nor accepts it, and with none active no link opens; each group counts its students in all and per problem (`test_an_exams_problem_is_switched_off_not_removed`, `test_exam_problems_groups_and_order`). |
+| AC-P30 | PL-56 | An exam is archived and unarchived (with or without a rename); opening it makes it the most recently used; another teacher gets 404 (`test_exams_are_archived_and_opening_one_makes_it_recently_used`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

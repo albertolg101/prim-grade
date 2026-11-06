@@ -495,5 +495,10 @@
  "Students can pick it on the upload link": "Студенты могут выбрать её по ссылке для загрузки",
  "Students who uploaded an answer, in all and per problem (by its number).": "Студенты, загрузившие ответ, всего и по задачам (по номеру).",
  "min": "мин",
- "{title} active": "{title} активна"
+ "{title} active": "{title} активна",
+ "All exams": "Все экзамены",
+ "No exam matches the search and filters.": "Ни один экзамен не подходит под поиск и фильтры.",
+ "Search by exam, problem or group": "Поиск по экзамену, задаче или группе",
+ "Search exams": "Поиск экзаменов",
+ "{n} of {total} exams": "{n} из {total} экзаменов"
 }

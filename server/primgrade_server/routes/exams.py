@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 
 from .. import models
 from ..deps import Config, Db, Teacher, owned
+from ..usage import last_used
 from .answers import answer_row
 
 router = APIRouter(prefix="/api", tags=["exams"])
@@ -16,6 +17,11 @@ router = APIRouter(prefix="/api", tags=["exams"])
 
 class ExamIn(BaseModel):
     title: str = Field(min_length=1, max_length=200)
+
+
+class ExamPatch(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    archived: bool | None = None
 
 
 class NewExam(ExamIn):
@@ -68,13 +74,16 @@ def group_counts(db, exam_id: str) -> dict:
     return out
 
 
-def exam_out(db, e: models.Exam) -> dict:
+def exam_out(db, e: models.Exam, used=None) -> dict:
     groups = db.scalars(select(models.Group).join(models.ExamGroup,
                                                   models.ExamGroup.group_id == models.Group.id)
                         .where(models.ExamGroup.exam_id == e.id).order_by(models.Group.name)).all()
     counts = group_counts(db, e.id)
     empty = {"names": set(), "per_problem": {}}
+    # PL-56: like a group, an exam counts as used when created, opened, or an answer in it is used
+    used = max(e.created_at, used) if used else e.created_at
     return {"id": e.id, "title": e.title, "created_at": e.created_at.isoformat(),
+            "archived": e.archived, "last_used_at": used.isoformat(),
             "problems": [{"id": p.id, "title": p.title, "status": p.status, "active": on}
                          for p, on in exam_links(db, e.id)],
             "groups": [{"id": g.id, "name": g.name,
@@ -86,7 +95,8 @@ def exam_out(db, e: models.Exam) -> dict:
 def list_exams(db: Db, user: Teacher) -> list[dict]:
     rows = db.scalars(select(models.Exam).where(models.Exam.owner_id == user.id)
                       .order_by(models.Exam.created_at.desc())).all()
-    return [exam_out(db, e) for e in rows]
+    used = last_used(db, models.Exam, models.Answer.exam_id, user.id)
+    return [exam_out(db, e, used.get(e.id)) for e in rows]
 
 
 @router.post("/exams", status_code=201)
@@ -110,11 +120,22 @@ def get_exam(exam_id: str, db: Db, user: Teacher) -> dict:
 
 
 @router.patch("/exams/{exam_id}")
-def rename_exam(exam_id: str, body: ExamIn, db: Db, user: Teacher) -> dict:
+def edit_exam(exam_id: str, body: ExamPatch, db: Db, user: Teacher) -> dict:
+    """Rename, or archive (PL-56: reversible; its answers, groups and links are kept)."""
     e = owned(db, models.Exam, exam_id, user)
-    e.title = body.title.strip()
+    if body.title is not None:
+        e.title = body.title.strip()
+    if body.archived is not None:
+        e.archived = body.archived
     db.commit()
     return exam_out(db, e)
+
+
+@router.post("/exams/{exam_id}/opened", status_code=204)
+def exam_opened(exam_id: str, db: Db, user: Teacher) -> None:
+    """PL-56: opening an exam makes it recently used."""
+    owned(db, models.Exam, exam_id, user).opened_at = models.now()
+    db.commit()
 
 
 def _append(db, exam_id: str, problem_id: str) -> None:

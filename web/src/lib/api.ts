@@ -117,6 +117,7 @@ export type GroupDetail = Group & {
 };
 export type Exam = {
   id: string; title: string; created_at: string;
+  archived: boolean; last_used_at: string;  // PL-56: created, opened, or an answer in it used
   problems: { id: string; title: string; status: string; active: boolean }[];  // PL-55: off, students can't pick it
   // PL-55: students who uploaded an answer, in all and per problem id
   groups: { id: string; name: string; students: number; per_problem: Record<string, number> }[];
