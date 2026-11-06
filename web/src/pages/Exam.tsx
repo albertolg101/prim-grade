@@ -6,8 +6,11 @@ import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import TagInput from "@/components/TagInput";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { t } from "@/lib/i18n";
 import { api, pagesForm, type AnswerRow, type Exam, type Group, type Link, type Page as UploadPage } from "@/lib/api";
@@ -33,25 +36,8 @@ export default function ExamPage({ id }: { id: string }) {
           onRename={(title) => save(() => api.patch(`/api/exams/${id}`, { title }))}
 >
       <ErrorText>{act.error}</ErrorText>
-      <div className="cols">
-        <ExamProblems e={e} all={problems.data ?? []} save={save} busy={act.busy} />
-        <Card>
-          <CardHeader><CardTitle>{t("Groups taking this exam")}</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            {groups.data?.filter((g) => !g.archived || e.groups.some((x) => x.id === g.id)).map((g) => {
-              const on = e.groups.some((x) => x.id === g.id);
-              return (
-                <label key={g.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={on} disabled={act.busy}
-                         onChange={() => save(() => api.put(`/api/exams/${id}/groups`, { group_ids: on ? e.groups.filter((x) => x.id !== g.id).map((x) => x.id) : [...e.groups.map((x) => x.id), g.id] }))} />
-                  {g.name}
-                </label>
-              );
-            })}
-            {groups.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("Create a group in the Groups tab first.")}</p>}
-          </CardContent>
-        </Card>
-      </div>
+      <ExamProblems e={e} all={problems.data ?? []} save={save} busy={act.busy} />
+      <ExamGroups e={e} all={groups.data ?? []} save={save} busy={act.busy} />
       {e.groups.length > 0 && (
         <div className="space-y-3">
           <div className="flex gap-1 overflow-x-auto border-b" role="tablist">
@@ -69,9 +55,9 @@ export default function ExamPage({ id }: { id: string }) {
   );
 }
 
+/** PL-26, PL-55: the exam's problems in order. Once in the exam a problem stays: it is switched off
+ * (students' links no longer offer it, its answers stay) instead of removed. */
 function ExamProblems({ e, all, save, busy }: { e: Exam; all: ProblemRow[]; save: (fn: () => Promise<Exam>) => void; busy: boolean }) {
-  const [pick, setPick] = useState("");
-  const [title, setTitle] = useState("");
   const ids = e.problems.map((p) => p.id);
   const others = all.filter((p) => !ids.includes(p.id) && !p.archived);  // PL-44
   const move = (i: number, j: number) => { const n = [...ids]; [n[i], n[j]] = [n[j], n[i]]; save(() => api.put(`/api/exams/${e.id}/problems`, { problem_ids: n })); };
@@ -83,31 +69,83 @@ function ExamProblems({ e, all, save, busy }: { e: Exam; all: ProblemRow[]; save
           {e.problems.map((p, i) => (
             <li key={p.id} className="flex items-center gap-1 text-sm">
               <span className="w-5 text-muted-foreground">{i + 1}.</span>
-              <a href={`/problems/${p.id}?exam=${e.id}`} onClick={(ev) => { ev.preventDefault(); navigate(`/problems/${p.id}?exam=${e.id}`); }} className="min-w-0 flex-1 truncate hover:underline">{p.title}</a>
+              <a href={`/problems/${p.id}?exam=${e.id}`} onClick={(ev) => { ev.preventDefault(); navigate(`/problems/${p.id}?exam=${e.id}`); }}
+                 className={cn("min-w-0 flex-1 truncate hover:underline", !p.active && "text-muted-foreground line-through")}>{p.title}</a>
               {p.status === "ready" ? <Badge>{t("Ready")}</Badge> : <Badge variant="outline">{t("Draft")}</Badge>}
+              <label className="ml-2 flex items-center gap-1.5 text-xs text-muted-foreground" title={t("Students can pick it on the upload link")}>
+                <Checkbox checked={p.active} disabled={busy} aria-label={t("{title} active", { title: p.title })}
+                          onCheckedChange={(on) => save(() => api.patch(`/api/exams/${e.id}/problems/${p.id}`, { active: on === true }))} />
+                {t("Active")}
+              </label>
               <Button size="icon" variant="ghost" aria-label={t("Move up")} disabled={i === 0 || busy} onClick={() => move(i, i - 1)}><ArrowUp /></Button>
               <Button size="icon" variant="ghost" aria-label={t("Move down")} disabled={i === ids.length - 1 || busy} onClick={() => move(i, i + 1)}><ArrowDown /></Button>
-              <Button size="icon" variant="ghost" aria-label={t("Remove {title}", { title: p.title })} disabled={busy} onClick={() => save(() => api.del(`/api/exams/${e.id}/problems/${p.id}`))}><X /></Button>
             </li>
           ))}
           {e.problems.length === 0 && <li className="text-sm text-muted-foreground">{t("No problems yet.")}</li>}
         </ol>
         {others.length > 0 && (
-          <div className="flex gap-2">
-            <Select value={pick} onValueChange={setPick}>
-              <SelectTrigger className="min-w-0 flex-1" aria-label={t("Existing problem")}><SelectValue placeholder={t("Add an existing problem")} /></SelectTrigger>
-              <SelectContent>{others.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent>
-            </Select>
-            <Button variant="outline" disabled={!pick || busy} onClick={() => { save(() => api.post(`/api/exams/${e.id}/problems`, { problem_id: pick })); setPick(""); }}>{t("Add")}</Button>
+          <TagInput label={t("Add a problem")} placeholder={t("Type a problem name…")} noMatch="No problem matches “{q}”."
+                    suggestions={others.map((p) => ({ value: p.title }))}
+                    onPick={(name) => { const p = others.find((x) => x.title === name); if (p) save(() => api.post(`/api/exams/${e.id}/problems`, { problem_id: p.id })); }} />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** PL-27, PL-55: the groups taking the exam, added with an autocomplete; per group, how many students
+ * uploaded an answer, in all and per problem. A group with answers stays in the exam. */
+function ExamGroups({ e, all, save, busy }: { e: Exam; all: Group[]; save: (fn: () => Promise<Exam>) => void; busy: boolean }) {
+  const ids = e.groups.map((g) => g.id);
+  const others = all.filter((g) => !g.archived && !ids.includes(g.id))
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));  // the newest first, like the answer filters
+  const put = (next: string[]) => save(() => api.put(`/api/exams/${e.id}/groups`, { group_ids: next }));
+  return (
+    <Card>
+      <CardHeader><CardTitle>{t("Groups taking this exam")}</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        {e.groups.length > 0 && (
+          <div className="overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-xs text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium">{t("Group")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("Students")}</th>
+                  {e.problems.map((p, i) => (
+                    <th key={p.id} className={cn("px-3 py-2 text-right font-medium", !p.active && "line-through")} title={p.title}>{i + 1}</th>
+                  ))}
+                  <th className="w-10"><span className="sr-only">{t("Remove")}</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {e.groups.map((g) => (
+                  <tr key={g.id}>
+                    <td className="max-w-48 truncate px-3 py-2 font-medium" title={g.name}>{g.name}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{g.students}</td>
+                    {e.problems.map((p) => (
+                      <td key={p.id} className="px-3 py-2 text-right tabular-nums text-muted-foreground">{g.per_problem[p.id] ?? 0}</td>
+                    ))}
+                    <td className="px-1 text-right">
+                      {g.students === 0 && (  // a group with answers stays (the server refuses too)
+                        <Button size="icon" variant="ghost" className="size-7" disabled={busy} aria-label={t("Remove group {name}", { name: g.name })}
+                                onClick={() => put(ids.filter((x) => x !== g.id))}><X /></Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-        <form className="flex gap-2" onSubmit={(ev) => {
-          ev.preventDefault();
-          save(async () => { const out = await api.post<Exam & { created_problem_id: string }>(`/api/exams/${e.id}/problems/new`, { title }); setTitle(""); return out; });
-        }}>
-          <Input placeholder={t("Or create a new problem")} value={title} onChange={(ev) => setTitle(ev.target.value)} aria-label={t("New problem title")} />
-          <Button type="submit" variant="outline" disabled={!title.trim() || busy}>{t("Create")}</Button>
-        </form>
+        {e.groups.length > 0 && e.problems.length > 0 && (
+          <p className="text-xs text-muted-foreground">{t("Students who uploaded an answer, in all and per problem (by its number).")}</p>
+        )}
+        {all.length === 0 ? <p className="text-sm text-muted-foreground">{t("Create a group in the Groups tab first.")}</p>
+          : others.length > 0 && (
+            <TagInput label={t("Add a group")} placeholder={t("Type a group…")} noMatch="No group matches “{q}”."
+                      suggestions={others.map((g) => ({ value: g.name }))}
+                      onPick={(name) => { const g = others.find((x) => x.name === name); if (g) put([...ids, g.id]); }} />
+          )}
       </CardContent>
     </Card>
   );
@@ -116,9 +154,7 @@ function ExamProblems({ e, all, save, busy }: { e: Exam; all: ProblemRow[]; save
 /** One exam and group: upload links with QR codes, answers per problem and student, teacher uploads. */
 function ExamGroup({ e, groupId }: { e: Exam; groupId: string }) {
   const answers = useLoad(() => api.get<{ answers: AnswerRow[] }>(`/api/exams/${e.id}/groups/${groupId}/answers`).then((r) => r.answers), [e.id, groupId]);
-  const [problem, setProblem] = useState<string>("all");
   const title = (pid: string) => e.problems.find((p) => p.id === pid)?.title ?? "";
-  const rows = (answers.data ?? []).filter((r) => problem === "all" || r.problem_id === problem);
   const ready = e.problems.every((p) => p.status === "ready");
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -128,16 +164,9 @@ function ExamGroup({ e, groupId }: { e: Exam; groupId: string }) {
           <CardDescription>{t("Students' uploads arrive here. Nothing is graded until you start it.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Select value={problem} onValueChange={setProblem}>
-            <SelectTrigger className="w-full sm:w-72" aria-label={t("Filter by problem")}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("All problems")}</SelectItem>
-              {e.problems.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
-            </SelectContent>
-          </Select>
           {!ready && <p className="text-sm text-muted-foreground">{t("Some problems are drafts: accept their graders before grading.")}</p>}
           <ErrorText>{answers.error}</ErrorText>
-          {answers.data && <AnswerTable rows={rows} reload={answers.reload} ctx={`exam:${e.id}:${groupId}`} canGrade={ready} problemTitle={title} />}
+          {answers.data && <AnswerTable rows={answers.data} reload={answers.reload} ctx={`exam:${e.id}:${groupId}`} canGrade={ready} problemTitle={title} />}
           <TeacherUpload e={e} groupId={groupId} onDone={answers.reload} />
         </CardContent>
       </Card>
@@ -209,15 +238,21 @@ function Links({ e, groupId }: { e: Exam; groupId: string }) {
             </div>
           </div>
         ) : (
-          <form className="flex flex-wrap items-end gap-2" onSubmit={(ev) => {
+          <form className="space-y-1.5" onSubmit={(ev) => {
             ev.preventDefault();
             act.run(async () => { await api.post(`/api/exams/${e.id}/groups/${groupId}/links`, { minutes: minutes ? Number(minutes) : null }); await links.reload(); });
           }}>
-            <label className="space-y-1 text-sm">
-              <span>{t("Open for (minutes)")}</span>
-              <Input type="number" min={1} max={240} className="w-24" placeholder={String(prefs.data?.link_minutes ?? 10)} value={minutes} onChange={(ev) => setMinutes(ev.target.value)} />
-            </label>
-            <Button type="submit" disabled={act.busy || e.problems.length === 0}>{t("Open a link")}</Button>
+            <Label htmlFor="link-minutes">{t("Open for")}</Label>
+            <div className="flex gap-2">
+              {/* the minutes and their unit read as one field, level with the button */}
+              <div className="relative w-28 shrink-0">
+                <Input id="link-minutes" type="number" inputMode="numeric" min={1} max={240}
+                       className="pr-11 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                       placeholder={String(prefs.data?.link_minutes ?? 10)} value={minutes} onChange={(ev) => setMinutes(ev.target.value)} />
+                <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">{t("min")}</span>
+              </div>
+              <Button type="submit" className="flex-1" disabled={act.busy || !e.problems.some((p) => p.active)}>{t("Open a link")}</Button>
+            </div>
           </form>
         )}
         <ErrorText>{act.error ?? links.error}</ErrorText>

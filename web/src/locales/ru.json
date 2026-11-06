@@ -282,7 +282,7 @@
  "accept the grader before approving a grade": "Примите критерии задачи, прежде чем утверждать оценку.",
  "acknowledge the issues the AI raised before accepting": "Подтвердите замечания ИИ, прежде чем принять.",
  "add at least one page": "Добавьте хотя бы одну страницу.",
- "add at least one problem to the exam first": "Сначала добавьте в экзамен хотя бы одну задачу.",
+ "the exam needs at least one active problem first": "Сначала в экзамене должна быть хотя бы одна активная задача.",
  "add the statement and the reference solution (text or images)": "Добавьте условие и эталонное решение (текст или изображения).",
  "add your OpenAI API key in Settings before using AI": "Добавьте ключ OpenAI API в Настройках, чтобы пользоваться ИИ.",
  "admin": "администратор",
@@ -487,5 +487,13 @@
  "No problem matches “{q}”.": "Нет задач, подходящих под «{q}».",
  "Edit answer": "Изменить ответ",
  "The student typed this name when uploading, so it is kept with the upload.": "Студент ввёл это имя при загрузке, поэтому оно сохраняется вместе с загрузкой.",
- "In an exam the name and group decide the student's versions, so they are kept.": "В экзамене имя и группа определяют версии студента, поэтому они сохраняются."
+ "In an exam the name and group decide the student's versions, so they are kept.": "В экзамене имя и группа определяют версии студента, поэтому они сохраняются.",
+ "Add a group": "Добавить группу",
+ "Open for": "Открыта на",
+ "Remove": "Убрать",
+ "Students": "Студенты",
+ "Students can pick it on the upload link": "Студенты могут выбрать её по ссылке для загрузки",
+ "Students who uploaded an answer, in all and per problem (by its number).": "Студенты, загрузившие ответ, всего и по задачам (по номеру).",
+ "min": "мин",
+ "{title} active": "{title} активна"
 }

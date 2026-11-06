@@ -23,7 +23,7 @@
   "accept the grader before approving a grade",
   "acknowledge the issues the AI raised before accepting",
   "add at least one page",
-  "add at least one problem to the exam first",
+  "the exam needs at least one active problem first",
   "add the statement and the reference solution (text or images)",
   "add your OpenAI API key in Settings before using AI",
   "admins only",

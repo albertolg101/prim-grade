@@ -282,7 +282,7 @@
  "accept the grader before approving a grade": "Acepta el corrector antes de aprobar una nota.",
  "acknowledge the issues the AI raised before accepting": "Confirma los problemas señalados por la IA antes de aceptar.",
  "add at least one page": "Añade al menos una página.",
- "add at least one problem to the exam first": "Primero añade al menos un problema al examen.",
+ "the exam needs at least one active problem first": "El examen necesita primero al menos un problema activo.",
  "add the statement and the reference solution (text or images)": "Añade el enunciado y la solución de referencia (texto o imágenes).",
  "add your OpenAI API key in Settings before using AI": "Añade tu clave de API de OpenAI en Ajustes antes de usar la IA.",
  "admin": "administrador",
@@ -487,5 +487,13 @@
  "No problem matches “{q}”.": "Ningún problema coincide con “{q}”.",
  "Edit answer": "Editar respuesta",
  "The student typed this name when uploading, so it is kept with the upload.": "El estudiante escribió este nombre al subir la respuesta, así que se conserva con la subida.",
- "In an exam the name and group decide the student's versions, so they are kept.": "En un examen el nombre y el grupo deciden las versiones del estudiante, así que se conservan."
+ "In an exam the name and group decide the student's versions, so they are kept.": "En un examen el nombre y el grupo deciden las versiones del estudiante, así que se conservan.",
+ "Add a group": "Añadir un grupo",
+ "Open for": "Abierto durante",
+ "Remove": "Quitar",
+ "Students": "Estudiantes",
+ "Students can pick it on the upload link": "Los estudiantes pueden elegirlo en el enlace de subida",
+ "Students who uploaded an answer, in all and per problem (by its number).": "Estudiantes que subieron una respuesta, en total y por problema (por su número).",
+ "min": "min",
+ "{title} active": "{title} activo"
 }

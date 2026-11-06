@@ -154,6 +154,8 @@ class ExamProblem(Base):
     )
     problem_id: Mapped[str] = mapped_column(ForeignKey("problems.id"), primary_key=True)
     position: Mapped[int] = mapped_column(Integer)
+    # PL-55: once in an exam a problem stays; switched off, students' links no longer offer it
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class ExamGroup(Base):

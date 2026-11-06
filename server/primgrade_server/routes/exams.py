@@ -10,7 +10,6 @@ from sqlalchemy import func, select
 from .. import models
 from ..deps import Config, Db, Teacher, owned
 from .answers import answer_row
-from .problems import NewProblem, create
 
 router = APIRouter(prefix="/api", tags=["exams"])
 
@@ -27,6 +26,10 @@ class AddProblem(BaseModel):
     problem_id: str
 
 
+class ProblemSwitch(BaseModel):
+    active: bool
+
+
 class Order(BaseModel):
     problem_ids: list[str]
 
@@ -39,21 +42,44 @@ class LinkIn(BaseModel):
     minutes: int | None = Field(default=None, ge=1, le=240)
 
 
-def exam_problems(db, exam_id: str) -> list[models.Problem]:
-    return list(db.scalars(
-        select(models.Problem).join(models.ExamProblem,
-                                    models.ExamProblem.problem_id == models.Problem.id)
-        .where(models.ExamProblem.exam_id == exam_id).order_by(models.ExamProblem.position)))
+def exam_links(db, exam_id: str) -> list[tuple[models.Problem, bool]]:
+    """The exam's problems in order, each with whether it is active (PL-55)."""
+    return list(db.execute(
+        select(models.Problem, models.ExamProblem.active)
+        .join(models.ExamProblem, models.ExamProblem.problem_id == models.Problem.id)
+        .where(models.ExamProblem.exam_id == exam_id).order_by(models.ExamProblem.position)).all())
+
+
+def exam_problems(db, exam_id: str, active_only: bool = False) -> list[models.Problem]:
+    return [p for p, on in exam_links(db, exam_id) if on or not active_only]
+
+
+def group_counts(db, exam_id: str) -> dict:
+    """PL-55: per group, the students who uploaded an answer to the exam, in all and per
+    problem."""
+    a = models.Answer
+    rows = db.execute(select(a.group_id, a.problem_id, a.student_name).distinct()
+                      .where(a.exam_id == exam_id)).all()
+    out: dict = {}
+    for gid, pid, name in rows:
+        g = out.setdefault(gid, {"names": set(), "per_problem": {}})
+        g["names"].add(name)
+        g["per_problem"][pid] = g["per_problem"].get(pid, 0) + 1
+    return out
 
 
 def exam_out(db, e: models.Exam) -> dict:
     groups = db.scalars(select(models.Group).join(models.ExamGroup,
                                                   models.ExamGroup.group_id == models.Group.id)
                         .where(models.ExamGroup.exam_id == e.id).order_by(models.Group.name)).all()
+    counts = group_counts(db, e.id)
+    empty = {"names": set(), "per_problem": {}}
     return {"id": e.id, "title": e.title, "created_at": e.created_at.isoformat(),
-            "problems": [{"id": p.id, "title": p.title, "status": p.status}
-                         for p in exam_problems(db, e.id)],
-            "groups": [{"id": g.id, "name": g.name} for g in groups]}
+            "problems": [{"id": p.id, "title": p.title, "status": p.status, "active": on}
+                         for p, on in exam_links(db, e.id)],
+            "groups": [{"id": g.id, "name": g.name,
+                        "students": len(counts.get(g.id, empty)["names"]),
+                        "per_problem": counts.get(g.id, empty)["per_problem"]} for g in groups]}
 
 
 @router.get("/exams")
@@ -108,29 +134,16 @@ def add_problem(exam_id: str, body: AddProblem, db: Db, user: Teacher) -> dict:
     return exam_out(db, e)
 
 
-@router.post("/exams/{exam_id}/problems/new", status_code=201)
-def new_problem_in_exam(exam_id: str, body: NewProblem, db: Db, user: Teacher) -> dict:
-    """PL-26, AC-P10: a problem created from inside an exam is added to it."""
-    e = owned(db, models.Exam, exam_id, user)
-    p = create(db, user, body)
-    _append(db, e.id, p.id)
-    db.commit()
-    return {**exam_out(db, e), "created_problem_id": p.id}
-
-
-@router.delete("/exams/{exam_id}/problems/{problem_id}")
-def remove_problem(exam_id: str, problem_id: str, db: Db, user: Teacher) -> dict:
+@router.patch("/exams/{exam_id}/problems/{problem_id}")
+def switch_problem(exam_id: str, problem_id: str, body: ProblemSwitch, db: Db,
+                   user: Teacher) -> dict:
+    """PL-55: a problem is not removed from an exam; switched off, students can no longer pick it,
+    and its answers stay."""
     e = owned(db, models.Exam, exam_id, user)
     link = db.get(models.ExamProblem, (e.id, problem_id))
     if link is None:
         raise HTTPException(404, "this problem is not in the exam")
-    if db.scalar(select(func.count()).select_from(models.Answer).where(
-            models.Answer.exam_id == e.id, models.Answer.problem_id == problem_id)):
-        raise HTTPException(409, "students have answered this problem in this exam")
-    db.delete(link)
-    db.flush()
-    for i, p in enumerate(exam_problems(db, e.id)):
-        db.get(models.ExamProblem, (e.id, p.id)).position = i
+    link.active = body.active
     db.commit()
     return exam_out(db, e)
 
@@ -207,8 +220,8 @@ def open_link(exam_id: str, group_id: str, body: LinkIn, db: Db, user: Teacher,
               config: Config) -> dict:
     """PL-28: the lifetime defaults to the teacher's setting (PL-08)."""
     e, g = _exam_group(db, user, exam_id, group_id)
-    if not exam_problems(db, e.id):
-        raise HTTPException(409, "add at least one problem to the exam first")
+    if not exam_problems(db, e.id, active_only=True):
+        raise HTTPException(409, "the exam needs at least one active problem first")
     minutes = body.minutes or user.link_minutes
     link = models.UploadLink(token=secrets.token_urlsafe(24), exam_id=e.id, group_id=g.id,
                              created_by=user.id,

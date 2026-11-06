@@ -294,9 +294,18 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-54 Opening counts as use** (owner request, 6 November 2026). Opening a problem's or a
   group's page makes it recently used, so it moves to the front of "Recently used" on its tab
   (PL-47, PL-51). Opening is not a change: a problem's "Changed" date and sort stay as they were.
-- **PL-26 Exams.** A teacher creates an exam with a title, adds existing problems, or creates a new
-  problem from inside the exam, which is added to it automatically. They can reorder and remove
-  problems, and assign one or more groups. Each exam and group pair is reviewed and costed
+- **PL-55 Exam problems stay; groups show who uploaded** (owner request, 6 November 2026). Once
+  in an exam a problem is not removed and no problem is created from the exam page: each problem
+  has an **Active** switch. Switched off, students' upload links no longer offer it and refuse it
+  (422), its answers stay, and a link opens only while one problem is active (409). Groups are
+  added with an autocomplete (newest first) and shown as rows: the group, how many students
+  uploaded an answer to the exam, and one column per problem (by number) counting the students who
+  uploaded an answer to it; a group without answers can be taken out. The exam's answers list has
+  no problem dropdown. The link's lifetime is one "Open for" field with a "min" unit, level with
+  **Open a link**.
+- **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
+  autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
+  autocomplete. Each exam and group pair is reviewed and costed
   separately.
 - **PL-27 Exam answers.** For an exam and group, the teacher sees answers per problem and per
   student, and reviews them with PL-22 to PL-24.
@@ -385,7 +394,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P07 | PL-14, PL-13 | A scanned page and its raw capture are both stored; the raw file's bytes are unchanged. |
 | AC-P08 | PL-21, I2 | A provider failure or unreadable answer shows *failed* or *review required* and no score. |
 | AC-P09 | PL-23, PL-24 | Approving with edits stores the approved grade, the untouched proposal and the AI-correct or wrong mark with its reason. |
-| AC-P10 | PL-26 | Creating a problem inside an exam adds it to that exam. |
+| AC-P10 | PL-26 | Withdrawn by PL-55: problems are no longer created from inside an exam. |
 | AC-P11 | PL-28, PL-30 | A link with a 1-minute lifetime refuses uploads after it expires; a closed link refuses at once. |
 | AC-P12 | PL-31 | Two uploads with the same name for one problem are both kept as versions. |
 | AC-P13 | PL-32, PL-33 | After one setup and two gradings, the problem, exam, group and exam+group totals add up to the recorded calls. |
@@ -401,6 +410,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P26 | PL-52 | An exam created with problems keeps their order; a repeated problem or another teacher's problem is refused and creates nothing (`test_an_exam_is_created_with_problems_in_the_given_order`). |
 | AC-P27 | PL-53 | A teacher's upload changes name, label and group; an exam answer keeps its name and group but its label changes; another teacher's answer or group is not found (`test_teacher_edits_an_answers_name_label_and_group`, `test_an_exam_answers_name_and_group_are_kept_but_its_label_can_change`). |
 | AC-P28 | PL-54 | Opening a problem or a group sets its last-used time without changing the problem's updated time; another teacher's gets 404 (`test_opening_a_problem_or_group_makes_it_recently_used`). |
+| AC-P29 | PL-55 | An exam's problem cannot be removed or created from the exam; switched off, the link neither offers nor accepts it, and with none active no link opens; each group counts its students in all and per problem (`test_an_exams_problem_is_switched_off_not_removed`, `test_exam_problems_groups_and_order`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

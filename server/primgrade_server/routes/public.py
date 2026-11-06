@@ -43,7 +43,8 @@ def open_page(token: str, request: Request, response: Response, db: Db, config: 
                             path="/api/public")
     return {"exam_title": exam.title, "group_name": group.name, "open": _open(link),
             "expires_at": link.expires_at.isoformat(), "cookie_note": COOKIE_NOTE,
-            "problems": [{"id": p.id, "title": p.title} for p in exam_problems(db, exam.id)]}
+            "problems": [{"id": p.id, "title": p.title}
+                         for p in exam_problems(db, exam.id, active_only=True)]}
 
 
 @router.post("/links/{token}/answers", status_code=201)
@@ -64,7 +65,7 @@ async def submit(
     name = names.clean(student_name)
     if not name:
         raise HTTPException(422, "type your name")
-    if problem_id not in {p.id for p in exam_problems(db, link.exam_id)}:
+    if problem_id not in {p.id for p in exam_problems(db, link.exam_id, active_only=True)}:
         raise HTTPException(422, "choose a problem of this exam")
     cookie = request.cookies.get(STUDENT_COOKIE)
     if not cookie:
