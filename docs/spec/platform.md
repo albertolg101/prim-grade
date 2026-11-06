@@ -159,8 +159,8 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-45 Problem screens and what follows acceptance** (owner request, 5 November 2026). A problem
   has three screens: 1 · Problem information, 2 · AI grader, 3 · Answers. Opened without a chosen
   screen, a ready problem (its rubric accepted) opens on Answers; one that has an AI grader or is
-  being prepared opens on the AI grader; otherwise on Problem information. Answers lists the problem's answers newest first by default (sort: newest,
-  oldest, name A–Z) and is where answers are added once the rubric is accepted. After accepting a
+  being prepared opens on the AI grader; otherwise on Problem information. Answers lists the problem's answers newest first by default (sorted
+  in the PL-49 panel) and is where answers are added once the rubric is accepted. After accepting a
   rubric version the teacher is asked where to go: the answers (default), the problem list, or stay
   on the page. The back link from an answer returns to the Answers screen.
 - **PL-46 Group on an answer** (owner request, 6 November 2026). When the teacher adds an answer
@@ -168,6 +168,17 @@ Each requirement has a stable id; tests and tasks cite it.
   (archived ones are not offered; with no groups the field says so); the picked group shows as a
   removable chip and stays for the next answer. The group shows next to the student's name in the
   list. A group given without an exam must be the teacher's own; an exam still needs its group.
+- **PL-49 Sort and filter a problem's answers** (owner request, 6 November 2026). On the Answers
+  screen a panel on the right of the list, its top level with the list's top, replaces the old sort
+  menu. It has **Sort by** (newest, oldest, name A–Z), **Uploaded** (All time, Today, Yesterday,
+  Last 7 days, Last 30 days, This month, This year, or a Custom range with From and To dates, both
+  days included, in local calendar days), **Group** and **Exam** checkboxes with counts, including
+  "No group" and "No exam" (a facet with a single value is not shown), and **Label**, picked like
+  the problem tags (PL-42): an autocomplete with counts adds each label as a removable chip.
+  Within a facet any picked value matches; facets combine; nothing picked means every answer.
+  **Clear** resets the filters, not the sort. "{n} of {total} answers" shows how many match; on a
+  phone a Filters button opens the panel above the list. Grading selected answers grades only the
+  ones still shown. Filters run on the loaded list and are not saved.
 - **PL-47 Recently used problems** (owner request, 6 November 2026). Above the problem list, a
   "Recently used" section shows the ten problems whose answers were most recently uploaded, graded
   by the AI or approved, newest first, as cards that open the problem. Archived problems and
