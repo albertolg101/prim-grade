@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { GroupPick } from "@/components/AddAnswers";
 import ImageViewer from "@/components/ImageViewer";
 import { ErrorText, StateBadge, pts, useAction, useCrumbs, useLoad, when, type Crumb } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { api, type AnswerDetail, type AnswerRow, type CriterionScore, type RunOut } from "@/lib/api";
+import { api, type AnswerDetail, type AnswerRow, type CriterionScore, type Group, type RunOut } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { navigate, query } from "@/lib/router";
 
@@ -64,6 +67,7 @@ export default function Review({ id }: { id: string }) {
         {a && (
           <>
             <h1 className="text-xl font-semibold">{name}</h1>
+            <EditAnswer a={a} onSaved={ans.reload} />
             <StateBadge state={a.state} />
             <span className="text-sm text-muted-foreground">
               {a.problem_title} · {a.source === "student" ? t("uploaded by the student") : t("uploaded by you")} {when(a.created_at)} · {t("rubric v{n}", { n: a.rubric_version })}
@@ -301,5 +305,63 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/** PL-53: the pencil by the title. The label can always change; the name and the group only on the
+ * teacher's own upload outside an exam (a student's typed name is kept, and in an exam they decide versions). */
+function EditAnswer({ a, onSaved }: { a: AnswerDetail; onSaved: () => Promise<unknown> }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(a.student_name);
+  const [label, setLabel] = useState(a.label);
+  const [group, setGroup] = useState<Group | null>(null);
+  const groups = useLoad(() => api.get<Group[]>("/api/groups"), []);
+  const act = useAction();
+  const fixed = a.source === "student" || !!a.exam_id;
+  useEffect(() => {  // fill the form from the answer each time it opens
+    if (!open) return;
+    setName(a.student_name); setLabel(a.label); act.setError(null);
+    setGroup(groups.data?.find((g) => g.id === a.group_id) ?? null);
+  }, [open, a, groups.data]);  // eslint-disable-line react-hooks/exhaustive-deps
+  const save = () => act.run(async () => {
+    await api.patch(`/api/answers/${a.id}`, fixed ? { label } : { label, student_name: name, group_id: group?.id ?? null });
+    await onSaved();
+    setOpen(false);
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground" aria-label={t("Edit answer")} title={t("Edit answer")}><Pencil /></Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form className="min-w-0 space-y-4" onSubmit={(e) => { e.preventDefault(); save(); }}>
+          <DialogHeader>
+            <DialogTitle>{t("Edit answer")}</DialogTitle>
+            {fixed && <DialogDescription>
+              {a.source === "student" ? t("The student typed this name when uploading, so it is kept with the upload.")
+                : t("In an exam the name and group decide the student's versions, so they are kept.")}
+            </DialogDescription>}
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="answer-name">{t("Student name")}</Label>
+            <Input id="answer-name" value={name} disabled={fixed} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="answer-label">{t("Label")}</Label>
+            <Input id="answer-label" value={label} onChange={(e) => setLabel(e.target.value)} />
+          </div>
+          <div className="min-w-0 space-y-1.5">
+            <p className="text-sm font-medium">{t("Group")}</p>
+            {groups.data && <GroupPick groups={groups.data.filter((g) => !g.archived || g.id === a.group_id)} value={group} onChange={setGroup} locked={fixed} />}
+          </div>
+          <ErrorText>{act.error ?? groups.error}</ErrorText>
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
+            <Button type="submit" disabled={act.busy || !groups.data}>{t("Save")}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

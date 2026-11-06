@@ -1,7 +1,7 @@
 """PL-20–24: AC-P08, AC-P09."""
 
 import pytest
-from conftest import ready_problem, upload
+from conftest import ready_problem, teacher, upload
 from primgrade_server import ai
 
 from grader.llm import LLMError
@@ -154,3 +154,34 @@ def test_problems_show_when_an_answer_was_last_uploaded_or_graded(admin):  # PL-
         "run_id": run["id"], "scores": scores, "feedback": "", "ai_verdict": "correct"})
     assert r.status_code == 200, r.text
     assert used()[p["id"]] > graded
+
+
+def test_teacher_edits_an_answers_name_label_and_group(admin, make_client):  # PL-53
+    p = ready_problem(admin)
+    g = admin.post("/api/groups", json={"name": "Group A"}).json()
+    a = upload(admin, p["id"], student_name="Ana", label="p1")
+    r = admin.patch(f"/api/answers/{a['id']}", json={"student_name": "  Ana   López ",
+                                                     "label": " page 1 ", "group_id": g["id"]})
+    assert r.status_code == 200, r.text
+    assert (r.json()["student_name"], r.json()["label"], r.json()["group_id"]) == (
+        "Ana López", "page 1", g["id"])
+    r = admin.patch(f"/api/answers/{a['id']}", json={"group_id": None})
+    assert r.json()["group_id"] is None and r.json()["student_name"] == "Ana López"
+    theirs = teacher(make_client, admin, "other@example.test")
+    assert theirs.patch(f"/api/answers/{a['id']}", json={"label": "x"}).status_code == 404
+    other_group = theirs.post("/api/groups", json={"name": "Theirs"}).json()
+    assert admin.patch(f"/api/answers/{a['id']}",
+                       json={"group_id": other_group["id"]}).status_code == 404
+
+
+def test_an_exam_answers_name_and_group_are_kept_but_its_label_can_change(admin):  # PL-53
+    p = ready_problem(admin)
+    g = admin.post("/api/groups", json={"name": "Group A"}).json()
+    e = admin.post("/api/exams", json={"title": "Midterm", "problem_ids": [p["id"]]}).json()
+    admin.put(f"/api/exams/{e['id']}/groups", json={"group_ids": [g["id"]]})
+    a = upload(admin, p["id"], student_name="Ana", exam_id=e["id"], group_id=g["id"])
+    url = f"/api/answers/{a['id']}"
+    assert admin.patch(url, json={"student_name": "Bea"}).status_code == 409
+    assert admin.patch(url, json={"group_id": None}).status_code == 409
+    r = admin.patch(url, json={"label": "late", "student_name": "Ana"})  # unchanged name is fine
+    assert r.status_code == 200 and r.json()["label"] == "late"

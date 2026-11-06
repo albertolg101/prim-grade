@@ -161,7 +161,7 @@ export default function AddAnswers({ problemId, groups, group, onGroup, onAdded,
 
 /** PL-46: an optional group, picked from the teacher's groups with an autocomplete; once picked it
  * shows as a chip that can be removed. */
-function GroupPick({ groups, value, onChange, locked }: { groups: Group[]; value: Group | null; onChange: (g: Group | null) => void; locked?: boolean }) {
+export function GroupPick({ groups, value, onChange, locked }: { groups: Group[]; value: Group | null; onChange: (g: Group | null) => void; locked?: boolean }) {
   if (value) {
     return (
       <div className="flex h-9 items-center justify-between gap-2 rounded-md border px-3 text-sm">

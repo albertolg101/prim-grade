@@ -116,6 +116,35 @@ def list_answers(problem_id: str, db: Db, user: Teacher) -> list[dict]:
     return [answer_row(db, a) for a in rows]
 
 
+class AnswerEdit(BaseModel):
+    student_name: str | None = Field(default=None, max_length=200)
+    label: str | None = Field(default=None, max_length=200)
+    group_id: str | None = None  # sent as null: no group
+
+
+@router.patch("/answers/{answer_id}")
+def edit_answer(answer_id: str, body: AnswerEdit, db: Db, user: Teacher) -> dict:
+    """PL-53: the label can always change. The name and the group only on the teacher's own upload
+    outside an exam: a student's typed name is the trace of who sent it (PL-31, PL-35), and in an
+    exam the name and group decide the student's versions and the exam-and-group pairing."""
+    a, _ = owned_answer(db, answer_id, user)
+    fixed = a.source == "student" or a.exam_id is not None
+    if body.label is not None:
+        a.label = body.label.strip()
+    if body.student_name is not None and names.clean(body.student_name) != a.student_name:
+        if fixed:
+            raise HTTPException(409, "the name of a student's upload or an exam answer is kept")
+        a.student_name = names.clean(body.student_name)
+    if "group_id" in body.model_fields_set and body.group_id != a.group_id:
+        if fixed:
+            raise HTTPException(409, "the group of a student's upload or an exam answer is kept")
+        if body.group_id:
+            owned(db, models.Group, body.group_id, user)
+        a.group_id = body.group_id
+    db.commit()
+    return answer_row(db, a)
+
+
 @router.get("/answers/{answer_id}")
 def get_answer(answer_id: str, db: Db, user: Teacher) -> dict:
     a, p = owned_answer(db, answer_id, user)

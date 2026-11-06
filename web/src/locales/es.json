@@ -484,5 +484,8 @@
  "{n} of {total} groups": "{n} de {total} grupos",
  "{n} students": "{n} estudiantes",
  "Recently created": "Creados recientemente",
- "No problem matches “{q}”.": "Ningún problema coincide con “{q}”."
+ "No problem matches “{q}”.": "Ningún problema coincide con “{q}”.",
+ "Edit answer": "Editar respuesta",
+ "The student typed this name when uploading, so it is kept with the upload.": "El estudiante escribió este nombre al subir la respuesta, así que se conserva con la subida.",
+ "In an exam the name and group decide the student's versions, so they are kept.": "En un examen el nombre y el grupo deciden las versiones del estudiante, así que se conservan."
 }

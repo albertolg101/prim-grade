@@ -283,6 +283,12 @@ Each requirement has a stable id; tests and tasks cite it.
   autocomplete, shown numbered and put in order with up and down arrows. The exam is created with
   those problems in that order in one request; a problem twice is refused (422) and another
   teacher's problem is not found (404), with no exam created.
+- **PL-53 Edit an answer** (owner request, 6 November 2026). A pencil between the answer's title and
+  its status opens **Edit answer** with the student name, the label and the group. The label can
+  always change. The name and the group change only on the teacher's own upload outside an exam: a
+  student's upload keeps the name the student typed (PL-31, PL-35), and in an exam the name and
+  group decide the student's versions and the exam-and-group pairing; there they show read-only
+  with the reason, and the API refuses a change (409). Another teacher's group is not found (404).
 - **PL-26 Exams.** A teacher creates an exam with a title, adds existing problems, or creates a new
   problem from inside the exam, which is added to it automatically. They can reorder and remove
   problems, and assign one or more groups. Each exam and group pair is reviewed and costed
@@ -388,6 +394,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P23 | PL-46 | An answer can carry one of the teacher's groups without an exam; another teacher's group is refused, and an exam without a group is refused (`test_an_answer_can_name_one_of_the_teachers_groups`). |
 | AC-P25 | PL-51 | A group's page lists the exams given to it and the problems in them or answered in the group, each with the group's answers counted and those ready to grade; groups say when they were last used; another teacher gets 404 (`test_group_page_lists_its_exams_and_problems_with_answers_to_grade`). |
 | AC-P26 | PL-52 | An exam created with problems keeps their order; a repeated problem or another teacher's problem is refused and creates nothing (`test_an_exam_is_created_with_problems_in_the_given_order`). |
+| AC-P27 | PL-53 | A teacher's upload changes name, label and group; an exam answer keeps its name and group but its label changes; another teacher's answer or group is not found (`test_teacher_edits_an_answers_name_label_and_group`, `test_an_exam_answers_name_and_group_are_kept_but_its_label_can_change`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

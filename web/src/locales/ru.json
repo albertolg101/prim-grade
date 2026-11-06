@@ -484,5 +484,8 @@
  "{n} of {total} groups": "{n} из {total} групп",
  "{n} students": "Студентов: {n}",
  "Recently created": "Недавно созданные",
- "No problem matches “{q}”.": "Нет задач, подходящих под «{q}»."
+ "No problem matches “{q}”.": "Нет задач, подходящих под «{q}».",
+ "Edit answer": "Изменить ответ",
+ "The student typed this name when uploading, so it is kept with the upload.": "Студент ввёл это имя при загрузке, поэтому оно сохраняется вместе с загрузкой.",
+ "In an exam the name and group decide the student's versions, so they are kept.": "В экзамене имя и группа определяют версии студента, поэтому они сохраняются."
 }
