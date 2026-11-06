@@ -455,5 +455,6 @@
  "Skipped (use JPG, PNG or WebP): {files}": "Omitidos (usa JPG, PNG o WebP): {files}",
  "{n} added": "{n} añadidas",
  "{n} pages": "{n} páginas",
- "{n} students, {pages} pages. Check the names before adding.": "{n} estudiantes, {pages} páginas. Revisa los nombres antes de añadir."
+ "{n} students, {pages} pages. Check the names before adding.": "{n} estudiantes, {pages} páginas. Revisa los nombres antes de añadir.",
+ "Changed": "Modificado"
 }

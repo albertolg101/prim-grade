@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AddAnswers from "@/components/AddAnswers";
-import DateRange from "@/components/DateRange";
+import { ALL_TIME, DateFilter, bounds } from "@/components/DateRange";
 import { ErrorText, StateBadge, pts, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,6 @@ import { navigate } from "@/lib/router";
 type Sort = "newest" | "oldest" | "name";
 const SORTS: [Sort, string][] = [["newest", "Newest first"], ["oldest", "Oldest first"], ["name", "Name A–Z"]];
 const nameOf = (r: AnswerRow) => r.student_name || r.label || "";
-// PL-49: date ranges in the style of analytics tools; days are local calendar days
-type Range = "all" | "today" | "yesterday" | "7d" | "30d" | "month" | "year" | "custom";
-const RANGES: [Range, string][] = [
-  ["all", "All time"], ["today", "Today"], ["yesterday", "Yesterday"], ["7d", "Last 7 days"], ["30d", "Last 30 days"],
-  ["month", "This month"], ["year", "This year"], ["custom", "Custom range"],
-];
 type Facet = "group" | "exam" | "label";
 const keyOf = (r: AnswerRow, f: Facet) => (f === "group" ? r.group_id : f === "exam" ? r.exam_id : r.label) || "";
 const NO_FILTER: Record<Facet, string[]> = { group: [], exam: [], label: [] };
@@ -31,22 +25,6 @@ const nameIn = (options: Option[], key: string) => options.find((o) => o.key ===
 type Status = "review" | "approved" | "not_graded";
 const STATUSES: [Status, string][] = [["review", "Review required"], ["approved", "Approved"], ["not_graded", "Not graded"]];
 const statusOf = (r: AnswerRow): Status => r.state === "approved" ? "approved" : r.state === "not_graded" || r.state === "running" ? "not_graded" : "review";
-
-/** [from, to) of a range; null is no bound. A custom range includes both of its days. */
-function bounds(r: Range, from: string, to: string, now = new Date()): [Date | null, Date | null] {
-  const day = (n: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + n);
-  const next = (iso: string) => { const d = new Date(`${iso}T00:00`); d.setDate(d.getDate() + 1); return d; };
-  switch (r) {
-    case "today": return [day(0), null];
-    case "yesterday": return [day(-1), day(0)];
-    case "7d": return [day(-6), null];
-    case "30d": return [day(-29), null];
-    case "month": return [new Date(now.getFullYear(), now.getMonth(), 1), null];
-    case "year": return [new Date(now.getFullYear(), 0, 1), null];
-    case "custom": return [from ? new Date(`${from}T00:00`) : null, to ? next(to) : null];
-    default: return [null, null];
-  }
-}
 
 /** PL-20, PL-21, PL-45 for one problem: add answers, grade the selected ones, open one to review. */
 export default function Answers({ problemId, ready }: { problemId: string; ready: boolean }) {
@@ -59,12 +37,10 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   // PL-49: filters run on the loaded list and are not saved; an empty facet means every value
   const [picked, setPicked] = useState(NO_FILTER);
   const [statuses, setStatuses] = useState<Status[]>(STATUSES.map(([s]) => s));  // all checked; none checked shows nothing
-  const [range, setRange] = useState<Range>("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [date, setDate] = useState(ALL_TIME);
   const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens
   const all = rows.data ?? [];
-  const [lo, hi] = bounds(range, from, to);
+  const [lo, hi] = bounds(date);
   const shown = all.filter((r) => {
     const at = new Date(r.created_at);
     return statuses.includes(statusOf(r)) && (!lo || at >= lo) && (!hi || at < hi)
@@ -84,7 +60,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
       remove: (label) => t("Remove label {label}", { label }),
       options: [...new Set(all.map((r) => r.label).filter(Boolean))].map((x) => ({ key: x, name: x })) },  // rows come newest first
   ];
-  const nFilters = picked.group.length + picked.exam.length + picked.label.length + (range === "all" ? 0 : 1) + (statuses.length === STATUSES.length ? 0 : 1);
+  const nFilters = picked.group.length + picked.exam.length + picked.label.length + (date.range === "all" ? 0 : 1) + (statuses.length === STATUSES.length ? 0 : 1);
 
   return (
     <div className="space-y-4">
@@ -116,7 +92,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">{t("Filters")}</h2>
               <Button size="sm" variant="ghost" className="h-7" disabled={!nFilters}
-                      onClick={() => { setPicked(NO_FILTER); setStatuses(STATUSES.map(([s]) => s)); setRange("all"); setFrom(""); setTo(""); }}>{t("Clear")}</Button>
+                      onClick={() => { setPicked(NO_FILTER); setStatuses(STATUSES.map(([s]) => s)); setDate(ALL_TIME); }}>{t("Clear")}</Button>
             </div>
             <div className="space-y-2">
               <p id="answer-sort" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</p>
@@ -135,14 +111,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
                 </label>
               ))}
             </fieldset>
-            <div className="space-y-2">
-              <p id="answer-date" className="text-xs font-medium text-muted-foreground">{t("Uploaded")}</p>
-              <Select value={range} onValueChange={(v) => setRange(v as Range)}>
-                <SelectTrigger size="sm" className="w-full" aria-labelledby="answer-date"><SelectValue /></SelectTrigger>
-                <SelectContent position="popper">{RANGES.map(([id, label]) => <SelectItem key={id} value={id}>{t(label)}</SelectItem>)}</SelectContent>
-              </Select>
-              {range === "custom" && <DateRange from={from} to={to} onChange={(f, t2) => { setFrom(f); setTo(t2); }} />}
-            </div>
+            <DateFilter title={t("Uploaded")} value={date} onChange={setDate} />
             {/* like the problem tags (PL-42): picked from an autocomplete that opens on the newest first */}
             {facets.map(({ f, title, options, empty, field, typeHint, noMatch, remove }) => (
               <fieldset key={f} className="min-w-0 space-y-2">

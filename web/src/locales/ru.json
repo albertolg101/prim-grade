@@ -455,5 +455,6 @@
  "Skipped (use JPG, PNG or WebP): {files}": "Пропущено (используйте JPG, PNG или WebP): {files}",
  "{n} added": "Добавлено: {n}",
  "{n} pages": "Страниц: {n}",
- "{n} students, {pages} pages. Check the names before adding.": "Студентов: {n}, страниц: {pages}. Проверьте имена перед добавлением."
+ "{n} students, {pages} pages. Check the names before adding.": "Студентов: {n}, страниц: {pages}. Проверьте имена перед добавлением.",
+ "Changed": "Изменено"
 }

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import TagInput from "@/components/TagInput";
+import { ALL_TIME, DateFilter, bounds } from "@/components/DateRange";
 import { Label } from "@/components/ui/label";
 import { api, type Problem } from "@/lib/api";
 import { t } from "@/lib/i18n";
@@ -41,11 +42,14 @@ export default function Problems() {
   const [states, setStates] = useState<State[]>(DEFAULT_STATES);  // none checked: nothing shown
   const [tags, setTags] = useState<string[]>([]);
   const [sort, setSort] = useState<Sort>("updated-desc");
+  const [changed, setChanged] = useState(ALL_TIME);  // by updated_at, the date the list shows
   const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens
   const rows = list.data ?? [];
   const allTags = stored.data ?? [];
   const words = lower(q).split(/\s+/).filter(Boolean);
+  const [lo, hi] = bounds(changed);
   const shown = rows.filter((r) =>
+    (!lo || new Date(r.updated_at) >= lo) && (!hi || new Date(r.updated_at) < hi) &&
     words.every((w) => lower(r.title).includes(w) || r.tags.some((x) => lower(x).includes(w)))
     && states.includes(stateOf(r))
     && tags.every((x) => r.tags.some((y) => lower(y) === lower(x))))
@@ -55,7 +59,7 @@ export default function Problems() {
   const recent = rows.filter((r) => r.last_used_at && !r.archived)
     .sort((a, b) => (a.last_used_at! < b.last_used_at! ? 1 : -1)).slice(0, 10);
   const statesChanged = states.length !== DEFAULT_STATES.length || !DEFAULT_STATES.every((x) => states.includes(x));
-  const nFilters = (statesChanged ? 1 : 0) + tags.length;
+  const nFilters = (statesChanged ? 1 : 0) + tags.length + (changed.range === "all" ? 0 : 1);
   const arch = useAction();
   const archive = (r: Row) => arch.run(async () => {
     await api.patch(`/api/problems/${r.id}`, { archived: !r.archived });
@@ -156,7 +160,7 @@ export default function Problems() {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("Filters")}</h2>
           <Button size="sm" variant="ghost" className="h-7" disabled={!nFilters}
-                  onClick={() => { setStates(DEFAULT_STATES); setTags([]); }}>{t("Clear")}</Button>
+                  onClick={() => { setStates(DEFAULT_STATES); setTags([]); setChanged(ALL_TIME); }}>{t("Clear")}</Button>
         </div>
         <div className="space-y-2">
           <p id="sort-label" className="text-xs font-medium text-muted-foreground">{t("Sort by")}</p>
@@ -177,6 +181,7 @@ export default function Problems() {
             </label>
           ))}
         </fieldset>
+        <DateFilter title={t("Changed")} value={changed} onChange={setChanged} />
         <fieldset className="min-w-0 space-y-2">
           <legend className="mb-2 text-xs font-medium text-muted-foreground">
             {t("Tags (all selected)")}{tags.length ? ` · ${tags.length}` : ""}

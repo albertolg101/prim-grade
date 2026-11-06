@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover } from "radix-ui";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getLang, t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -70,5 +71,45 @@ export default function DateRange({ from, to, onChange }: { from: string; to: st
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
+  );
+}
+
+// PL-49: date ranges in the style of analytics tools; days are local calendar days
+export type Range = "all" | "today" | "yesterday" | "7d" | "30d" | "month" | "year" | "custom";
+const RANGES: [Range, string][] = [
+  ["all", "All time"], ["today", "Today"], ["yesterday", "Yesterday"], ["7d", "Last 7 days"], ["30d", "Last 30 days"],
+  ["month", "This month"], ["year", "This year"], ["custom", "Custom range"],
+];
+export type DateValue = { range: Range; from: string; to: string };
+export const ALL_TIME: DateValue = { range: "all", from: "", to: "" };
+
+/** [from, to) of a range; null is no bound. A custom range includes both of its days. */
+export function bounds({ range: r, from, to }: DateValue, now = new Date()): [Date | null, Date | null] {
+  const day = (n: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + n);
+  const next = (iso: string) => { const d = new Date(`${iso}T00:00`); d.setDate(d.getDate() + 1); return d; };
+  switch (r) {
+    case "today": return [day(0), null];
+    case "yesterday": return [day(-1), day(0)];
+    case "7d": return [day(-6), null];
+    case "30d": return [day(-29), null];
+    case "month": return [new Date(now.getFullYear(), now.getMonth(), 1), null];
+    case "year": return [new Date(now.getFullYear(), 0, 1), null];
+    case "custom": return [from ? new Date(`${from}T00:00`) : null, to ? next(to) : null];
+    default: return [null, null];
+  }
+}
+
+/** PL-42, PL-49: a preset range (Today, Last 7 days…) or a custom one on the calendar, for a filter panel. */
+export function DateFilter({ title, value, onChange }: { title: string; value: DateValue; onChange: (v: DateValue) => void }) {
+  const id = useId();
+  return (
+    <div className="space-y-2">
+      <p id={id} className="text-xs font-medium text-muted-foreground">{title}</p>
+      <Select value={value.range} onValueChange={(v) => onChange({ ...value, range: v as Range })}>
+        <SelectTrigger size="sm" className="w-full" aria-labelledby={id}><SelectValue /></SelectTrigger>
+        <SelectContent position="popper">{RANGES.map(([r, label]) => <SelectItem key={r} value={r}>{t(label)}</SelectItem>)}</SelectContent>
+      </Select>
+      {value.range === "custom" && <DateRange from={value.from} to={value.to} onChange={(from, to) => onChange({ ...value, from, to })} />}
+    </div>
   );
 }

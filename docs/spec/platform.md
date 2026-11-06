@@ -142,6 +142,9 @@ Each requirement has a stable id; tests and tasks cite it.
   - **Status**: Draft, Ready and Archived checkboxes with counts. Draft and Ready are checked by
     default, Archived is not. An archived problem shows only under Archived, whatever its status;
     none checked shows nothing (PL-44).
+  - **Changed** (owner request, 6 November 2026): the date each problem was last changed, the one the
+    list shows, with the same presets and custom-range calendar as **Uploaded** on the Answers screen
+    (PL-49); All time by default.
   - **Tags**: never listed all at once. Clicking the field opens a menu with the first 8 tags and
     "Type to see {n} more"; typing searches them all (each with how many problems carry it); picking one, or Enter on a full tag name in any
     case, adds it as a chip with a remove button. A problem must carry every chosen tag. An unknown
@@ -152,7 +155,7 @@ Each requirement has a stable id; tests and tasks cite it.
   Every scrollbar on the site is thin and drawn in the theme's colours (light and dark).
   A cut-off label on any button, link, select, option or tag scrolls to its end and back while
   hovered, so it can be read in full (none with reduced motion).
-  - **Clear** resets status to the default and removes the tags.
+  - **Clear** resets status to the default, removes the tags and sets Changed back to All time.
   The search matches every typed word against the problem's name or tags, ignoring case. On a
   phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
   problems" shows how many match. Search and filters run on the loaded list and are not saved.
