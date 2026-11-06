@@ -1,5 +1,7 @@
 """PL-32–34: AC-P13."""
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from conftest import PNG, ready_problem
 
@@ -24,3 +26,16 @@ def test_totals_add_up(admin):  # AC-P13
         assert r["usd"] == pytest.approx(row["grading_usd"]) and r["calls"] == 2
     usage = admin.get("/api/admin/usage").json()
     assert sum(u["usd"] for u in usage) == pytest.approx(c["total_usd"])
+
+
+def test_spending_by_dates(admin):  # PL-62, AC-P34
+    ready_problem(admin)  # one setup call, made now
+    now = datetime.now(UTC)
+    day = timedelta(days=1)
+    inside = admin.get("/api/costs", params={"since": (now - day).isoformat(),
+                                             "until": (now + day).isoformat()}).json()
+    everything = admin.get("/api/costs").json()["total_usd"]
+    assert inside["total_usd"] > 0 and inside["total_usd"] == everything
+    later = admin.get("/api/costs", params={"since": (now + day).isoformat()}).json()
+    assert later["total_usd"] == 0 and later["problems"] == []
+    assert admin.get("/api/costs", params={"since": "not a date"}).status_code == 422

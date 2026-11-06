@@ -336,6 +336,10 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-61 Export as Excel or CSV** (owner request, 6 November 2026). The exam page's export (PL-58)
   offers Excel (.xlsx, marks as numbers) or CSV, starting with the teacher's default, which is a
   setting (Excel unless changed).
+- **PL-62 Spending filters** (owner request, 6 November 2026). The Settings spending card drops the
+  per-problem table (the API still returns it) and shows per exam and group, per exam and per group,
+  each with the same column widths. A period (the date presets or a custom range) filters every
+  table and the total on the server; a search narrows the rows by exam or group name.
 - **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
   autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
   autocomplete. Each exam and group pair is reviewed and costed
@@ -448,6 +452,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P31 | PL-57 | A reopened link, a new link for the same exam and group, and a closed link all show the bound name and every version this browser sent; another browser gets none (`test_reopened_page_shows_what_this_browser_sent`). |
 | AC-P32 | PL-58 | The export lists approved totals only, leaves unapproved cells empty, writes a formula-like name as text and refuses another teacher's exam (`test_export_has_approved_marks_only`). |
 | AC-P33 | PL-61 | The export also comes as Excel with numeric marks; another format is refused; the default format is a setting that starts as Excel and accepts only csv or xlsx (`test_export_has_approved_marks_only`, `test_export_format_is_a_setting`). |
+| AC-P34 | PL-62 | Spending for a period that includes the calls equals the full total; a later period is empty; a malformed date is refused (`test_spending_by_dates`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

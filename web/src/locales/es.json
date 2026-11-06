@@ -508,5 +508,12 @@
  "Export marks": "Exportar notas",
  "Export format": "Formato de exportación",
  "Export marks as": "Exportar notas como",
- "Open sidebar": "Abrir la barra lateral"
+ "Open sidebar": "Abrir la barra lateral",
+ "Search spending": "Buscar gastos",
+ "Search by exam or group": "Buscar por examen o grupo",
+ "Period": "Periodo",
+ "Per exam and group": "Por examen y grupo",
+ "Per exam": "Por examen",
+ "Per group": "Por grupo",
+ "Nothing spent in this period.": "Sin gastos en este periodo."
 }

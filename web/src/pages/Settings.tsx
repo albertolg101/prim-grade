@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import { ErrorText, Page, useAction, useLoad, usd } from "@/components/common";
+import { ALL_TIME, DateFilter, bounds } from "@/components/DateRange";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +15,6 @@ type Prefs = { link_minutes: number; export_format: "xlsx" | "csv"; has_api_key:
 type Row = { id: string; usd: number; tokens: number; calls: number };
 type Costs = {
   total_usd: number;
-  problems: { id: string; title: string; setup_usd: number; grading_usd: number; tokens: number }[];
   groups: (Row & { name: string })[];
   exams: (Row & { title: string })[];
   exam_groups: (Row & { exam_title: string; group_name: string })[];
@@ -22,7 +23,14 @@ type Costs = {
 /** PL-06, PL-08 and the spending views of PL-33; theme and language are in the top bar (PL-07, PL-37). */
 export default function Settings({ onSignOut }: { onSignOut: () => void }) {
   const prefs = useLoad(() => api.get<Prefs>("/api/settings"), []);
-  const costs = useLoad(() => api.get<Costs>("/api/costs"), []);
+  // PL-62: spending for a period, narrowed by exam or group name
+  const [period, setPeriod] = useState(ALL_TIME);
+  const [q, setQ] = useState("");
+  const [since, until] = bounds(period);
+  const range = new URLSearchParams({ ...(since && { since: since.toISOString() }), ...(until && { until: until.toISOString() }) }).toString();
+  const costs = useLoad(() => api.get<Costs>(`/api/costs${range ? `?${range}` : ""}`), [range]);
+  const words = q.toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  const hit = (...names: string[]) => words.every((w) => names.some((n) => n.toLocaleLowerCase().includes(w)));
   const [key, setKey] = useState("");
   const [minutes, setMinutes] = useState("");
   const keyAct = useAction();
@@ -106,17 +114,23 @@ export default function Settings({ onSignOut }: { onSignOut: () => void }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="relative min-w-48 flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input type="search" className="h-8 pl-8" aria-label={t("Search spending")} placeholder={t("Search by exam or group")}
+                     value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+            <div className="w-48"><DateFilter title={t("Period")} value={period} onChange={setPeriod} /></div>
+          </div>
           <ErrorText>{costs.error}</ErrorText>
           {costs.data && (
             <>
-              <CostTable title={t("Per problem")} head={[t("Problem"), t("Preparing"), t("Grading")]}
-                         rows={costs.data.problems.map((r) => [r.title, usd(r.setup_usd), usd(r.grading_usd)])} />
-              <CostTable title={t("Per exam (grading)")} head={[t("Exam"), t("Answers graded"), t("Cost")]}
-                         rows={costs.data.exams.map((r) => [r.title, String(r.calls), usd(r.usd)])} />
-              <CostTable title={t("Per group (grading)")} head={[t("Group"), t("Answers graded"), t("Cost")]}
-                         rows={costs.data.groups.map((r) => [r.name, String(r.calls), usd(r.usd)])} />
-              <CostTable title={t("Per exam and group (grading)")} head={[t("Exam · Group"), t("Answers graded"), t("Cost")]}
-                         rows={costs.data.exam_groups.map((r) => [`${r.exam_title} · ${r.group_name}`, String(r.calls), usd(r.usd)])} />
+              <CostTable title={t("Per exam and group")} head={[t("Exam"), t("Group")]}
+                         rows={costs.data.exam_groups.filter((r) => hit(r.exam_title, r.group_name)).map((r) => [[r.exam_title, r.group_name], r.calls, r.usd])} />
+              <CostTable title={t("Per exam")} head={[t("Exam")]}
+                         rows={costs.data.exams.filter((r) => hit(r.title)).map((r) => [[r.title], r.calls, r.usd])} />
+              <CostTable title={t("Per group")} head={[t("Group")]}
+                         rows={costs.data.groups.filter((r) => hit(r.name)).map((r) => [[r.name], r.calls, r.usd])} />
             </>
           )}
         </CardContent>
@@ -125,18 +139,32 @@ export default function Settings({ onSignOut }: { onSignOut: () => void }) {
   );
 }
 
-function CostTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {
+/** PL-62: every spending table has the same columns at the same widths, so the numbers line up. */
+function CostTable({ title, head, rows }: { title: string; head: string[]; rows: [string[], number, number][] }) {
   return (
-    <div>
-      <h3 className="mb-1 text-sm font-medium">{title}</h3>
-      {rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Nothing spent yet.")}</p> : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-muted-foreground">{head.map((h, i) => <th key={h} className={i ? "text-right font-normal" : "font-normal"}>{h}</th>)}</tr></thead>
-            <tbody>{rows.map((r, i) => <tr key={i} className="border-t">{r.map((c, j) => <td key={j} className={j ? "py-1 text-right tabular-nums" : "py-1"}>{c}</td>)}</tr>)}</tbody>
-          </table>
-        </div>
+    <section className="space-y-1">
+      <h3 className="text-sm font-medium">{title}</h3>
+      {rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Nothing spent in this period.")}</p> : (
+        <table className="w-full table-fixed text-sm">
+          <colgroup>{head.map((h) => <col key={h} />)}<col className="w-28 sm:w-36" /><col className="w-24" /></colgroup>
+          <thead>
+            <tr className="text-left text-xs text-muted-foreground">
+              {head.map((h) => <th key={h} className="pb-1 font-normal">{h}</th>)}
+              <th className="pb-1 text-right font-normal">{t("Answers graded")}</th>
+              <th className="pb-1 text-right font-normal">{t("Cost")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([names, calls, cost], i) => (
+              <tr key={i} className="border-t">
+                {names.map((n, j) => <td key={j} className="truncate py-1.5 pr-3" title={n}>{n}</td>)}
+                <td className="py-1.5 text-right tabular-nums">{calls}</td>
+                <td className="py-1.5 text-right tabular-nums">{usd(cost)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
-    </div>
+    </section>
   );
 }

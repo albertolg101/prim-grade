@@ -508,5 +508,12 @@
  "Export marks": "Экспорт оценок",
  "Export format": "Формат экспорта",
  "Export marks as": "Экспортировать оценки как",
- "Open sidebar": "Показать боковую панель"
+ "Open sidebar": "Показать боковую панель",
+ "Search spending": "Поиск расходов",
+ "Search by exam or group": "Поиск по экзамену или группе",
+ "Period": "Период",
+ "Per exam and group": "По экзамену и группе",
+ "Per exam": "По экзаменам",
+ "Per group": "По группам",
+ "Nothing spent in this period.": "За этот период расходов нет."
 }
