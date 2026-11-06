@@ -33,7 +33,8 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
   const exact = suggestions.find((s) => lower(s.value) === q);
   const create = allowNew && q && !exact ? text.trim() : null;
   const items = [...matches.map((s) => ({ ...s, create: false })), ...(create ? [{ value: create, hint: undefined, create: true }] : [])];
-  const pick = (value: string) => { onPick(value); setText(""); setActive(0); };
+  // PL-59: the list closes after a pick, so it never stays over the buttons under it; a click reopens it
+  const pick = (value: string) => { onPick(value); setText(""); setActive(0); setOpen(false); };
 
   return (
     <div className={cn("relative", className)}>
@@ -55,7 +56,8 @@ export default function TagInput({ suggestions, onPick, allowNew, label, placeho
                  if (exact && (!it || it.create)) pick(exact.value);  // a full name in any case is that tag
                  else if (it) pick(it.value);
                } else if (e.key === "Escape") {
-                 if (open && text) { setOpen(false); } else onClose?.();
+                 // an open list closes first (and not the dialog it sits in); the next Escape is the field's
+                 if (open && items.length) { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); setOpen(false); } else onClose?.();
                }
              }} />
       {open && (q || items.length > 0) && (

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import { BookOpen, ChevronRight, ClipboardList, Loader2, LogOut, Menu, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
+import { BookOpen, ChevronRight, ClipboardList, Loader2, LogOut, Menu, PanelLeftClose, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
 import { CrumbsContext, type Crumb } from "@/components/common";
 import { LanguageSelect, ThemeButtons } from "@/components/Prefs";
 import ZoomFooter from "@/components/ZoomFooter";
@@ -35,7 +35,11 @@ export default function App() {
   const path = loc.split("?")[0];
   const student = match("/s/:token", path);
   const [me, setMe] = useState<Me | null | undefined>(undefined);
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenu] = useState(false);  // phones: the drawer
+  // PL-60: on a computer the sidebar can be closed; the browser remembers it
+  const [side, setSideState] = useState(() => { try { return localStorage.getItem("sidebar") !== "closed"; } catch { return true; } });
+  const setSide = (open: boolean) => { setSideState(open); try { localStorage.setItem("sidebar", open ? "open" : "closed"); } catch { /* private window */ } };
+  const wide = () => window.matchMedia("(min-width: 48rem)").matches;
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [prefError, setPrefError] = useState<string | null>(null);
   const [lang, setLangState] = useState<Lang>(getLang());
@@ -94,12 +98,16 @@ export default function App() {
         {menu && <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenu(false)} />}
         <aside className={cn(
           "fixed top-0 left-0 z-50 flex h-(--screen-h) w-60 flex-col border-r bg-background transition-transform md:sticky md:translate-x-0",
-          menu ? "translate-x-0" : "invisible -translate-x-full md:visible")}>
+          menu ? "translate-x-0" : "invisible -translate-x-full md:visible", !side && "md:hidden")}>
           <div className="flex h-13 items-center justify-between px-4">
             <a href="/problems" onClick={(e) => { e.preventDefault(); navigate("/problems"); }}
                className="text-lg font-bold text-primary">PrimGrade</a>
             <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("Close menu")} onClick={() => setMenu(false)}>
               <X />
+            </Button>
+            <Button variant="ghost" size="icon" className="hidden text-muted-foreground md:inline-flex" aria-label={t("Close sidebar")} title={t("Close sidebar")}
+                    onClick={() => setSide(false)}>
+              <PanelLeftClose />
             </Button>
           </div>
           <nav className="flex flex-1 flex-col gap-0.5 px-2" aria-label={t("Main")}>
@@ -125,8 +133,8 @@ export default function App() {
         </aside>
         <div className="min-w-0 flex-1 pb-(--footer-pad)">
           <header className="sticky top-0 z-30 flex h-13 items-center gap-2 border-b bg-background/95 px-2 backdrop-blur sm:px-4">
-            <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("Open menu")} aria-expanded={menu}
-                    onClick={() => setMenu(true)}>
+            <Button variant="ghost" size="icon" className={cn(side && "md:hidden")} aria-label={t("Open menu")} aria-expanded={menu}
+                    onClick={() => (wide() ? setSide(true) : setMenu(true))}>
               <Menu />
             </Button>
             <nav aria-label={t("Breadcrumb")} className="min-w-0 flex-1">

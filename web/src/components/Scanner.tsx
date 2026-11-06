@@ -135,7 +135,7 @@ export default function ScannerDialog({ onPage, onClose, count }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white" role="dialog" aria-label={t("Scan pages")}>
+    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white select-none" role="dialog" aria-label={t("Scan pages")}>
       <div className="flex items-center justify-between gap-2 p-3">
         <span className="text-sm">{t("Pages scanned: {n}", { n: count })}</span>
         <Button variant="secondary" onClick={onClose}>{t("Done")}</Button>

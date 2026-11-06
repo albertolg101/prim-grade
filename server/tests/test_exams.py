@@ -89,3 +89,28 @@ def test_exams_are_archived_and_opening_one_makes_it_recently_used(admin, make_c
     theirs = teacher(make_client, admin, "other@example.test")
     assert theirs.post(f"/api/exams/{first['id']}/opened").status_code == 404
     assert theirs.patch(f"/api/exams/{first['id']}", json={"archived": False}).status_code == 404
+
+
+def test_export_has_approved_marks_only(admin, make_client):  # PL-58, AC-P32
+    p1, p2 = ready_problem(admin, "Q1"), ready_problem(admin, "Q2")
+    e = admin.post("/api/exams", json={"title": "Final 1",
+                                       "problem_ids": [p1["id"], p2["id"]]}).json()
+    g = admin.post("/api/groups", json={"name": "Group A"}).json()
+    admin.put(f"/api/exams/{e['id']}/groups", json={"group_ids": [g["id"]]})
+    ids = {}
+    for name, pid in [("Ana", p1["id"]), ("Ana", p2["id"]), ("=cmd", p1["id"])]:
+        ids[name, pid] = admin.post(
+            f"/api/problems/{pid}/answers",
+            data={"student_name": name, "exam_id": e["id"], "group_id": g["id"]},
+            files=[("pages", ("a.png", PNG, "image/png"))]).json()["id"]
+    r = admin.post(f"/api/answers/{ids['Ana', p1['id']]}/approve",
+                   json={"scores": [{"criterion_id": "C1", "points": 1.5},
+                                    {"criterion_id": "C2", "points": 2}], "feedback": ""})
+    assert r.status_code == 200
+    r = admin.get(f"/api/exams/{e['id']}/export.csv")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+    assert "Final_1-marks.csv" in r.headers["content-disposition"]
+    # not approved stays empty (I1); a typed formula is not run by the spreadsheet
+    assert r.text.splitlines() == ["Group,Student,Q1,Q2", "Group A,'=cmd,,", "Group A,Ana,3.5,"]
+    other = teacher(make_client, admin, "other@example.test")
+    assert other.get(f"/api/exams/{e['id']}/export.csv").status_code == 404

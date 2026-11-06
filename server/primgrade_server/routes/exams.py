@@ -1,9 +1,11 @@
 """PL-26–28, PL-30: exams, their problems and groups, answers per exam and group, upload links."""
 
+import csv
+import io
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
@@ -206,6 +208,37 @@ def _exam_group(db, user, exam_id: str, group_id: str) -> tuple[models.Exam, mod
     if not db.get(models.ExamGroup, (e.id, g.id)):
         raise HTTPException(404, "that group is not assigned to this exam")
     return e, g
+
+
+def _cell(text: str) -> str:
+    """Typed names never run as spreadsheet formulas."""
+    return "'" + text if text[:1] in ("=", "+", "-", "@") else text
+
+
+@router.get("/exams/{exam_id}/export.csv")
+def export_marks(exam_id: str, db: Db, user: Teacher) -> Response:
+    """PL-58: approved marks, one row per group and student, one column per problem. Only the
+    graded version counts, and a cell stays empty until a teacher approves it (I1)."""
+    e = owned(db, models.Exam, exam_id, user)
+    problems = exam_problems(db, e.id)
+    a = models.Answer
+    rows = db.execute(select(models.Group.name, a.student_name, a.problem_id,
+                             models.Approval.total)
+                      .join(models.Group, models.Group.id == a.group_id)
+                      .outerjoin(models.Approval, models.Approval.answer_id == a.id)
+                      .where(a.exam_id == e.id, a.selected)).all()
+    marks: dict = {}
+    for group, name, pid, total in rows:
+        marks.setdefault((group, name), {})[pid] = total
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(["Group", "Student", *[p.title for p in problems]])
+    for (group, name), by in sorted(marks.items()):
+        w.writerow([_cell(group), _cell(name),
+                    *["" if by.get(p.id) is None else f"{by[p.id]:g}" for p in problems]])
+    filename = "".join(c if c.isalnum() else "_" for c in e.title)[:60] or "exam"
+    return Response(out.getvalue(), media_type="text/csv; charset=utf-8", headers={
+        "Content-Disposition": f'attachment; filename="{filename}-marks.csv"'})
 
 
 @router.get("/exams/{exam_id}/groups/{group_id}/answers")

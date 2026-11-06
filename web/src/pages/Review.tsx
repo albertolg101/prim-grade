@@ -234,6 +234,11 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
   const missing = rubric.criteria.some((c) => scores[c.id] === "" || Number(scores[c.id]) < 0 || Number(scores[c.id]) > c.max_points);
   const needVerdict = aiRan && !verdict;
   const needWhy = verdict === "wrong" && (!reason || (!wrong.length && !note.trim()));
+  const blank = rubric.criteria.some((c) => scores[c.id] === "");  // PL-59: no total without every score (I2)
+  // PL-59: the AI wrote its feedback for its own scores; once a score changes it may no longer fit
+  const aiFeedback = run?.harness?.feedback;
+  const stale = !!aiFeedback && feedback === aiFeedback
+    && rubric.criteria.some((c) => c.id in proposed && scores[c.id] !== "" && Number(scores[c.id]) !== proposed[c.id]);
 
   const submit = () => act.run(async () => onDone(await api.post<AnswerDetail>(`/api/answers/${a.id}/approve`, {
     run_id: run && run.status !== "running" ? run.id : null,
@@ -247,7 +252,7 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
       <CardHeader>
         <div className="flex items-baseline gap-2">
           <CardTitle className="text-lg">{a.approval ? t("Approved") : t("Your grade")}</CardTitle>
-          <span className={`ml-auto text-3xl font-bold tabular-nums ${a.approval ? "text-success" : ""}`}>{pts(total)}<span className="text-lg font-medium text-muted-foreground"> / {pts(max)}</span></span>
+          <span className={`ml-auto text-3xl font-bold tabular-nums ${a.approval ? "text-success" : ""}`}>{blank ? "—" : pts(total)}<span className="text-lg font-medium text-muted-foreground"> / {pts(max)}</span></span>
         </div>
         {a.approval && <p className="text-sm text-muted-foreground">{t("Approved {when}. You can change it and approve again.", { when: when(a.approval.approved_at) })}</p>}
       </CardHeader>
@@ -265,7 +270,8 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
         </div>
         <label className="block space-y-1">
           <span className="text-sm font-medium">{t("Feedback for the student")}</span>
-          <Textarea rows={3} value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+          <Textarea rows={3} value={feedback} onChange={(e) => setFeedback(e.target.value)} aria-invalid={stale || undefined} />
+          {stale && <span role="status" className="block rounded-md border border-warning bg-warning/15 px-2 py-1 text-xs">{t("You changed the AI's scores, but this feedback was written for them. Check it before approving.")}</span>}
         </label>
         {aiRan && (
           <fieldset className="space-y-2 rounded-lg border p-3">

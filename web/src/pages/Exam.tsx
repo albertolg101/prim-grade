@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Copy, Maximize2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Copy, Download, Maximize2, X } from "lucide-react";
 import { AnswerTable } from "@/components/Answers";
 import Capture from "@/components/Capture";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
@@ -35,7 +35,11 @@ export default function ExamPage({ id }: { id: string }) {
   return (
     <Page title={e.title} crumbs={[[t("Exams"), "/exams"]]}
           onRename={(title) => save(() => api.patch(`/api/exams/${id}`, { title }))}
-          actions={e.archived && <Badge variant="secondary">{t("Archived")}</Badge>}>
+          actions={<>
+            {e.archived && <Badge variant="secondary">{t("Archived")}</Badge>}
+            {/* PL-58: approved marks only, one row per student */}
+            <Button asChild variant="outline" size="sm"><a href={`/api/exams/${id}/export.csv`} download><Download /> {t("Export marks (CSV)")}</a></Button>
+          </>}>
       {/* PL-56: like a group (PL-51): reversible, its answers, groups and links are kept */}
       <Button variant="ghost" size="sm" className="-mt-3 -ml-2 h-7 self-start px-2 text-xs font-normal text-muted-foreground" disabled={act.busy}
               onClick={() => save(() => api.patch(`/api/exams/${id}`, { archived: !e.archived }))}>
