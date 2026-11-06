@@ -4,6 +4,7 @@ import { clock, ErrorText, useAction, useLoad, when } from "@/components/common"
 import { LanguageSelect, useLocalLang } from "@/components/Prefs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, pagesForm, type Page } from "@/lib/api";
@@ -84,16 +85,24 @@ function ReceiptText({ r }: { r: Receipt }) {
     : t("Received at {time}: pages {n}", { time: when(r.received_at), n: r.pages })}</>;
 }
 
-/** PL-65: small pictures of the pages received; each opens at full size (I4). */
+/** PL-65: small pictures of the pages received; a tap opens the page in a preview with a Close button (I4). */
 function Thumbs({ token, files }: { token: string; files: string[] }) {
+  const [open, setOpen] = useState<number | null>(null);
+  const url = (f: string) => `/api/public/links/${token}/files/${f}`;
   return (
     <span className="mt-1 flex flex-wrap gap-1.5">
       {files.map((f, n) => (
-        <a key={f} href={`/api/public/links/${token}/files/${f}`} target="_blank" rel="noreferrer"
-           aria-label={t("Open page {n} at full size", { n: n + 1 })}>
-          <img src={`/api/public/links/${token}/files/${f}`} alt="" className="h-16 w-12 rounded border bg-white object-cover" />
-        </a>
+        <button key={f} type="button" onClick={() => setOpen(n)} aria-label={t("Open page {n} at full size", { n: n + 1 })}>
+          <img src={url(f)} alt="" className="h-16 w-12 rounded border bg-white object-cover" />
+        </button>
       ))}
+      <Dialog open={open !== null} onOpenChange={(o) => !o && setOpen(null)}>
+        <DialogContent className="flex max-h-[95dvh] max-w-[95vw] flex-col gap-3 p-3 sm:max-w-3xl">
+          <DialogTitle className="text-sm">{t("Page {n}", { n: (open ?? 0) + 1 })}</DialogTitle>
+          {open !== null && <img src={url(files[open])} alt="" className="min-h-0 flex-1 rounded bg-white object-contain" />}
+          <DialogClose asChild><Button variant="outline" className="w-full">{t("Close")}</Button></DialogClose>
+        </DialogContent>
+      </Dialog>
     </span>
   );
 }

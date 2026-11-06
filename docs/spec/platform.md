@@ -356,7 +356,8 @@ Each requirement has a stable id; tests and tasks cite it.
   6 November 2026). Once the student has sent anything, a line says how many of the exam's exercises
   were sent and names the ones not sent yet; a card with nothing sent says "Not sent yet", and its
   button says "Add your pages first" until pages are added. Each receipt, also on a closed link,
-  shows small pictures of the pages received that open at full size (I4). A page is served only to
+  shows small pictures of the pages received; a tap opens the page in a preview on the same
+  page, closed with its Close button or the corner ✕ (I4). A page is served only to
   the browser bound to the student who sent it (PL-35); any other request gets 404.
 - **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
   autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
