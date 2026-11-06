@@ -521,5 +521,10 @@
  "Creating grader": "Создание проверяющего",
  "Show the first {n}": "Показать первые {n}",
  "Show all {n}": "Показать все {n}",
- "Total": "Итого"
+ "Total": "Итого",
+ "Sent: {n} of {total} exercises.": "Отправлено: {n} из {total} заданий.",
+ "Not sent yet: {titles}": "Ещё не отправлено: {titles}",
+ "Not sent yet": "Ещё не отправлено",
+ "Open page {n} at full size": "Открыть страницу {n} в полном размере",
+ "Add your pages first": "Сначала добавьте страницы"
 }

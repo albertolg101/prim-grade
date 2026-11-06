@@ -157,3 +157,24 @@ def test_reopened_page_shows_what_this_browser_sent(admin):  # PL-57, AC-P31
     assert len(s.get(f"/api/public/links/{token}").json()["received"]) == 2  # closed: still shown
     other = student(admin).get(f"/api/public/links/{token2}").json()  # another browser
     assert other["student_name"] is None and other["received"] == []
+
+
+def test_a_student_opens_only_the_pages_this_browser_sent(admin):  # PL-65, AC-P37
+    e, g, p1, _ = setup_exam(admin)
+    link, token = open_link(admin, e, g)
+    s, other = student(admin), student(admin)
+    for c in (s, other):
+        c.get(f"/api/public/links/{token}")  # opening the page sets the cookie
+    sent = submit(s, token, "Student One", p1["id"]).json()
+    assert sent["pages"] == 1 and len(sent["files"]) == 1
+    theirs = submit(other, token, "Student Two", p1["id"]).json()["files"][0]
+    mine = s.get(f"/api/public/links/{token}").json()["received"][0]["files"][0]
+    assert mine == sent["files"][0]
+    page = s.get(f"/api/public/links/{token}/files/{mine}")
+    assert page.status_code == 200 and page.content == PNG
+    url = f"/api/public/links/{token}/files/"
+    assert s.get(url + theirs).status_code == 404  # another student's page
+    assert other.get(url + mine).status_code == 404  # another browser
+    assert student(admin).get(url + mine).status_code == 404  # no cookie
+    admin.post(f"/api/links/{link['id']}/close")
+    assert s.get(url + mine).status_code == 200  # closed: still shown

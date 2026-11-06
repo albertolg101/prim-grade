@@ -345,6 +345,15 @@ Each requirement has a stable id; tests and tasks cite it.
   The per-problem table is back, with creating the grader, grading and the total per problem,
   most expensive first; the search also matches problem names. Every spending table shows its
   first 10 rows and a "Show all" button, so a teacher with many problems still sees the top costs.
+- **PL-64 The approved total stays in view** (simulation wave 2, B3, 6 November 2026). After
+  *Approve grade* or *Approve again*, the grade card scrolls back into view, so the teacher sees the
+  total and "Approved …" they just made final (I1) instead of the bottom of the panel.
+- **PL-65 The student sees what was received and what is missing** (simulation wave 2, B4, B5,
+  6 November 2026). Once the student has sent anything, a line says how many of the exam's exercises
+  were sent and names the ones not sent yet; a card with nothing sent says "Not sent yet", and its
+  button says "Add your pages first" until pages are added. Each receipt, also on a closed link,
+  shows small pictures of the pages received that open at full size (I4). A page is served only to
+  the browser bound to the student who sent it (PL-35); any other request gets 404.
 - **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
   autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
   autocomplete. Each exam and group pair is reviewed and costed
@@ -459,6 +468,8 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P33 | PL-61 | The export also comes as Excel with numeric marks; another format is refused; the default format is a setting that starts as Excel and accepts only csv or xlsx (`test_export_has_approved_marks_only`, `test_export_format_is_a_setting`). |
 | AC-P34 | PL-62 | Spending for a period that includes the calls equals the full total; a later period is empty; a malformed date is refused (`test_spending_by_dates`). |
 | AC-P35 | PL-63 | The period's creating-graders and grading totals add up to its total and match the problem's split; each problem counts its graded answers (`test_totals_add_up`). |
+| AC-P36 | PL-64 | After approving, the grade card with the approved total is in view (browser check, wave 2 walk). |
+| AC-P37 | PL-65 | A receipt lists its page ids; the bound browser opens its own pages, also after the link closes; another student's page, another browser and a browser without the cookie get 404 (`test_a_student_opens_only_the_pages_this_browser_sent`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

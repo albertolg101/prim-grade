@@ -5,11 +5,13 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
-from sqlalchemy import func, select
+from fastapi.responses import FileResponse
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from .. import files, models, names
 from ..deps import Config, Db
+from ..grading import pages_of
 from ..security import STUDENT_COOKIE, STUDENT_COOKIE_DAYS, new_token, token_hash
 from .answers import add_answer
 from .exams import exam_problems
@@ -53,21 +55,53 @@ def open_page(token: str, request: Request, response: Response, db: Db, config: 
 def mine(db, link: models.UploadLink, cookie: str | None) -> tuple[str | None, list[dict]]:
     """PL-57: what this browser's student already sent for this exam and group, through any link,
     so a reopened page shows it. Only the browser bound to the name (PL-35) gets it."""
-    binding = cookie and db.scalar(select(models.StudentBinding).where(
-        models.StudentBinding.exam_id == link.exam_id,
-        models.StudentBinding.group_id == link.group_id,
-        models.StudentBinding.cookie_hash == token_hash(cookie)))
+    binding = _binding(db, link, cookie)
     if not binding:
         return None, []
     a = models.Answer
-    pages = (select(func.count()).select_from(models.AnswerPage)
-             .where(models.AnswerPage.answer_id == a.id).scalar_subquery())
-    rows = db.execute(select(a.problem_id, a.version, pages, a.created_at).where(
-        a.exam_id == link.exam_id, a.group_id == link.group_id, a.source == "student",
-        a.student_name == binding.student_name).order_by(a.created_at)).all()
-    return binding.student_name, [
-        {"problem_id": pid, "version": v, "pages": n, "received_at": at.isoformat()}
-        for pid, v, n, at in rows]
+    rows = db.scalars(_own_answers(link, binding.student_name).order_by(a.created_at)).all()
+    return binding.student_name, [_receipt(db, x) for x in rows]
+
+
+def _binding(db, link: models.UploadLink, cookie: str | None) -> models.StudentBinding | None:
+    if not cookie:
+        return None
+    return db.scalar(select(models.StudentBinding).where(
+        models.StudentBinding.exam_id == link.exam_id,
+        models.StudentBinding.group_id == link.group_id,
+        models.StudentBinding.cookie_hash == token_hash(cookie)))
+
+
+def _own_answers(link: models.UploadLink, student_name: str):
+    a = models.Answer
+    return select(a).where(a.exam_id == link.exam_id, a.group_id == link.group_id,
+                           a.source == "student", a.student_name == student_name)
+
+
+def _receipt(db, a: models.Answer) -> dict:
+    """PL-65: the page ids let the student open what was received (I4), through `own_page` only."""
+    files = [f.id for f in pages_of(db, a.id)]
+    return {"problem_id": a.problem_id, "version": a.version, "pages": len(files),
+            "files": files, "received_at": a.created_at.isoformat()}
+
+
+@router.get("/links/{token}/files/{file_id}")
+def own_page(token: str, file_id: str, request: Request, db: Db):
+    """PL-65: a received page, for the browser bound to the student who sent it (PL-35) and no one
+    else; the link may be closed. Anything else is 404, so it reveals nothing about other
+    answers."""
+    link = _link(db, token)
+    binding = _binding(db, link, request.cookies.get(STUDENT_COOKIE))
+    owned = binding and db.scalar(
+        select(models.AnswerPage.file_id)
+        .where(models.AnswerPage.file_id == file_id,
+               models.AnswerPage.answer_id.in_(
+                   _own_answers(link, binding.student_name).with_only_columns(models.Answer.id))))
+    f = owned and db.get(models.File, file_id)
+    if not f:
+        raise HTTPException(404, "page not found")
+    return FileResponse(f.path, media_type=f.mime,
+                        headers={"Cache-Control": "private, max-age=86400"})
 
 
 @router.post("/links/{token}/answers", status_code=201)
@@ -113,5 +147,4 @@ async def submit(
     a = add_answer(db, problem, saved, source="student", student_name=binding.student_name,
                    exam_id=link.exam_id, group_id=link.group_id, link_id=link.id)
     db.commit()
-    return {"received": True, "problem_id": problem_id, "version": a.version,
-            "pages": len(saved), "received_at": a.created_at.isoformat()}
+    return {"received": True, **_receipt(db, a)}

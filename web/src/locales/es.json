@@ -521,5 +521,10 @@
  "Creating grader": "Crear calificador",
  "Show the first {n}": "Mostrar los primeros {n}",
  "Show all {n}": "Mostrar los {n}",
- "Total": "Total"
+ "Total": "Total",
+ "Sent: {n} of {total} exercises.": "Enviados: {n} de {total} ejercicios.",
+ "Not sent yet: {titles}": "Aún sin enviar: {titles}",
+ "Not sent yet": "Aún sin enviar",
+ "Open page {n} at full size": "Abrir la página {n} a tamaño completo",
+ "Add your pages first": "Primero añade tus páginas"
 }

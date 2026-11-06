@@ -102,7 +102,11 @@ export default function Review({ id }: { id: string }) {
                          boxClass="h-[calc(var(--app-h)*0.6)] lg:h-auto lg:min-h-0 lg:flex-1" />
             <div className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
               {a.rubric && <ApprovalForm key={`${a.id}-${run?.id ?? "none"}-${a.approval?.approved_at ?? ""}`} a={a} run={run}
-                                         onDone={(next) => { ans.setData(next); list.reload(); }} />}
+                                         onDone={(next) => {
+                                           ans.setData(next); list.reload();
+                                           // PL-64: the approved total stays in view after approving
+                                           requestAnimationFrame(() => document.getElementById("grade-card")?.scrollIntoView({ block: "start" }));
+                                         }} />}
               {!a.rubric && <p className="text-sm text-muted-foreground">{t("Accept the problem's grader before grading this answer.")}</p>}
               <Proposal a={a} run={run} onGrade={() => act.run(async () => { await api.post("/api/answers/grade", { answer_ids: [a.id] }); await ans.reload(); })} busy={act.busy} />
               <ErrorText>{act.error}</ErrorText>
@@ -248,7 +252,7 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
   })));
 
   return (
-    <Card className={`border-2 shadow-md ${a.approval ? "border-success" : "border-primary"}`}>
+    <Card id="grade-card" className={`scroll-mt-4 border-2 shadow-md ${a.approval ? "border-success" : "border-primary"}`}>
       <CardHeader>
         <div className="flex items-baseline gap-2">
           <CardTitle className="text-lg">{a.approval ? t("Approved") : t("Your grade")}</CardTitle>
