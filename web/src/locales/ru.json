@@ -423,8 +423,6 @@
  "This month": "Этот месяц",
  "This year": "Этот год",
  "Custom range": "Свой период",
- "From": "С",
- "To": "По",
  "Uploaded": "Загружено",
  "No group": "Без группы",
  "No exam": "Без экзамена",
@@ -433,5 +431,8 @@
  "Filter by label": "Фильтр по метке",
  "Type a label…": "Введите метку…",
  "No label matches “{q}”.": "Нет меток, подходящих под «{q}».",
- "Remove label {label}": "Убрать метку {label}"
+ "Remove label {label}": "Убрать метку {label}",
+ "Pick dates": "Выбрать даты",
+ "Previous month": "Предыдущий месяц",
+ "Next month": "Следующий месяц"
 }

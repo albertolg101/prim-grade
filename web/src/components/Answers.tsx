@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Capture from "@/components/Capture";
+import DateRange from "@/components/DateRange";
 import { ErrorText, StateBadge, pts, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,16 +132,7 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
                 <SelectTrigger size="sm" className="w-full" aria-labelledby="answer-date"><SelectValue /></SelectTrigger>
                 <SelectContent position="popper">{RANGES.map(([id, label]) => <SelectItem key={id} value={id}>{t(label)}</SelectItem>)}</SelectContent>
               </Select>
-              {range === "custom" && (
-                <div className="space-y-2">
-                  <label className="block space-y-1 text-xs text-muted-foreground">{t("From")}
-                    <Input type="date" className="h-8 px-2 text-xs" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
-                  </label>
-                  <label className="block space-y-1 text-xs text-muted-foreground">{t("To")}
-                    <Input type="date" className="h-8 px-2 text-xs" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
-                  </label>
-                </div>
-              )}
+              {range === "custom" && <DateRange from={from} to={to} onChange={(f, t2) => { setFrom(f); setTo(t2); }} />}
             </div>
             {([["group", "Group"], ["exam", "Exam"]] as [Facet, string][]).map(([f, title]) => {
               const keys = [...new Set(all.map((r) => keyOf(r, f)))]

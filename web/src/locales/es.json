@@ -423,8 +423,6 @@
  "This month": "Este mes",
  "This year": "Este año",
  "Custom range": "Rango personalizado",
- "From": "Desde",
- "To": "Hasta",
  "Uploaded": "Subida",
  "No group": "Sin grupo",
  "No exam": "Sin examen",
@@ -433,5 +431,8 @@
  "Filter by label": "Filtrar por etiqueta",
  "Type a label…": "Escribe una etiqueta…",
  "No label matches “{q}”.": "Ninguna etiqueta coincide con “{q}”.",
- "Remove label {label}": "Quitar la etiqueta {label}"
+ "Remove label {label}": "Quitar la etiqueta {label}",
+ "Pick dates": "Elegir fechas",
+ "Previous month": "Mes anterior",
+ "Next month": "Mes siguiente"
 }

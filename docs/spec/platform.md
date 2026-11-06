@@ -171,8 +171,9 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-49 Sort and filter a problem's answers** (owner request, 6 November 2026). On the Answers
   screen a panel on the right of the list, its top level with the list's top, replaces the old sort
   menu. It has **Sort by** (newest, oldest, name A–Z), **Uploaded** (All time, Today, Yesterday,
-  Last 7 days, Last 30 days, This month, This year, or a Custom range with From and To dates, both
-  days included, in local calendar days), **Group** and **Exam** checkboxes with counts, including
+  Last 7 days, Last 30 days, This month, This year, or a Custom range, both days included, in local
+  calendar days; the range is picked on a one-month calendar in the site's own popover, weeks from
+  Monday: the first click sets the start, the second the end, and today shows in the primary colour), **Group** and **Exam** checkboxes with counts, including
   "No group" and "No exam" (a facet with a single value is not shown), and **Label**, picked like
   the problem tags (PL-42): an autocomplete with counts adds each label as a removable chip.
   Within a facet any picked value matches; facets combine; nothing picked means every answer.
