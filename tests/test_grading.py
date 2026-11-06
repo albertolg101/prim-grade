@@ -5,12 +5,13 @@ from pathlib import Path
 
 import pytest
 
+from grader import llm
 from grader.grading import InvalidAssessment, run_batch, validate_harness, validate_raw
-from grader.llm import cost_usd
+from grader.llm import LLMError, cost_usd, openai_llm
 from grader.schemas import RawAssessment, Usage
-from grader.setup import grader_instructions, validate_rubric
+from grader.setup import grader_instructions, revise_text, validate_rubric
 
-from .conftest import FakeLLM, exercise, harness, rubric, run, submission
+from .conftest import FakeLLM, exercise, harness, proposal, rubric, run, submission
 
 
 def test_valid_proposal_total_is_server_computed():
@@ -127,3 +128,50 @@ def test_language_reaches_prompt_but_not_cached_instructions():
     batch(fake, [run("a", language="es"), run("b", mode="raw", language="es")], [submission()])
     assert all("in Spanish" in c["text"] for c in fake.calls)
     assert "Spanish" not in fake.calls[0]["instructions"]
+
+
+def test_openai_llm_uses_the_given_key(monkeypatch):
+    """GL-01: each LLM callable is billed to its own key."""
+    seen = {}
+
+    class FakeResponses:
+        async def parse(self, **kw):
+            seen["model"] = kw["model"]
+
+            class U:
+                input_tokens, output_tokens, total_tokens = 10, 5, 15
+
+                class input_tokens_details:
+                    cached_tokens = 0
+
+                class output_tokens_details:
+                    reasoning_tokens = 0
+
+            class R:
+                output_parsed = RawAssessment(status="proposed", score=1, comment="")
+                usage, status = U, "completed"
+
+            return R
+
+    class FakeClient:
+        def __init__(self, api_key):
+            seen.setdefault("keys", []).append(api_key)
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(llm, "AsyncOpenAI", FakeClient)
+    a, b = openai_llm("sk-a"), openai_llm("sk-b")
+    out, usage = asyncio.run(a("gpt-6.1-sol", "i", "t", [], RawAssessment))
+    asyncio.run(b("gpt-6.1-sol", "i", "t", [], RawAssessment))
+    assert seen["keys"] == ["sk-a", "sk-b"] and seen["model"] == "gpt-6.1-sol"
+    assert out.score == 1 and usage.total_tokens == 15
+    with pytest.raises(LLMError):
+        openai_llm("  ")
+
+
+def test_revise_text_carries_proposal_and_instruction():
+    """GL-02: a revision sees the current proposal and the teacher's instruction."""
+    text = revise_text("P3", "pallet", "a=...", proposal(), "C2 accepts g = 9.8 or 10", 1, 0, "en")
+    assert "C2 accepts g = 9.8 or 10" in text and '"id": "C1"' in text
+    assert "first 1 show the statement" in text and "in English" in text
+    with pytest.raises(ValueError):
+        revise_text("P3", "", "", proposal(), "  ", 0, 0, "en")

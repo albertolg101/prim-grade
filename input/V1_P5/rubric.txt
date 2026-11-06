@@ -1,0 +1,34 @@
+1. Rúbrica de calificación
+Criterio de evaluación  Puntuación
+1. Diagrama de fuerzas. Representa correctamente las cuatro fuerzas que actúan sobre la caja: peso, normal, fuerza aplicada y rozamiento, con sus direcciones y sentidos adecuados.  Condición obligatoria
+2. Segunda ley de Newton en el eje X. Escribe correctamente la ecuación correspondiente, en concordancia total con el diagrama de fuerzas.  Condición obligatoria
+3. Segunda ley de Newton en el eje Y. Escribe correctamente la ecuación correspondiente, en concordancia total con el diagrama de fuerzas.  Condición obligatoria
+Cumplimiento conjunto de los tres criterios anteriores.  3 puntos
+4. Determinación de la fuerza de rozamiento. Determina correctamente la fuerza normal y aplica la relación entre esta y la fuerza de rozamiento.  1 punto
+5. Determinación de la aceleración. Despeja correctamente la aceleración y obtiene su expresión literal en función de los datos del problema.  1 punto
+Total  5 puntos
+
+2. Reglas de evaluación
+Regla 1. Condición eliminatoria
+
+Los criterios 1, 2 y 3 constituyen un bloque indivisible de 3 puntos.
+- Si los tres criterios son completamente correctos, el estudiante obtiene 3 puntos.
+- Si existe al menos un error en cualquiera de ellos, la calificación total del problema es 0 puntos, independientemente del resto de la solución.
+- La omisión de cualquiera de los elementos obligatorios también implica 0 puntos.
+Regla 2. Ecuaciones necesarias
+
+Solamente se exige escribir las ecuaciones de la segunda ley de Newton para los ejes que aportan información necesaria para resolver el problema.
+
+En este caso concreto, ambas ecuaciones son necesarias: la horizontal permite determinar la aceleración y la vertical permite determinar la fuerza normal y, posteriormente, el rozamiento.
+
+Regla 3. Evaluación de los procedimientos posteriores
+
+Una vez superado el bloque obligatorio, los 2 puntos restantes se asignan de manera independiente según el cumplimiento de los criterios 4 y 5.
+
+Regla 4. Errores de cálculo
+
+No se descuentan puntos por errores numéricos, operaciones aritméticas incorrectas o redondeos. Se evalúa la corrección física y algebraica del procedimiento, no la exactitud de los cálculos.
+
+Regla 5. Convenciones de signos
+
+Se aceptan diferentes orientaciones de los ejes coordenados, siempre que exista correspondencia completa entre el diagrama de fuerzas y las ecuaciones de Newton.

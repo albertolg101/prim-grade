@@ -1,6 +1,6 @@
-# real exam data and runtime state — never commit
-input/
+# runtime state — never commit (input/ is committed as authorised test data)
 data/
+**/.DS_Store
 .env
 # tooling
 .venv/
@@ -11,3 +11,7 @@ __pycache__/
 *.swp
 # simulate_wave.py output (screenshots may show exam data)
 out/
+*.egg-info/
+storage/
+web/node_modules/
+web/dist/

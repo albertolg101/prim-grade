@@ -60,17 +60,45 @@ Each requirement has a stable id; tests and tasks cite it.
   and it never appears in logs, prompts or the admin view. AI actions are disabled, with a message
   pointing to Settings, until a key is saved.
 - **PL-07 Theme.** Follows the system light or dark setting by default; the teacher can choose
-  light, dark or system.
+  light, dark or system with three buttons on the right of the top bar, on every page.
+- **PL-48 Dates** (owner request, 6 November 2026). Every date in the interface follows one rule,
+  in the interface language: today shows "Today" and the time, 24-hour without seconds
+  ("Today 14:05"); yesterday shows "Yesterday" and the time ("Yesterday 23:59"); earlier this year shows day and month ("6 Nov"); before this year
+  adds the year ("31 Dec 2025").
+- **PL-37 Language** (owner request, 5 November 2026). A menu in the top bar, next to the theme
+  buttons, sets the language to English, Spanish or Russian. It changes every interface text at
+  once and is saved per teacher. Every AI call (problem setup, revision and grading) uses the
+  teacher's language at the time of the call through the grader's `language_rule`: explanations,
+  rubric and feedback are in that language; transcriptions and quotes stay as written. The problem
+  and each grading run record the language used. The sign-in page and the student page have the
+  same menu; their choice stays in that browser. Server messages that have a translation are shown
+  translated; the others stay in English.
 - **PL-08 Upload-link duration.** The default lifetime of a student upload link is 10 minutes. Each
   teacher can change their default.
 
 ### Look and navigation
 
-- **PL-09 Tabs.** A signed-in teacher moves between **Problems**, **Exams**, **Groups** and
-  **Settings**; admins also see **Admin**.
+- **PL-09 Tabs.** A signed-in teacher moves between **Problems**, **Groups**, **Exams** and
+  **Settings** in a left sidebar; admins also see **Admin**. On a phone the sidebar is a drawer
+  opened from the top bar.
+- **PL-38 Breadcrumbs** (owner request, 5 November 2026). The left of the top bar shows where the
+  teacher is (for example *Exams › Exam › Ana*); each earlier step is a link. On a phone only the
+  current page is shown.
+- **PL-39 Zoom** (owner request, 5 November 2026). A thin footer on every page has −, the current
+  level (press to return to 100 %) and +, from 75 % to 200 %. A web page cannot change the browser's
+  own zoom, so the app scales its root font size (every size is in rem); dialogs and menus zoom
+  with it and open in the right place. CSS `zoom` was tried first and dropped: dropdowns opened
+  off-screen because they are placed in on-screen pixels. The footer keeps
+  its size at every level and sits beside the sidebar on a computer (full width on a phone, where
+  the sidebar is a drawer). The level is kept per browser, since it depends on the screen.
 - **PL-10 Colours.** Dark mode uses yellow as the primary colour; light mode uses blue.
 - **PL-11 Phone and computer.** Every screen works on a phone (from 360 px wide, touch) and on a
   computer. On a phone the one-answer review (PL-22) stacks the image above the grade.
+  Pages use the whole screen width; their parts sit two per row and wrap to one column on narrow
+  screens (owner request, 5 November 2026).
+  An odd last part keeps its half width. Text fields side by side share one height, the height
+  the longest text needs; in rubric criterion cards and in the statement and solution blocks the
+  rows of fields line up across the two columns.
 
 ### Capture
 
@@ -85,7 +113,108 @@ Each requirement has a stable id; tests and tasks cite it.
 ### Problems
 
 - **PL-15 Draft with a title.** A problem can be saved as a draft with only a title. Statement,
-  solution and rubric can be added later.
+  solution and rubric can be added later. The button is **New problem**, with **Create problem**
+  in its dialog; the problem still starts as a draft.
+- **PL-40 Two problem screens** (owner request, 5 November 2026). A problem has two screens, with
+  no cards around them: **1 · Problem information** (statement and reference solution in one column
+  each, the optional rubric across both) and **2 · AI grader** (what the AI understood, the rubric with one card per criterion,
+  accept and improve, then the problem's answers). Images added to the statement or solution are
+  uploaded as soon as they are dropped, picked or scanned; tapping one opens it large in a dialog.
+  The whole statement or solution block is the drop area: while an image is dragged over it, a
+  dashed primary-colour border and a blurred cover read "Drop your images here". An empty text
+  field reads "Click to type or drag your images here", centred and muted; Browse files and Scan
+  sit below it on the left. On a computer the rubric field grows with its text only while the
+  whole screen still fits without a page scrollbar (so the problem name and the screen tabs stay
+  in view), then scrolls inside; it can always grow to 15 lines, even on a short screen. On a
+  phone it keeps growing with the text.
+  The title is not a form field: a pencil next to the page title turns it into a text input (Enter
+  or leaving saves, Esc cancels). Exams are renamed the same way.
+- **PL-41 Problem tags** (owner request, 5 November 2026). A plus next to the problem's status
+  in its header opens a field that suggests the teacher's existing tags and accepts a new one
+  (Enter adds it; picking a suggestion adds it at once). Tags show as chips with a remove button.
+  A tag is 1–40 characters, a problem has at most 20, and "Mechanics" and "mechanics" are one tag
+  (the first spelling is kept). A teacher's tags are stored on their own: a tag stays when no
+  problem carries it any more, and is offered again. Tags are private to the teacher. Tags do not
+  affect grading.
+- **PL-42 Search and filter problems** (owner request, 5 November 2026). The Problems page has a
+  search bar above the list and a filter sidebar on its right with:
+  - **Sort by**: recently changed (default), least recently changed, name A–Z, name Z–A.
+  - **Status**: Draft, Ready and Archived checkboxes with counts. Draft and Ready are checked by
+    default, Archived is not. An archived problem shows only under Archived, whatever its status;
+    none checked shows nothing (PL-44).
+  - **Changed** (owner request, 6 November 2026): the date each problem was last changed, the one the
+    list shows, with the same presets and custom-range calendar as **Uploaded** on the Answers screen
+    (PL-49); All time by default.
+  - **Tags**: never listed all at once. Clicking the field opens a menu with the first 8 tags and
+    "Type to see {n} more"; typing searches them all (each with how many problems carry it); picking one, or Enter on a full tag name in any
+    case, adds it as a chip with a remove button. A problem must carry every chosen tag. An unknown
+    name says no tag matches.
+  Tag suggestions here and on the problem header open in the site's own menu (`TagInput`), as wide
+  as the field, so they stay inside the panel; the typed part is bold, arrow keys move, Enter
+  picks, Escape closes. On the problem header a name that is not a tag yet shows "Create …".
+  Every scrollbar on the site is thin and drawn in the theme's colours (light and dark).
+  A cut-off label on any button, link, select, option or tag scrolls to its end and back while
+  hovered, so it can be read in full (none with reduced motion).
+  - **Clear** resets status to the default, removes the tags and sets Changed back to All time.
+  The search matches every typed word against the problem's name or tags, ignoring case. On a
+  phone a Filters button opens the panel between the search bar and the list. "{n} of {total}
+  problems" shows how many match. Search and filters run on the loaded list and are not saved.
+- **PL-45 Problem screens and what follows acceptance** (owner request, 5 November 2026). A problem
+  has three screens: 1 · Problem information, 2 · AI grader, 3 · Answers. Opened without a chosen
+  screen, a ready problem (its rubric accepted) opens on Answers; one that has an AI grader or is
+  being prepared opens on the AI grader; otherwise on Problem information. Answers lists the problem's answers newest first by default (sorted
+  in the PL-49 panel) and is where answers are added once the rubric is accepted. After accepting a
+  rubric version the teacher is asked where to go: the answers (default), the problem list, or stay
+  on the page. The back link from an answer returns to the Answers screen.
+- **PL-46 Group on an answer** (owner request, 6 November 2026). When the teacher adds an answer
+  on a problem's Answers screen, they can optionally pick one of their groups in an autocomplete
+  (archived ones are not offered; with no groups the field says so); the picked group shows as a
+  removable chip and stays for the next answer. The group shows next to the student's name in the
+  list. A group given without an exam must be the teacher's own; an exam still needs its group.
+- **PL-49 Sort and filter a problem's answers** (owner request, 6 November 2026). On the Answers
+  screen a panel on the right of the list, its top level with the list's top, replaces the old sort
+  menu. It has **Sort by** (newest, oldest, name A–Z), **Status** (three checkboxes with counts, all
+  checked by default, none checked shows nothing: Review required covers draft proposals, review
+  required and failed answers; Approved; Not graded covers not graded and grading in progress), **Uploaded** (All time, Today, Yesterday,
+  Last 7 days, Last 30 days, This month, This year, or a Custom range, both days included, in local
+  calendar days; the range is picked on a one-month calendar in the site's own popover, weeks from
+  Monday: the first click sets the start, the second the end, and today shows in the primary colour), **Group**, **Exam** and **Label**,
+  each picked like the problem tags (PL-42): clicking the field opens an autocomplete with the most
+  recently created groups and exams first (labels: the most recently used), each with how many of
+  the problem's answers carry it, and typing searches them all; a pick shows as a removable chip.
+  A section with nothing to pick says so ("No groups yet"). Within a facet any picked value matches; facets combine; nothing picked means every answer.
+  **Clear** resets the filters (all three statuses checked), not the sort. "{n} of {total} answers" shows how many match; on a
+  phone a Filters button opens the panel above the list. Grading selected answers grades only the
+  ones still shown. Filters run on the loaded list and are not saved.
+- **PL-50 Add answers from a dialog, one student or a folder** (owner request, 6 November 2026).
+  On a ready problem's Answers screen an **Add answer(s)** button, beside the answer count, opens a
+  dialog instead of a section on the page. **One student**: browse, drop or scan the pages, with an
+  optional name (PL-20). **Folder of students**: the teacher chooses a folder; each JPG, PNG or WebP
+  image directly in it is one student, named after the file without its extension; each folder
+  inside it is one student, named after that folder, its images (also in deeper folders) as pages
+  in file-name order with numbers compared as numbers (p2 before p10). Hidden files are ignored;
+  other files are listed as skipped. Before anything is sent the teacher sees every student with
+  their page count and can rename or remove them. Label and group (PL-46) apply to every answer
+  added. Answers are sent one per student, in order; a failure stops there, keeps the students not
+  yet added in the list with the error, and the ones already added stay added.
+- **PL-47 Recently used problems** (owner request, 6 November 2026). Above the problem list, a
+  "Recently used" section shows the ten problems whose answers were most recently uploaded, graded
+  by the AI or approved, newest first, as cards that open the problem. Archived problems and
+  problems without answers are left out; the full list, its search and filters stay below.
+- **PL-44 Archive a problem** (owner request, 5 November 2026). An archive button on each row of
+  the Problems list and below the problem's title archives it; on an archived problem the same
+  button unarchives it, and the problem shows an "Archived" badge. Archiving only hides the problem
+  from the default list (PL-42) and from "Add an existing problem" on an exam; its status, rubric
+  versions, answers, grades and exams are kept, and it can still be opened.
+- **PL-43 Preparing shown everywhere** (owner request, 5 November 2026). While the AI grader of a
+  problem is being prepared (Prepare, Prepare again from scratch), a spinner shows at the right
+  edge of Problems in the sidebar and next to that problem's name in the Problems list, so the
+  teacher can leave the page and still see it running. Preparing is a server job: the request
+  returns at once (202), the problem is marked as preparing in the database, and every open tab
+  polls that state (every 2 s while something is preparing, 5 s otherwise), so another tab or a
+  reload shows it too. One preparation runs per problem at a time (a second request gets 409). A
+  provider failure stores an error and no proposal (I2); a server restart turns a preparation in
+  progress into that error ("prepare it again"), as for grading runs (ADR-0001).
 - **PL-16 Generate the grader.** From a statement and a reference solution (text and/or images, an
   optional rubric), the teacher asks the AI to prepare the problem: its reading of the statement and
   solution, final answers, assumptions, expected forces when a diagram is needed, a rubric with
@@ -112,6 +241,19 @@ Each requirement has a stable id; tests and tasks cite it.
 - **PL-22 One answer at a time.** A review view shows one answer: the paper image large (zoom, pan,
   page switch) next to the AI's proposal (criteria, points, evidence, reasoning, confidence,
   feedback), with next and previous. A list view shows all answers with their state.
+  On a computer the review view fits the screen without a page scrollbar: the paper takes the
+  height left and the proposal and grade column scrolls inside itself (owner request, 6 November
+  2026).
+  A "Reset view" button (with the current zoom) puts the paper back at 100% and centred; whenever
+  the zoom returns to 100% by any path, the paper is centred again (owner request, 6 November 2026).
+  In the right column the teacher's grade comes first, with its live total as the headline, and
+  the AI proposal below it, quieter. The proposal card shows its total and the criteria not marked
+  high confidence ("Check first") in its header, then one square per criterion with its id, points
+  and confidence. The stages fold below: 1 transcription, 2 physics interpretation, 3 proposed
+  scores (each criterion with its evidence and source, reasoning and confidence, all shown once
+  open) and the suggested feedback (I3, I5). In the teacher's grade each criterion is a small cell with its id
+  (description on hover), its points large and bold, and its maximum; the cells sit side by side. On this screen the page and zoom buttons sit under the paper, beside
+  its caption (owner requests, 6 November 2026).
 - **PL-23 Final grade.** The teacher sets the final points per criterion and the feedback, starting
   from the proposal, and approves. Approval is the only way a grade becomes final (I1). The AI's
   proposal is kept unchanged beside the approved grade.
@@ -124,9 +266,102 @@ Each requirement has a stable id; tests and tasks cite it.
 
 - **PL-25 Groups.** A teacher creates, renames and archives groups (a class or a section) and sees
   the students who have submitted in each.
-- **PL-26 Exams.** A teacher creates an exam with a title, adds existing problems, or creates a new
-  problem from inside the exam, which is added to it automatically. They can reorder and remove
-  problems, and assign one or more groups. Each exam and group pair is reviewed and costed
+- **PL-51 Groups page and a group's page** (owner request, 6 November 2026). The Groups page works
+  like Problems (PL-42, PL-47): a **New group** button opens a dialog; "Recently used" shows the ten
+  unarchived groups most recently created or with an answer uploaded, graded or approved; below, a
+  search bar (group or student name), the list with an archive button per row, and a filter panel:
+  **Sort by** (recently used, recently created, name A–Z, Z–A), **Status** (Active checked,
+  Archived not) and **Created** (the PL-49 date filter). Archiving hides a group only from these
+  defaults and from the answer group pickers; its answers and exams are kept.
+  Opening a group shows its name (pencil to rename), archive, the
+  exams given to it (each opens the exam on this group), and its problems: those in its exams and
+  those with an answer from this group. They use the Problems search and filter panel; each row
+  shows this group's answers and approved answers, and on a ready problem **Add answer(s)** (PL-50,
+  the group fixed to this one); grading happens on the problem's answers.
+  Opening a problem from here shows its answers with the Group filter (PL-49) already set to
+  this group; the filter can be removed, and moving between the problem's tabs keeps it.
+- **PL-52 New exam with its problems** (owner request, 6 November 2026). **New exam** on the Exams
+  page opens a dialog with the title and, optionally, existing unarchived problems picked with an
+  autocomplete, shown numbered and put in order with up and down arrows. The exam is created with
+  those problems in that order in one request; a problem twice is refused (422) and another
+  teacher's problem is not found (404), with no exam created.
+- **PL-53 Edit an answer** (owner request, 6 November 2026). A pencil between the answer's title and
+  its status opens **Edit answer** with the student name, the label and the group. The label can
+  always change. The name and the group change only on the teacher's own upload outside an exam: a
+  student's upload keeps the name the student typed (PL-31, PL-35), and in an exam the name and
+  group decide the student's versions and the exam-and-group pairing; there they show read-only
+  with the reason, and the API refuses a change (409). Another teacher's group is not found (404).
+- **PL-54 Opening counts as use** (owner request, 6 November 2026). Opening a problem's or a
+  group's page makes it recently used, so it moves to the front of "Recently used" on its tab
+  (PL-47, PL-51). Opening is not a change: a problem's "Changed" date and sort stay as they were.
+- **PL-55 Exam problems stay; groups show who uploaded** (owner request, 6 November 2026). Once
+  in an exam a problem is not removed and no problem is created from the exam page: each problem
+  has an **Active** switch. Switched off, students' upload links no longer offer it and refuse it
+  (422), its answers stay, and a link opens only while one problem is active (409). Groups are
+  added with an autocomplete (newest first) and shown as rows: the group, how many students
+  uploaded an answer to the exam, and one column per problem (by number) counting the students who
+  uploaded an answer to it; a group without answers can be taken out. The exam's answers list has
+  no problem dropdown. The link's lifetime is one "Open for" field with a "min" unit, level with
+  **Open a link**.
+- **PL-56 Exams page like Problems and Groups** (owner request, 6 November 2026). The Exams page
+  shows "Recently used" (the ten unarchived exams most recently created, opened, or with an answer
+  uploaded, graded or approved), then a search bar (exam, problem or group name), the list with an
+  archive button per row, and a filter panel: **Sort by** (recently used, recently created, name
+  A–Z, Z–A), **Status** (Active checked, Archived not), **Created** (the PL-49 date filter) and
+  **Group** (an autocomplete; an exam given to any picked group). Opening an exam makes it recently
+  used (PL-54). An exam is archived from its row or its page; it is reversible and keeps its
+  answers, groups and links.
+- **PL-57 The student page remembers what was sent** (owner request, 6 November 2026). Opening an
+  upload link again in the same browser, after closing the tab or through a new link for the same
+  exam and group, shows the name that browser is bound to (PL-35, read-only) and, per problem, every
+  version it sent with its time and pages; a closed link still lists them. Only the bound browser
+  gets this: another browser sees an empty page. The exam page also refreshes its answers and group
+  counts every 5 seconds while it is on screen, so students' uploads show up without a reload.
+- **PL-58 Export approved marks** (simulation wave 1, A5, 6 November 2026). The exam page downloads a
+  CSV with one row per group and student and one column per problem, holding the approved total of
+  the graded version. A cell stays empty until a teacher approves that answer (I1). A typed name
+  that starts like a spreadsheet formula is written as text.
+- **PL-59 Review and setup guards** (simulation wave 1, A1, A2, A4, 6 November 2026). The grade
+  card shows "—" instead of a total while any criterion has no points, so an answer without a
+  proposal never shows 0 (I2). When the teacher changes a score the AI proposed and the feedback is
+  still the AI's text, a notice asks them to check it before approving; approving is not blocked.
+  An autocomplete list closes after a pick, and Escape closes an open list before the dialog it is
+  in, so the list never sits over a dialog's buttons. A3 (criterion names and reasons next to each
+  score) was withdrawn by the owner: teachers know their rubric, the description stays on hover and
+  the AI's reasons stay in the folded "Proposed scores" stage.
+- **PL-60 Foldable sidebar, unselectable button text** (owner request, 6 November 2026). On a
+  computer the sidebar folds to a strip of its icons (each named on hover) with its own button, and
+  the same button opens it again; the browser remembers the choice. A phone keeps the full drawer. Button text and the whole scan screen cannot be text-selected, so
+  dragging a scan's corners never selects labels.
+- **PL-61 Export as Excel or CSV** (owner request, 6 November 2026). The exam page's export (PL-58)
+  offers Excel (.xlsx, marks as numbers) or CSV, starting with the teacher's default, which is a
+  setting (Excel unless changed).
+- **PL-62 Spending filters** (owner request, 6 November 2026). The Settings spending card drops the
+  per-problem table (the API still returns it) and shows per exam and group, per exam and per group,
+  each with the same column widths. A period (the date presets or a custom range) filters every
+  table and the total on the server; a search narrows the rows by exam or group name.
+- **PL-63 Spending totals and per problem** (owner request, 6 November 2026). The spending card
+  opens with the period's total and its split: creating graders (setup and improve) and grading.
+  The per-problem table is back, with creating the grader, grading and the total per problem,
+  most expensive first; the search also matches problem names. Every spending table shows its
+  first 10 rows and a "Show all" button, so a teacher with many problems still sees the top costs.
+- **PL-64 The approved total stays in view** (simulation wave 2, B3, 6 November 2026). After
+  *Approve grade* or *Approve again*, the grade card scrolls back into view, so the teacher sees the
+  total and "Approved …" they just made final (I1) instead of the bottom of the panel. Once an
+  answer is approved, the PL-59 feedback notice compares with the approved scores, so it no longer
+  stays on screen after the teacher approved; it comes back if they change a score again. B1
+  (criterion names in the grade card) and a blocking feedback check (B2) were proposed by wave 2 and
+  declined by the owner, keeping PL-59.
+- **PL-65 The student sees what was received and what is missing** (simulation wave 2, B4, B5,
+  6 November 2026). Once the student has sent anything, a line says how many of the exam's exercises
+  were sent and names the ones not sent yet; a card with nothing sent says "Not sent yet", and its
+  button says "Add your pages first" until pages are added. Each receipt, also on a closed link,
+  shows small pictures of the pages received; a tap opens the page in a preview on the same
+  page, closed with its Close button or the corner ✕ (I4). A page is served only to
+  the browser bound to the student who sent it (PL-35); any other request gets 404.
+- **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
+  autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
+  autocomplete. Each exam and group pair is reviewed and costed
   separately.
 - **PL-27 Exam answers.** For an exam and group, the teacher sees answers per problem and per
   student, and reviews them with PL-22 to PL-24.
@@ -215,13 +450,34 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P07 | PL-14, PL-13 | A scanned page and its raw capture are both stored; the raw file's bytes are unchanged. |
 | AC-P08 | PL-21, I2 | A provider failure or unreadable answer shows *failed* or *review required* and no score. |
 | AC-P09 | PL-23, PL-24 | Approving with edits stores the approved grade, the untouched proposal and the AI-correct or wrong mark with its reason. |
-| AC-P10 | PL-26 | Creating a problem inside an exam adds it to that exam. |
+| AC-P10 | PL-26 | Withdrawn by PL-55: problems are no longer created from inside an exam. |
 | AC-P11 | PL-28, PL-30 | A link with a 1-minute lifetime refuses uploads after it expires; a closed link refuses at once. |
 | AC-P12 | PL-31 | Two uploads with the same name for one problem are both kept as versions. |
 | AC-P13 | PL-32, PL-33 | After one setup and two gradings, the problem, exam, group and exam+group totals add up to the recorded calls. |
 | AC-P15 | PL-35, US.P12 | Opening a link sets an opaque cookie; a first submission binds it server-side. A different student name with that cookie is refused without storing answer files or grading, including on a replacement link for the same exam/group. Concurrent attempts cannot bind two names. The refusal does not expose the bound name. |
 | AC-P16 | PL-35, PL-31 | The bound student can submit other problems; repeat uploads for one problem remain versions. A shared-device conflict directs the student to the teacher, who can upload on their behalf. Cookie bypass is documented as an unresolved limitation, not treated as verified identity. |
 | AC-P14 | PL-10, PL-11 | At 375 px and 1280 px, in light and dark, every tab is usable and uses the right primary colour. |
+| AC-P19 | PL-41 | Tags added to a problem are kept, merged case-insensitively, suggested on the teacher's other problems, and never shown to another teacher; empty or over-long tags are refused (`test_tags_are_kept_per_teacher_and_suggested`). |
+| AC-P20 | PL-43 | Preparing runs as a background job: the problem shows as preparing to every request of its owner and to no one else, a second preparation is refused while one runs, and a provider failure or a restart leaves an error and no proposal (`test_preparing_is_shared_and_runs_once`, `test_provider_failure_while_preparing_stores_no_proposal`). |
+| AC-P21 | PL-44 | Archiving a problem keeps its status and rubric version, it is still listed with `archived`, and unarchiving restores it (`test_archiving_a_problem_is_reversible_and_keeps_it`). |
+| AC-P22 | PL-45 | A problem's answers are listed newest first (`test_problem_answers_are_listed_newest_first`). |
+| AC-P23 | PL-46 | An answer can carry one of the teacher's groups without an exam; another teacher's group is refused, and an exam without a group is refused (`test_an_answer_can_name_one_of_the_teachers_groups`). |
+| AC-P25 | PL-51 | A group's page lists the exams given to it and the problems in them or answered in the group, each with the group's answers counted and those ready to grade; groups say when they were last used; another teacher gets 404 (`test_group_page_lists_its_exams_and_problems_with_answers_to_grade`). |
+| AC-P26 | PL-52 | An exam created with problems keeps their order; a repeated problem or another teacher's problem is refused and creates nothing (`test_an_exam_is_created_with_problems_in_the_given_order`). |
+| AC-P27 | PL-53 | A teacher's upload changes name, label and group; an exam answer keeps its name and group but its label changes; another teacher's answer or group is not found (`test_teacher_edits_an_answers_name_label_and_group`, `test_an_exam_answers_name_and_group_are_kept_but_its_label_can_change`). |
+| AC-P28 | PL-54 | Opening a problem or a group sets its last-used time without changing the problem's updated time; another teacher's gets 404 (`test_opening_a_problem_or_group_makes_it_recently_used`). |
+| AC-P29 | PL-55 | An exam's problem cannot be removed or created from the exam; switched off, the link neither offers nor accepts it, and with none active no link opens; each group counts its students in all and per problem (`test_an_exams_problem_is_switched_off_not_removed`, `test_exam_problems_groups_and_order`). |
+| AC-P30 | PL-56 | An exam is archived and unarchived (with or without a rename); opening it makes it the most recently used; another teacher gets 404 (`test_exams_are_archived_and_opening_one_makes_it_recently_used`). |
+| AC-P31 | PL-57 | A reopened link, a new link for the same exam and group, and a closed link all show the bound name and every version this browser sent; another browser gets none (`test_reopened_page_shows_what_this_browser_sent`). |
+| AC-P32 | PL-58 | The export lists approved totals only, leaves unapproved cells empty, writes a formula-like name as text and refuses another teacher's exam (`test_export_has_approved_marks_only`). |
+| AC-P33 | PL-61 | The export also comes as Excel with numeric marks; another format is refused; the default format is a setting that starts as Excel and accepts only csv or xlsx (`test_export_has_approved_marks_only`, `test_export_format_is_a_setting`). |
+| AC-P34 | PL-62 | Spending for a period that includes the calls equals the full total; a later period is empty; a malformed date is refused (`test_spending_by_dates`). |
+| AC-P35 | PL-63 | The period's creating-graders and grading totals add up to its total and match the problem's split; each problem counts its graded answers (`test_totals_add_up`). |
+| AC-P36 | PL-64 | After approving, the grade card with the approved total is in view (browser check, wave 2 walk). |
+| AC-P37 | PL-65 | A receipt lists its page ids; the bound browser opens its own pages, also after the link closes; another student's page, another browser and a browser without the cookie get 404 (`test_a_student_opens_only_the_pages_this_browser_sent`). |
+| AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
+| AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
+| AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |
 
 ## Open questions (each with the default applied until answered, D10)
 

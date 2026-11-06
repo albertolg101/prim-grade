@@ -338,3 +338,14 @@ Prototype simplifications (each is a known gap, not a decision):
   in local storage.
 - Confidence is a review signal, not a calibrated probability. Token counts are
   measured; costs are estimates from the user's price table.
+
+## Library changes for the platform (GL IDs)
+
+Added 5 November 2026 for [the platform spec](platform.md).
+
+| ID | Change | Implementation | Tests |
+|---|---|---|---|
+| GL-01 Per-teacher key | Each LLM callable is billed to the key it was created with. | `llm.openai_llm(api_key)`; `call_structured` keeps the process-wide `OPENAI_API_KEY` for evaluation scripts | `test_openai_llm_uses_the_given_key` |
+| GL-02 Revise with an instruction | The teacher's instruction and the current proposal produce a complete revised `SetupProposal`; preparation rules still apply and conflicts go to `issues`. | `setup.REVISE_INSTRUCTIONS`, `setup.revise_text` | `test_revise_text_carries_proposal_and_instruction` |
+| GL-03 One model | The platform passes `gpt-6.1-sol` on every call; the library does not choose a model. | caller (`server/`) | platform tests |
+| GL-04 Instructions written on answers | Not implemented; needs owner approval (changes grading semantics). | — | — |

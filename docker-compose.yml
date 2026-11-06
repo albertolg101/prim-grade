@@ -1,0 +1,36 @@
+# PrimGrade platform (ADR-0001). `docker compose up --build` runs everything on http://localhost:8080
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: primgrade
+      POSTGRES_PASSWORD: primgrade
+      POSTGRES_DB: primgrade
+    ports:
+      - "127.0.0.1:5433:5432"   # also used by the server tests (database primgrade_test)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U primgrade"]
+      interval: 2s
+      retries: 30
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://primgrade:primgrade@db:5432/primgrade
+      PRIMGRADE_SECRET_KEY: ${PRIMGRADE_SECRET_KEY:?set PRIMGRADE_SECRET_KEY (32+ characters) in .env}
+      PRIMGRADE_LLM: ${PRIMGRADE_LLM:-openai}   # "fake" for a demo without a key or tokens
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}   # the address in the QR code
+      PRIMGRADE_SECURE_COOKIES: ${PRIMGRADE_SECURE_COOKIES:-0}   # 1 behind HTTPS
+    ports:
+      - "127.0.0.1:8080:8000"
+    volumes:
+      - storage:/data/storage   # originals, captures and scans, never modified (I4)
+
+volumes:
+  pgdata:
+  storage:

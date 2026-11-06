@@ -60,17 +60,16 @@ def _image_part(path: Path) -> dict:
     return {"type": "input_image", "image_url": f"data:{mime};base64,{b64}", "detail": "high"}
 
 
-_client: AsyncOpenAI | None = None
-
-
-async def call_structured[T: BaseModel](
-    model: str, instructions: str, text: str, images: list[Path], schema: type[T]
+async def _parse[T: BaseModel](
+    client: AsyncOpenAI,
+    model: str,
+    instructions: str,
+    text: str,
+    images: list[Path],
+    schema: type[T],
 ) -> tuple[T, Usage]:
-    global _client
-    if _client is None:
-        _client = AsyncOpenAI()  # reads OPENAI_API_KEY
     content = [{"type": "input_text", "text": text}] + [_image_part(p) for p in images]
-    resp = await _client.responses.parse(
+    resp = await client.responses.parse(
         model=model,
         instructions=instructions,
         input=[{"role": "user", "content": content}],
@@ -88,3 +87,28 @@ async def call_structured[T: BaseModel](
     )
     usage.cost_usd = cost_usd(model, usage, load_prices())
     return resp.output_parsed, usage
+
+
+_client: AsyncOpenAI | None = None
+
+
+async def call_structured[T: BaseModel](
+    model: str, instructions: str, text: str, images: list[Path], schema: type[T]
+) -> tuple[T, Usage]:
+    """Process-wide key from OPENAI_API_KEY (evaluation scripts)."""
+    global _client
+    if _client is None:
+        _client = AsyncOpenAI()
+    return await _parse(_client, model, instructions, text, images, schema)
+
+
+def openai_llm(api_key: str) -> LLM:
+    """GL-01: an LLM callable billed to the caller's own key (one per teacher)."""
+    if not api_key.strip():
+        raise LLMError("no OpenAI API key")
+    client = AsyncOpenAI(api_key=api_key)
+
+    async def call(model, instructions, text, images, schema):
+        return await _parse(client, model, instructions, text, images, schema)
+
+    return call

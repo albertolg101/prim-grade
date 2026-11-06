@@ -1,0 +1,28 @@
+1. Rúbrica de calificación
+Criterio de evaluación  Puntuación
+1. Diagramas de fuerzas. Representa correctamente, para cada cuerpo, todas las fuerzas que actúan, con sus direcciones y sentidos.  Condición obligatoria
+2. Segunda ley de Newton para el cuerpo 1. Escribe correctamente la ecuación de movimiento en correspondencia total con su diagrama de fuerzas y el sentido del eje seleccionado.  Condición obligatoria
+3. Segunda ley de Newton para el cuerpo 2. Escribe correctamente la ecuación de movimiento en correspondencia total con su diagrama de fuerzas y el sentido del eje seleccionado.  Condición obligatoria
+Cumplimiento conjunto de los tres criterios anteriores.  3 puntos
+4. Combinación de las ecuaciones. Utiliza correctamente las condiciones de la polea y el cable ideales, y combina las ecuaciones para eliminar la tensión.  1 punto
+5. Determinación de la aceleración. Despeja correctamente la aceleración, obtiene su expresión literal e identifica el sentido de movimiento de la plataforma.  1 punto
+Total  5 puntos
+
+2. Reglas de evaluación
+Regla 1. Condición eliminatoria
+
+Los criterios 1, 2 y 3 constituyen un bloque indivisible de 3 puntos.
+- Si los tres criterios son completamente correctos, el estudiante obtiene 3 puntos.
+- Si existe al menos un error en cualquiera de ellos, la calificación total del problema es 0 puntos, independientemente del resto de la solución.
+- La omisión de cualquiera de los diagramas o de las ecuaciones correspondientes también implica 0 puntos.
+Regla 2. Evaluación de los procedimientos posteriores
+
+Los 2 puntos restantes se asignan de forma independiente por el cumplimiento de los criterios 4 y 5.
+
+Regla 3. Errores de cálculo
+
+No se descuentan puntos por errores aritméticos, sustituciones numéricas incorrectas o redondeos. Se evalúa exclusivamente la corrección física y algebraica del procedimiento.
+
+Regla 4. Convenciones de signos
+
+Se aceptan diferentes elecciones de los sentidos positivos de los ejes, siempre que exista coherencia completa entre los diagramas de fuerzas, las ecuaciones de Newton y la interpretación de la aceleración.

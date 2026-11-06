@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* PL-10: light uses a blue primary, dark a yellow primary (shadcn/ui tokens). */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.18 0.02 255);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 255);
+  --primary: oklch(0.52 0.2 258);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.01 255);
+  --secondary-foreground: oklch(0.25 0.03 255);
+  --muted: oklch(0.96 0.01 255);
+  --muted-foreground: oklch(0.48 0.02 255);
+  --accent: oklch(0.94 0.03 255);
+  --accent-foreground: oklch(0.25 0.03 255);
+  --destructive: oklch(0.58 0.22 27);
+  --warning: oklch(0.7 0.16 70);
+  --success: oklch(0.55 0.15 150);
+  --border: oklch(0.91 0.01 255);
+  --input: oklch(0.91 0.01 255);
+  --ring: oklch(0.52 0.2 258);
+}
+
+.dark {
+  --background: oklch(0.16 0.005 85);
+  --foreground: oklch(0.96 0.01 95);
+  --card: oklch(0.2 0.006 85);
+  --card-foreground: oklch(0.96 0.01 95);
+  --popover: oklch(0.2 0.006 85);
+  --popover-foreground: oklch(0.96 0.01 95);
+  --primary: oklch(0.86 0.17 92);
+  --primary-foreground: oklch(0.2 0.02 85);
+  --secondary: oklch(0.26 0.008 85);
+  --secondary-foreground: oklch(0.96 0.01 95);
+  --muted: oklch(0.26 0.008 85);
+  --muted-foreground: oklch(0.72 0.01 90);
+  --accent: oklch(0.3 0.02 90);
+  --accent-foreground: oklch(0.96 0.01 95);
+  --destructive: oklch(0.68 0.2 25);
+  --warning: oklch(0.78 0.15 70);
+  --success: oklch(0.72 0.15 150);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.86 0.17 92);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Two columns of components that wrap to one on narrow screens; .col-full takes a whole row */
+@layer components {
+  /* at most two equal columns, one below 2 x 24rem; an odd last item keeps its half width.
+     Items in a row stretch to the same height. */
+  .cols {
+    display: grid; gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(max(min(100%, 24rem), calc(50% - 0.75rem)), 1fr));
+  }
+  .cols > .col-full { grid-column: 1 / -1; }
+}
+
+/* every scrollbar on the site: thin, in the theme's colours (light and dark) */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  *:hover { scrollbar-color: color-mix(in oklab, var(--muted-foreground) 50%, transparent) transparent; }
+  /* browsers without scrollbar-color (older Safari) */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); background-clip: padding-box; border: 2px solid transparent; border-radius: 9999px; }
+}
+
+/* PL-39: the zoom footer keeps a fixed pixel height at every zoom; layout leaves room for it */
+:root {
+  --footer-h: 28px;
+  --app-h: calc(100dvh - var(--footer-h));
+  --screen-h: 100dvh;  /* the sidebar runs beside the footer */
+  --footer-pad: var(--footer-h);  /* room under content, on the content column only (no extra scroll) */
+}
+
+/* lib/marquee.ts: a cut-off label scrolls to its end and back while its control is hovered */
+[data-marquee] { text-overflow: clip; }
+
+/* number fields without the browser's up / down arrows (typing and the arrow keys still work) */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* PL-60: button text is never selected, e.g. while dragging a scan's corners or double-clicking */
+button, [role="button"] { -webkit-user-select: none; user-select: none; }
