@@ -6,7 +6,7 @@ import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const ScannerDialog = lazy(() => import("./Scanner"));
-const OK = ["image/jpeg", "image/png", "image/webp"];
+export const OK = ["image/jpeg", "image/png", "image/webp"];
 
 /** PL-12: browse, drag and drop, or scan. The pages are shown, in order, before anything is sent.
  * With children, the whole block is the drop area: the children, then one row with the buttons on the

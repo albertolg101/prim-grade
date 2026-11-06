@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import Capture from "@/components/Capture";
+import AddAnswers from "@/components/AddAnswers";
 import DateRange from "@/components/DateRange";
 import { ErrorText, StateBadge, pts, useAction, useLoad, when } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TagInput from "@/components/TagInput";
 import { cn } from "@/lib/utils";
 import { Filter, X } from "lucide-react";
-import { api, pagesForm, type AnswerRow, type Exam, type Group, type Page } from "@/lib/api";
+import { api, type AnswerRow, type Exam, type Group } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { navigate } from "@/lib/router";
 
@@ -52,9 +51,6 @@ function bounds(r: Range, from: string, to: string, now = new Date()): [Date | n
 /** PL-20, PL-21, PL-45 for one problem: add answers, grade the selected ones, open one to review. */
 export default function Answers({ problemId, ready }: { problemId: string; ready: boolean }) {
   const rows = useLoad(() => api.get<AnswerRow[]>(`/api/problems/${problemId}/answers`), [problemId]);
-  const [pages, setPages] = useState<Page[]>([]);
-  const [label, setLabel] = useState("");
-  const [name, setName] = useState("");
   const [group, setGroup] = useState<Group | null>(null);  // PL-46: optional
   const groups = useLoad(() => api.get<Group[]>("/api/groups"), []);
   const groupName = (id: string | null) => groups.data?.find((g) => g.id === id)?.name;
@@ -67,7 +63,6 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens
-  const act = useAction();
   const all = rows.data ?? [];
   const [lo, hi] = bounds(range, from, to);
   const shown = all.filter((r) => {
@@ -90,38 +85,26 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
       options: [...new Set(all.map((r) => r.label).filter(Boolean))].map((x) => ({ key: x, name: x })) },  // rows come newest first
   ];
   const nFilters = picked.group.length + picked.exam.length + picked.label.length + (range === "all" ? 0 : 1) + (statuses.length === STATUSES.length ? 0 : 1);
-  const add = () => act.run(async () => {
-    await api.form(`/api/problems/${problemId}/answers`,
-      pagesForm(pages, { label, student_name: name, group_id: group?.id }));
-    setPages([]); setLabel(""); setName("");  // the group stays: the next answer is often from the same one
-    await rows.reload();
-  });
 
   return (
     <div className="space-y-4">
-      {ready && (
-        <div className="space-y-2 rounded-lg border p-3">
-          <h3 className="text-sm font-semibold">{t("Add an answer")}</h3>
-          <Capture pages={pages} onChange={setPages} label={t("answer pages")} />
-          <div className="flex flex-wrap gap-2">
-            <Input className="w-full sm:w-72" placeholder={t("Student name (optional)")} value={name} onChange={(e) => setName(e.target.value)} aria-label={t("Student name")} />
-            <Input className="w-full sm:w-52" placeholder={t("Label (optional)")} value={label} onChange={(e) => setLabel(e.target.value)} aria-label={t("Label")} />
-            <GroupPick groups={(groups.data ?? []).filter((g) => !g.archived)} value={group} onChange={setGroup} />
-            <Button disabled={!pages.length || act.busy} onClick={add}>{pages.length === 1 ? t("Add answer (1 page)") : t("Add answer ({n} pages)", { n: pages.length })}</Button>
-          </div>
-          <ErrorText>{act.error}</ErrorText>
-        </div>
-      )}
       <ErrorText>{rows.error}</ErrorText>
-      {rows.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("No answers yet.")}</p>}
-      {all.length > 0 && (<>
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground" aria-live="polite">{t("{n} of {total} answers", { n: shown.length, total: all.length })}</p>
-          <Button size="sm" variant="outline" className="lg:hidden" aria-expanded={showFilters} aria-controls="answer-filters"
-                  onClick={() => setShowFilters(!showFilters)}>
-            <Filter /> {t("Filters")}{nFilters ? ` · ${nFilters}` : ""}
-          </Button>
+      {/* PL-50: one toolbar; adding answers opens a dialog */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {rows.data?.length === 0 ? t("No answers yet.") : all.length > 0 && t("{n} of {total} answers", { n: shown.length, total: all.length })}
+        </p>
+        <div className="flex gap-2">
+          {all.length > 0 && (
+            <Button size="sm" variant="outline" className="lg:hidden" aria-expanded={showFilters} aria-controls="answer-filters"
+                    onClick={() => setShowFilters(!showFilters)}>
+              <Filter /> {t("Filters")}{nFilters ? ` · ${nFilters}` : ""}
+            </Button>
+          )}
+          {ready && <AddAnswers problemId={problemId} groups={groups.data ?? []} group={group} onGroup={setGroup} onAdded={rows.reload} />}
         </div>
+      </div>
+      {all.length > 0 && (<>
         {/* PL-49: the panel starts level with the list, on its right */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
@@ -254,26 +237,5 @@ export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle, groupNa
         ))}
       </ul>
     </div>
-  );
-}
-
-/** PL-46: an optional group, picked from the teacher's groups with an autocomplete; once picked it
- * shows as a chip that can be removed. */
-function GroupPick({ groups, value, onChange }: { groups: Group[]; value: Group | null; onChange: (g: Group | null) => void }) {
-  const box = "w-full sm:w-52";
-  if (value) {
-    return (
-      <div className={cn("flex h-9 items-center justify-between gap-2 rounded-md border px-3 text-sm", box)}>
-        <span className="min-w-0 truncate" title={value.name}>{value.name}</span>
-        <button type="button" aria-label={t("Remove group {name}", { name: value.name })} className="rounded-full p-0.5 hover:bg-accent"
-                onClick={() => onChange(null)}><X className="size-3.5" /></button>
-      </div>
-    );
-  }
-  if (!groups.length) return <Input className={box} disabled placeholder={t("No groups yet")} aria-label={t("Group")} />;
-  return (
-    <TagInput className={box} inputClassName="h-9" label={t("Group")} placeholder={t("Group (optional)")}
-              noMatch="No group matches “{q}”." suggestions={groups.map((g) => ({ value: g.name }))}
-              onPick={(name) => onChange(groups.find((g) => g.name === name) ?? null)} />
   );
 }

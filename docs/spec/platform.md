@@ -183,6 +183,17 @@ Each requirement has a stable id; tests and tasks cite it.
   **Clear** resets the filters (all three statuses checked), not the sort. "{n} of {total} answers" shows how many match; on a
   phone a Filters button opens the panel above the list. Grading selected answers grades only the
   ones still shown. Filters run on the loaded list and are not saved.
+- **PL-50 Add answers from a dialog, one student or a folder** (owner request, 6 November 2026).
+  On a ready problem's Answers screen an **Add answer(s)** button, beside the answer count, opens a
+  dialog instead of a section on the page. **One student**: browse, drop or scan the pages, with an
+  optional name (PL-20). **Folder of students**: the teacher chooses a folder; each JPG, PNG or WebP
+  image directly in it is one student, named after the file without its extension; each folder
+  inside it is one student, named after that folder, its images (also in deeper folders) as pages
+  in file-name order with numbers compared as numbers (p2 before p10). Hidden files are ignored;
+  other files are listed as skipped. Before anything is sent the teacher sees every student with
+  their page count and can rename or remove them. Label and group (PL-46) apply to every answer
+  added. Answers are sent one per student, in order; a failure stops there, keeps the students not
+  yet added in the list with the error, and the ones already added stay added.
 - **PL-47 Recently used problems** (owner request, 6 November 2026). Above the problem list, a
   "Recently used" section shows the ten problems whose answers were most recently uploaded, graded
   by the AI or approved, newest first, as cards that open the problem. Archived problems and

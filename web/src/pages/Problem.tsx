@@ -78,10 +78,7 @@ export default function ProblemPage({ id }: { id: string }) {
       </div>
       {/* PL-45: the answers, newest first */}
       <section hidden={view !== "answers"} className="space-y-3 pt-2">
-        <p className="text-sm text-muted-foreground">
-          {p.status === "ready" ? t("Add one answer per student (one or more pages). Grading only starts when you ask for it.")
-            : t("Accept the rubric on the AI grader screen before adding answers.")}
-        </p>
+        {p.status !== "ready" && <p className="text-sm text-muted-foreground">{t("Accept the rubric on the AI grader screen before adding answers.")}</p>}
         <Answers problemId={p.id} ready={p.status === "ready"} />
       </section>
     </Page>

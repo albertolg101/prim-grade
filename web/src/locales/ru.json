@@ -440,5 +440,20 @@
  "Filter by group": "Фильтр по группе",
  "Filter by exam": "Фильтр по экзамену",
  "Type a group…": "Введите группу…",
- "Type an exam…": "Введите экзамен…"
+ "Type an exam…": "Введите экзамен…",
+ "1 page": "1 страница",
+ "Add 1 answer": "Добавить 1 ответ",
+ "Add answer(s)": "Добавить ответ(ы)",
+ "Add {n} answers": "Добавить ответы: {n}",
+ "Adding… {done} of {total}": "Добавление… {done} из {total}",
+ "Choose a folder": "Выбрать папку",
+ "Folder of students": "Папка студентов",
+ "How to add": "Как добавить",
+ "Images directly in the folder are one student each, named after the file. A folder inside it is one student, named after the folder, with its images as pages in name order.": "Каждое изображение прямо в папке — отдельный студент с именем файла. Каждая вложенная папка — один студент с именем папки, её изображения — страницы в порядке имён.",
+ "One answer per student (one or more pages). Grading only starts when you ask for it.": "Один ответ на студента (одна или несколько страниц). Проверка начинается только по вашему запросу.",
+ "One student": "Один студент",
+ "Skipped (use JPG, PNG or WebP): {files}": "Пропущено (используйте JPG, PNG или WebP): {files}",
+ "{n} added": "Добавлено: {n}",
+ "{n} pages": "Страниц: {n}",
+ "{n} students, {pages} pages. Check the names before adding.": "Студентов: {n}, страниц: {pages}. Проверьте имена перед добавлением."
 }

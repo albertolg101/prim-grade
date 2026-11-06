@@ -440,5 +440,20 @@
  "Filter by group": "Filtrar por grupo",
  "Filter by exam": "Filtrar por examen",
  "Type a group…": "Escribe un grupo…",
- "Type an exam…": "Escribe un examen…"
+ "Type an exam…": "Escribe un examen…",
+ "1 page": "1 página",
+ "Add 1 answer": "Añadir 1 respuesta",
+ "Add answer(s)": "Añadir respuesta(s)",
+ "Add {n} answers": "Añadir {n} respuestas",
+ "Adding… {done} of {total}": "Añadiendo… {done} de {total}",
+ "Choose a folder": "Elegir una carpeta",
+ "Folder of students": "Carpeta de estudiantes",
+ "How to add": "Cómo añadir",
+ "Images directly in the folder are one student each, named after the file. A folder inside it is one student, named after the folder, with its images as pages in name order.": "Cada imagen directamente en la carpeta es un estudiante, con el nombre del archivo. Cada carpeta dentro es un estudiante, con el nombre de la carpeta, y sus imágenes son las páginas en orden de nombre.",
+ "One answer per student (one or more pages). Grading only starts when you ask for it.": "Una respuesta por estudiante (una o más páginas). La calificación solo empieza cuando la pides.",
+ "One student": "Un estudiante",
+ "Skipped (use JPG, PNG or WebP): {files}": "Omitidos (usa JPG, PNG o WebP): {files}",
+ "{n} added": "{n} añadidas",
+ "{n} pages": "{n} páginas",
+ "{n} students, {pages} pages. Check the names before adding.": "{n} estudiantes, {pages} páginas. Revisa los nombres antes de añadir."
 }
