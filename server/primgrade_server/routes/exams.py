@@ -4,8 +4,10 @@ import csv
 import io
 import secrets
 from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Response
+from openpyxl import Workbook
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
@@ -15,6 +17,7 @@ from ..usage import last_used
 from .answers import answer_row
 
 router = APIRouter(prefix="/api", tags=["exams"])
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 class ExamIn(BaseModel):
@@ -215,10 +218,11 @@ def _cell(text: str) -> str:
     return "'" + text if text[:1] in ("=", "+", "-", "@") else text
 
 
-@router.get("/exams/{exam_id}/export.csv")
-def export_marks(exam_id: str, db: Db, user: Teacher) -> Response:
-    """PL-58: approved marks, one row per group and student, one column per problem. Only the
-    graded version counts, and a cell stays empty until a teacher approves it (I1)."""
+@router.get("/exams/{exam_id}/export.{fmt}")
+def export_marks(exam_id: str, fmt: Literal["csv", "xlsx"], db: Db, user: Teacher) -> Response:
+    """PL-58, PL-61: approved marks as CSV or Excel, one row per group and student, one column
+    per problem. Only the graded version counts, and a cell stays empty until a teacher approves
+    it (I1)."""
     e = owned(db, models.Exam, exam_id, user)
     problems = exam_problems(db, e.id)
     a = models.Answer
@@ -230,15 +234,24 @@ def export_marks(exam_id: str, db: Db, user: Teacher) -> Response:
     marks: dict = {}
     for group, name, pid, total in rows:
         marks.setdefault((group, name), {})[pid] = total
-    out = io.StringIO()
-    w = csv.writer(out)
-    w.writerow(["Group", "Student", *[p.title for p in problems]])
-    for (group, name), by in sorted(marks.items()):
-        w.writerow([_cell(group), _cell(name),
-                    *["" if by.get(p.id) is None else f"{by[p.id]:g}" for p in problems]])
-    filename = "".join(c if c.isalnum() else "_" for c in e.title)[:60] or "exam"
-    return Response(out.getvalue(), media_type="text/csv; charset=utf-8", headers={
-        "Content-Disposition": f'attachment; filename="{filename}-marks.csv"'})
+    table = [["Group", "Student", *[p.title for p in problems]]]
+    table += [[_cell(group), _cell(name), *[by.get(p.id) for p in problems]]
+              for (group, name), by in sorted(marks.items())]
+    filename = f'{"".join(c if c.isalnum() else "_" for c in e.title)[:60] or "exam"}-marks.{fmt}'
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    if fmt == "csv":
+        out = io.StringIO()
+        csv.writer(out).writerows([["" if v is None else f"{v:g}" if isinstance(v, float) else v
+                                    for v in r] for r in table])
+        return Response(out.getvalue(), media_type="text/csv; charset=utf-8", headers=headers)
+    book = Workbook()
+    sheet = book.active
+    sheet.title = "Marks"
+    for r in table:
+        sheet.append(r)  # marks stay numbers, so the spreadsheet can sum them
+    out = io.BytesIO()
+    book.save(out)
+    return Response(out.getvalue(), headers=headers, media_type=XLSX)
 
 
 @router.get("/exams/{exam_id}/groups/{group_id}/answers")

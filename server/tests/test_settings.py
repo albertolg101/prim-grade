@@ -8,7 +8,7 @@ KEY = "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789WXYZ"
 def test_key_is_never_returned_and_is_encrypted(admin, clean_db):  # AC-P03
     r = admin.put("/api/settings/api-key", json={"api_key": KEY})
     assert r.json() == {"theme": "system", "language": "en", "link_minutes": 10,
-                        "has_api_key": True, "api_key_last4": "WXYZ"}
+                        "export_format": "xlsx", "has_api_key": True, "api_key_last4": "WXYZ"}
     assert KEY not in admin.get("/api/settings").text
     assert KEY not in admin.get("/api/admin/users").text
     with create_engine(clean_db).connect() as c:

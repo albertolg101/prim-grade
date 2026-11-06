@@ -37,8 +37,7 @@ export default function ExamPage({ id }: { id: string }) {
           onRename={(title) => save(() => api.patch(`/api/exams/${id}`, { title }))}
           actions={<>
             {e.archived && <Badge variant="secondary">{t("Archived")}</Badge>}
-            {/* PL-58: approved marks only, one row per student */}
-            <Button asChild variant="outline" size="sm"><a href={`/api/exams/${id}/export.csv`} download><Download /> {t("Export marks (CSV)")}</a></Button>
+            <ExportMarks id={id} />
           </>}>
       {/* PL-56: like a group (PL-51): reversible, its answers, groups and links are kept */}
       <Button variant="ghost" size="sm" className="-mt-3 -ml-2 h-7 self-start px-2 text-xs font-normal text-muted-foreground" disabled={act.busy}
@@ -293,5 +292,29 @@ function Links({ e, groupId }: { e: Exam; groupId: string }) {
         </div>
       )}
     </Card>
+  );
+}
+
+type Format = "xlsx" | "csv";
+
+/** PL-58, PL-61: approved marks only, one row per student, in the teacher's default format or the
+ * one picked here. */
+function ExportMarks({ id }: { id: string }) {
+  const prefs = useLoad(() => api.get<{ export_format: Format }>("/api/settings"), []);
+  const [picked, setPicked] = useState<Format | null>(null);
+  const fmt = picked ?? prefs.data?.export_format ?? "xlsx";
+  return (
+    <div className="flex">
+      <Button asChild variant="outline" size="sm" className="rounded-r-none">
+        <a href={`/api/exams/${id}/export.${fmt}`} download><Download /> {t("Export marks")}</a>
+      </Button>
+      <Select value={fmt} onValueChange={(v) => setPicked(v as Format)}>
+        <SelectTrigger size="sm" className="rounded-l-none border-l-0" aria-label={t("Export format")}><SelectValue /></SelectTrigger>
+        <SelectContent position="popper" align="end">
+          <SelectItem value="xlsx">Excel</SelectItem>
+          <SelectItem value="csv">CSV</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

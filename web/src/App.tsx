@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import { BookOpen, ChevronRight, ClipboardList, Loader2, LogOut, Menu, PanelLeftClose, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
+import { BookOpen, ChevronRight, ClipboardList, Loader2, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, Shield, Users, X } from "lucide-react";
 import { CrumbsContext, type Crumb } from "@/components/common";
 import { LanguageSelect, ThemeButtons } from "@/components/Prefs";
 import ZoomFooter from "@/components/ZoomFooter";
@@ -36,10 +36,10 @@ export default function App() {
   const student = match("/s/:token", path);
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [menu, setMenu] = useState(false);  // phones: the drawer
-  // PL-60: on a computer the sidebar can be closed; the browser remembers it
+  // PL-60: on a computer the sidebar folds to its icons; the browser remembers it
   const [side, setSideState] = useState(() => { try { return localStorage.getItem("sidebar") !== "closed"; } catch { return true; } });
   const setSide = (open: boolean) => { setSideState(open); try { localStorage.setItem("sidebar", open ? "open" : "closed"); } catch { /* private window */ } };
-  const wide = () => window.matchMedia("(min-width: 48rem)").matches;
+  const rail = !side;  // folded: icons only, on a computer (a phone always has the full drawer)
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [prefError, setPrefError] = useState<string | null>(null);
   const [lang, setLangState] = useState<Lang>(getLang());
@@ -98,43 +98,45 @@ export default function App() {
         {menu && <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenu(false)} />}
         <aside className={cn(
           "fixed top-0 left-0 z-50 flex h-(--screen-h) w-60 flex-col border-r bg-background transition-transform md:sticky md:translate-x-0",
-          menu ? "translate-x-0" : "invisible -translate-x-full md:visible", !side && "md:hidden")}>
-          <div className="flex h-13 items-center justify-between px-4">
+          menu ? "translate-x-0" : "invisible -translate-x-full md:visible", rail && "md:w-14")}>
+          <div className={cn("flex h-13 items-center justify-between px-4", rail && "md:justify-center md:px-0")}>
             <a href="/problems" onClick={(e) => { e.preventDefault(); navigate("/problems"); }}
-               className="text-lg font-bold text-primary">PrimGrade</a>
+               className={cn("text-lg font-bold text-primary", rail && "md:hidden")}>PrimGrade</a>
             <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("Close menu")} onClick={() => setMenu(false)}>
               <X />
             </Button>
-            <Button variant="ghost" size="icon" className="hidden text-muted-foreground md:inline-flex" aria-label={t("Close sidebar")} title={t("Close sidebar")}
-                    onClick={() => setSide(false)}>
-              <PanelLeftClose />
+            <Button variant="ghost" size="icon" className="hidden text-muted-foreground md:inline-flex" aria-expanded={side}
+                    aria-label={t(rail ? "Open sidebar" : "Close sidebar")} title={t(rail ? "Open sidebar" : "Close sidebar")}
+                    onClick={() => setSide(rail)}>
+              {rail ? <PanelLeftOpen /> : <PanelLeftClose />}
             </Button>
           </div>
           <nav className="flex flex-1 flex-col gap-0.5 px-2" aria-label={t("Main")}>
             {tabs.map(([label, to, Icon]) => (
               <a key={to} href={to}
                  onClick={(e) => { e.preventDefault(); navigate(to); }}
-                 aria-current={active === to ? "page" : undefined}
-                 className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                 aria-current={active === to ? "page" : undefined} aria-label={rail ? t(label) : undefined} title={rail ? t(label) : undefined}
+                 className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium", rail && "md:justify-center md:px-0",
                    active === to ? "bg-primary/15 text-foreground"
                      : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
-                <Icon className="size-4" />
-                {t(label)}
+                <Icon className="size-4 shrink-0" />
+                <span className={cn(rail && "md:hidden")}>{t(label)}</span>
                 {to === "/problems" && <PreparingSpinner />}
               </a>
             ))}
           </nav>
           <div className="p-2">
-            <p className="truncate px-3 py-1 text-xs text-muted-foreground">{me.email}</p>
-            <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground" onClick={signOut}>
-              <LogOut className="size-4" /> {t("Sign out")}
+            <p className={cn("truncate px-3 py-1 text-xs text-muted-foreground", rail && "md:hidden")}>{me.email}</p>
+            <Button variant="ghost" className={cn("w-full justify-start gap-3 px-3 text-muted-foreground", rail && "md:justify-center md:px-0")}
+                    onClick={signOut} aria-label={rail ? t("Sign out") : undefined} title={rail ? t("Sign out") : undefined}>
+              <LogOut className="size-4" /> <span className={cn(rail && "md:hidden")}>{t("Sign out")}</span>
             </Button>
           </div>
         </aside>
         <div className="min-w-0 flex-1 pb-(--footer-pad)">
           <header className="sticky top-0 z-30 flex h-13 items-center gap-2 border-b bg-background/95 px-2 backdrop-blur sm:px-4">
-            <Button variant="ghost" size="icon" className={cn(side && "md:hidden")} aria-label={t("Open menu")} aria-expanded={menu}
-                    onClick={() => (wide() ? setSide(true) : setMenu(true))}>
+            <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("Open menu")} aria-expanded={menu}
+                    onClick={() => setMenu(true)}>
               <Menu />
             </Button>
             <nav aria-label={t("Breadcrumb")} className="min-w-0 flex-1">

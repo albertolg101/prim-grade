@@ -1,4 +1,5 @@
-"""PL-06–08, PL-37: the teacher's OpenAI key, theme, language and upload-link lifetime."""
+"""PL-06–08, PL-37, PL-61: the teacher's OpenAI key, theme, language, upload-link lifetime and
+export format."""
 
 from typing import Literal
 
@@ -16,6 +17,7 @@ class Prefs(BaseModel):
     theme: Literal["system", "light", "dark"] | None = None
     language: Literal["en", "es", "ru"] | None = None
     link_minutes: int | None = Field(default=None, ge=1, le=240)
+    export_format: Literal["csv", "xlsx"] | None = None
 
 
 class ApiKey(BaseModel):
@@ -25,6 +27,7 @@ class ApiKey(BaseModel):
 def out(user) -> dict:
     # the key itself never leaves the server (PL-06, AC-P03)
     return {"theme": user.theme, "language": user.language, "link_minutes": user.link_minutes,
+            "export_format": user.export_format,
             "has_api_key": bool(user.api_key_enc), "api_key_last4": user.api_key_last4}
 
 

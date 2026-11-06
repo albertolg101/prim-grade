@@ -329,10 +329,13 @@ Each requirement has a stable id; tests and tasks cite it.
   in, so the list never sits over a dialog's buttons. A3 (criterion names and reasons next to each
   score) was withdrawn by the owner: teachers know their rubric, the description stays on hover and
   the AI's reasons stay in the folded "Proposed scores" stage.
-- **PL-60 Closable sidebar, unselectable button text** (owner request, 6 November 2026). On a
-  computer the sidebar closes with its own button and reopens from the header menu button; the
-  browser remembers the choice. Button text and the whole scan screen cannot be text-selected, so
+- **PL-60 Foldable sidebar, unselectable button text** (owner request, 6 November 2026). On a
+  computer the sidebar folds to a strip of its icons (each named on hover) with its own button, and
+  the same button opens it again; the browser remembers the choice. A phone keeps the full drawer. Button text and the whole scan screen cannot be text-selected, so
   dragging a scan's corners never selects labels.
+- **PL-61 Export as Excel or CSV** (owner request, 6 November 2026). The exam page's export (PL-58)
+  offers Excel (.xlsx, marks as numbers) or CSV, starting with the teacher's default, which is a
+  setting (Excel unless changed).
 - **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
   autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
   autocomplete. Each exam and group pair is reviewed and costed
@@ -444,6 +447,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P30 | PL-56 | An exam is archived and unarchived (with or without a rename); opening it makes it the most recently used; another teacher gets 404 (`test_exams_are_archived_and_opening_one_makes_it_recently_used`). |
 | AC-P31 | PL-57 | A reopened link, a new link for the same exam and group, and a closed link all show the bound name and every version this browser sent; another browser gets none (`test_reopened_page_shows_what_this_browser_sent`). |
 | AC-P32 | PL-58 | The export lists approved totals only, leaves unapproved cells empty, writes a formula-like name as text and refuses another teacher's exam (`test_export_has_approved_marks_only`). |
+| AC-P33 | PL-61 | The export also comes as Excel with numeric marks; another format is refused; the default format is a setting that starts as Excel and accepts only csv or xlsx (`test_export_has_approved_marks_only`, `test_export_format_is_a_setting`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

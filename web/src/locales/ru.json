@@ -503,7 +503,10 @@
  "{n} of {total} exams": "{n} из {total} экзаменов",
  "This browser has already sent answers as {name}, so it keeps that name.": "Этот браузер уже отправлял ответы как {name}, поэтому имя сохраняется.",
  "What you sent, as {name}": "Что вы отправили как {name}",
- "Export marks (CSV)": "Экспорт оценок (CSV)",
  "You changed the AI's scores, but this feedback was written for them. Check it before approving.": "Вы изменили баллы ИИ, но этот отзыв написан для них. Проверьте его перед утверждением.",
- "Close sidebar": "Скрыть боковую панель"
+ "Close sidebar": "Скрыть боковую панель",
+ "Export marks": "Экспорт оценок",
+ "Export format": "Формат экспорта",
+ "Export marks as": "Экспортировать оценки как",
+ "Open sidebar": "Показать боковую панель"
 }

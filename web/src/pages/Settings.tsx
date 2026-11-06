@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import { navigate } from "@/lib/router";
 
-type Prefs = { link_minutes: number; has_api_key: boolean; api_key_last4: string | null };
+type Prefs = { link_minutes: number; export_format: "xlsx" | "csv"; has_api_key: boolean; api_key_last4: string | null };
 type Row = { id: string; usd: number; tokens: number; calls: number };
 type Costs = {
   total_usd: number;
@@ -76,6 +77,18 @@ export default function Settings({ onSignOut }: { onSignOut: () => void }) {
                   <Button type="submit" variant="outline" disabled={prefAct.busy || Number(minutes) === p.link_minutes}>{t("Save")}</Button>
                 </div>
               </form>
+              {/* PL-61: the exam page's export starts with this format */}
+              <div className="space-y-1.5">
+                <Label id="export-format">{t("Export marks as")}</Label>
+                <Select value={p.export_format} disabled={prefAct.busy}
+                        onValueChange={(v) => prefAct.run(async () => prefs.setData(await api.put<Prefs>("/api/settings", { export_format: v })))}>
+                  <SelectTrigger className="w-40" aria-labelledby="export-format"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
+                    <SelectItem value="csv">CSV</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <ErrorText>{prefAct.error}</ErrorText>
               <Button variant="outline" className="sm:hidden"
                       onClick={async () => { await api.post("/api/auth/logout"); onSignOut(); navigate("/"); }}>

@@ -503,7 +503,10 @@
  "{n} of {total} exams": "{n} de {total} exámenes",
  "This browser has already sent answers as {name}, so it keeps that name.": "Este navegador ya envió respuestas como {name}, así que mantiene ese nombre.",
  "What you sent, as {name}": "Lo que enviaste, como {name}",
- "Export marks (CSV)": "Exportar notas (CSV)",
  "You changed the AI's scores, but this feedback was written for them. Check it before approving.": "Has cambiado las puntuaciones de la IA, pero este comentario se escribió para ellas. Revísalo antes de aprobar.",
- "Close sidebar": "Cerrar la barra lateral"
+ "Close sidebar": "Cerrar la barra lateral",
+ "Export marks": "Exportar notas",
+ "Export format": "Formato de exportación",
+ "Export marks as": "Exportar notas como",
+ "Open sidebar": "Abrir la barra lateral"
 }

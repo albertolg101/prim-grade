@@ -1,7 +1,10 @@
 """PL-25–27, PL-55: groups and exam answers."""
 
+import io
+
 from conftest import PNG, ready_problem, teacher
 from fastapi.testclient import TestClient
+from openpyxl import load_workbook
 
 
 def test_exam_problems_groups_and_order(admin):
@@ -114,3 +117,18 @@ def test_export_has_approved_marks_only(admin, make_client):  # PL-58, AC-P32
     assert r.text.splitlines() == ["Group,Student,Q1,Q2", "Group A,'=cmd,,", "Group A,Ana,3.5,"]
     other = teacher(make_client, admin, "other@example.test")
     assert other.get(f"/api/exams/{e['id']}/export.csv").status_code == 404
+    # PL-61: Excel too, with marks as numbers; any other format is refused
+    r = admin.get(f"/api/exams/{e['id']}/export.xlsx")
+    assert r.status_code == 200 and "Final_1-marks.xlsx" in r.headers["content-disposition"]
+    sheet = load_workbook(io.BytesIO(r.content)).active
+    assert [[c.value for c in row] for row in sheet.iter_rows()] == [
+        ["Group", "Student", "Q1", "Q2"], ["Group A", "'=cmd", None, None],
+        ["Group A", "Ana", 3.5, None]]
+    assert admin.get(f"/api/exams/{e['id']}/export.pdf").status_code == 422
+
+
+def test_export_format_is_a_setting(admin):  # PL-61, AC-P33
+    assert admin.get("/api/settings").json()["export_format"] == "xlsx"
+    r = admin.put("/api/settings", json={"export_format": "csv"})
+    assert r.json()["export_format"] == "csv"
+    assert admin.put("/api/settings", json={"export_format": "pdf"}).status_code == 422

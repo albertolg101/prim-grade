@@ -49,6 +49,8 @@ class User(Base):
     theme: Mapped[str] = mapped_column(String(8), default="system")  # system | light | dark
     language: Mapped[str] = mapped_column(String(2), default="en", server_default="en")  # PL-37
     link_minutes: Mapped[int] = mapped_column(Integer, default=10)
+    # PL-61: csv | xlsx
+    export_format: Mapped[str] = mapped_column(String(4), default="xlsx", server_default="xlsx")
     created_at: Mapped[datetime] = ts()
 
 
