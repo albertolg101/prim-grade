@@ -24,8 +24,8 @@ import Student from "@/pages/Student";
 type Tab = [string, string, typeof BookOpen];
 const TABS: Tab[] = [
   ["Problems", "/problems", BookOpen],
-  ["Exams", "/exams", ClipboardList],
   ["Groups", "/groups", Users],
+  ["Exams", "/exams", ClipboardList],
   ["Settings", "/settings", SettingsIcon],
 ];
 

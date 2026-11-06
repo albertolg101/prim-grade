@@ -78,7 +78,7 @@ Each requirement has a stable id; tests and tasks cite it.
 
 ### Look and navigation
 
-- **PL-09 Tabs.** A signed-in teacher moves between **Problems**, **Exams**, **Groups** and
+- **PL-09 Tabs.** A signed-in teacher moves between **Problems**, **Groups**, **Exams** and
   **Settings** in a left sidebar; admins also see **Admin**. On a phone the sidebar is a drawer
   opened from the top bar.
 - **PL-38 Breadcrumbs** (owner request, 5 November 2026). The left of the top bar shows where the
