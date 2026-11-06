@@ -25,7 +25,8 @@ const stateOf = (r: ProblemRow): State => r.archived ? "archived" : r.status as 
 
 /** PL-42 (and PL-51 on a group's page): a search bar, the problems, and a filter panel on their right.
  * The caller draws what sits inside each row after the title (`meta`) and the buttons after it (`actions`). */
-export default function ProblemBrowser<R extends ProblemRow>({ rows, allTags, meta, actions, afterTitle }: {
+export default function ProblemBrowser<R extends ProblemRow>({ rows, allTags, meta, actions, afterTitle, query = "" }: {
+  query?: string;  // PL-51: added to each problem link, e.g. the group to filter its answers by
   rows: R[]; allTags: string[]; meta: (r: R) => React.ReactNode; actions?: (r: R) => React.ReactNode; afterTitle?: (r: R) => React.ReactNode;
 }) {
   // search and filters run on the loaded list and are not saved
@@ -67,7 +68,7 @@ export default function ProblemBrowser<R extends ProblemRow>({ rows, allTags, me
           {shown.map((p) => (
             // the row's buttons sit next to the link, never inside it
             <div key={p.id} className="flex items-center hover:bg-accent">
-              <a href={`/problems/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}`); }}
+              <a href={`/problems/${p.id}${query}`} onClick={(e) => { e.preventDefault(); navigate(`/problems/${p.id}${query}`); }}
                  className={cn("flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4", !actions && "pr-4", p.archived && "text-muted-foreground")}>
                 <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="min-w-0 truncate font-medium">{p.title}</span>

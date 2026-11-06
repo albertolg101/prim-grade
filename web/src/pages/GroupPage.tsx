@@ -57,7 +57,7 @@ export default function GroupPage({ id }: { id: string }) {
         {g.problems.length === 0 ? (
           <Card className="p-4 text-sm text-muted-foreground">{t("No problems yet: they appear here once an exam of this group has them, or an answer from this group is added to one.")}</Card>
         ) : (
-          <ProblemBrowser rows={g.problems} allTags={tags.data ?? []}
+          <ProblemBrowser rows={g.problems} query={`?group=${g.id}`} allTags={tags.data ?? []}
             meta={(p) => <span>{t("{n} answers · {approved} approved", { n: p.answers, approved: p.approved })}</span>}
             actions={(p) => p.status === "ready" && !p.archived && (<>
               <AddAnswers problemId={p.id} groups={[g]} group={g} onGroup={() => {}} lockGroup onAdded={group.reload}

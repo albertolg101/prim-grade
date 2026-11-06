@@ -35,6 +35,7 @@ export default function ProblemPage({ id }: { id: string }) {
   const edit = useAction();  // rename and tags
   const go = (v: View) => {
     const q = new URLSearchParams(from ? { exam: from } : {});
+    if (query("group")) q.set("group", query("group")!);  // PL-51: the answers keep the group filter
     q.set("view", v);
     navigate(`/problems/${id}?${q}`);
   };

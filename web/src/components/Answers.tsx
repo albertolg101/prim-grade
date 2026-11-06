@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { Filter, X } from "lucide-react";
 import { api, type AnswerRow, type Exam, type Group } from "@/lib/api";
 import { t } from "@/lib/i18n";
-import { navigate } from "@/lib/router";
+import { navigate, query } from "@/lib/router";
 
 type Sort = "newest" | "oldest" | "name";
 const SORTS: [Sort, string][] = [["newest", "Newest first"], ["oldest", "Oldest first"], ["name", "Name A–Z"]];
@@ -35,7 +35,8 @@ export default function Answers({ problemId, ready }: { problemId: string; ready
   const exams = useLoad(() => api.get<Exam[]>("/api/exams"), []);
   const [sort, setSort] = useState<Sort>("newest");  // the server lists newest first
   // PL-49: filters run on the loaded list and are not saved; an empty facet means every value
-  const [picked, setPicked] = useState(NO_FILTER);
+  // PL-51: from a group's page the problem opens filtered by that group
+  const [picked, setPicked] = useState(() => { const g = query("group"); return g ? { ...NO_FILTER, group: [g] } : NO_FILTER; });
   const [statuses, setStatuses] = useState<Status[]>(STATUSES.map(([s]) => s));  // all checked; none checked shows nothing
   const [date, setDate] = useState(ALL_TIME);
   const [showFilters, setShowFilters] = useState(false);  // phones only; always shown on wide screens

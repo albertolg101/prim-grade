@@ -278,6 +278,8 @@ Each requirement has a stable id; tests and tasks cite it.
   those with an answer from this group. They use the Problems search and filter panel; each row
   shows this group's answers and approved answers, and on a ready problem **Add answer(s)** (PL-50,
   the group fixed to this one) and **Grade (n)**, which grades this group's answers not graded yet.
+  Opening a problem from here shows its answers with the Group filter (PL-49) already set to
+  this group; the filter can be removed, and moving between the problem's tabs keeps it.
 - **PL-52 New exam with its problems** (owner request, 6 November 2026). **New exam** on the Exams
   page opens a dialog with the title and, optionally, existing unarchived problems picked with an
   autocomplete, shown numbered and put in order with up and down arrows. The exam is created with
