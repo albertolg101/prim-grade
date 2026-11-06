@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
 from .. import files, models, names
@@ -37,14 +37,37 @@ def _open(link: models.UploadLink) -> bool:
 def open_page(token: str, request: Request, response: Response, db: Db, config: Config) -> dict:
     link = _link(db, token)
     exam, group = db.get(models.Exam, link.exam_id), db.get(models.Group, link.group_id)
-    if not request.cookies.get(STUDENT_COOKIE):
+    cookie = request.cookies.get(STUDENT_COOKIE)
+    if not cookie:
         response.set_cookie(STUDENT_COOKIE, new_token(), max_age=STUDENT_COOKIE_DAYS * 86400,
                             httponly=True, samesite="lax", secure=config.secure_cookies,
                             path="/api/public")
+    name, received = mine(db, link, cookie)
     return {"exam_title": exam.title, "group_name": group.name, "open": _open(link),
             "expires_at": link.expires_at.isoformat(), "cookie_note": COOKIE_NOTE,
             "problems": [{"id": p.id, "title": p.title}
-                         for p in exam_problems(db, exam.id, active_only=True)]}
+                         for p in exam_problems(db, exam.id, active_only=True)],
+            "student_name": name, "received": received}
+
+
+def mine(db, link: models.UploadLink, cookie: str | None) -> tuple[str | None, list[dict]]:
+    """PL-57: what this browser's student already sent for this exam and group, through any link,
+    so a reopened page shows it. Only the browser bound to the name (PL-35) gets it."""
+    binding = cookie and db.scalar(select(models.StudentBinding).where(
+        models.StudentBinding.exam_id == link.exam_id,
+        models.StudentBinding.group_id == link.group_id,
+        models.StudentBinding.cookie_hash == token_hash(cookie)))
+    if not binding:
+        return None, []
+    a = models.Answer
+    pages = (select(func.count()).select_from(models.AnswerPage)
+             .where(models.AnswerPage.answer_id == a.id).scalar_subquery())
+    rows = db.execute(select(a.problem_id, a.version, pages, a.created_at).where(
+        a.exam_id == link.exam_id, a.group_id == link.group_id, a.source == "student",
+        a.student_name == binding.student_name).order_by(a.created_at)).all()
+    return binding.student_name, [
+        {"problem_id": pid, "version": v, "pages": n, "received_at": at.isoformat()}
+        for pid, v, n, at in rows]
 
 
 @router.post("/links/{token}/answers", status_code=201)

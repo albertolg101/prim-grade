@@ -311,6 +311,12 @@ Each requirement has a stable id; tests and tasks cite it.
   **Group** (an autocomplete; an exam given to any picked group). Opening an exam makes it recently
   used (PL-54). An exam is archived from its row or its page; it is reversible and keeps its
   answers, groups and links.
+- **PL-57 The student page remembers what was sent** (owner request, 6 November 2026). Opening an
+  upload link again in the same browser, after closing the tab or through a new link for the same
+  exam and group, shows the name that browser is bound to (PL-35, read-only) and, per problem, every
+  version it sent with its time and pages; a closed link still lists them. Only the bound browser
+  gets this: another browser sees an empty page. The exam page also refreshes its answers and group
+  counts every 5 seconds while it is on screen, so students' uploads show up without a reload.
 - **PL-26 Exams.** A teacher creates an exam with a title and adds existing problems (picked with an
   autocomplete). They can reorder problems and switch them off (PL-55), and add groups with an
   autocomplete. Each exam and group pair is reviewed and costed
@@ -420,6 +426,7 @@ Each comes with tests and a `grader.md` update (AGENTS.md, Grader library bounda
 | AC-P28 | PL-54 | Opening a problem or a group sets its last-used time without changing the problem's updated time; another teacher's gets 404 (`test_opening_a_problem_or_group_makes_it_recently_used`). |
 | AC-P29 | PL-55 | An exam's problem cannot be removed or created from the exam; switched off, the link neither offers nor accepts it, and with none active no link opens; each group counts its students in all and per problem (`test_an_exams_problem_is_switched_off_not_removed`, `test_exam_problems_groups_and_order`). |
 | AC-P30 | PL-56 | An exam is archived and unarchived (with or without a rename); opening it makes it the most recently used; another teacher gets 404 (`test_exams_are_archived_and_opening_one_makes_it_recently_used`). |
+| AC-P31 | PL-57 | A reopened link, a new link for the same exam and group, and a closed link all show the bound name and every version this browser sent; another browser gets none (`test_reopened_page_shows_what_this_browser_sent`). |
 | AC-P24 | PL-47 | The problem list gives each problem the time an answer to it was last uploaded, graded or approved, and none for a problem without answers (`test_problems_show_when_an_answer_was_last_uploaded_or_graded`). |
 | AC-P18 | PL-39 | At 75 %, 100 % and 150 %, on a phone and a computer, the sidebar runs the full height and the footer starts at its right edge, nothing scrolls sideways, dialogs zoom with the page, and the footer stays 28 px high. |
 | AC-P17 | PL-37 | A teacher who picks Spanish sees the interface in Spanish after one click, and the setup and grading prompts carry the Spanish language rule; the run records `es`. Every interface text has a Spanish and a Russian translation (`server/tests/test_web_i18n.py`). |

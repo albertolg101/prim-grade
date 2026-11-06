@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Capture from "@/components/Capture";
 import { clock, ErrorText, useAction, useLoad, when } from "@/components/common";
 import { LanguageSelect, useLocalLang } from "@/components/Prefs";
@@ -9,8 +9,11 @@ import { Label } from "@/components/ui/label";
 import { api, pagesForm, type Page } from "@/lib/api";
 import { t } from "@/lib/i18n";
 
-type LinkInfo = { exam_title: string; group_name: string; open: boolean; expires_at: string; cookie_note: string; problems: { id: string; title: string }[] };
-type Receipt = { version: number; pages: number; received_at: string };
+type Receipt = { problem_id: string; version: number; pages: number; received_at: string };
+type LinkInfo = {
+  exam_title: string; group_name: string; open: boolean; expires_at: string; cookie_note: string; problems: { id: string; title: string }[];
+  student_name: string | null; received: Receipt[];  // PL-57: what this browser already sent, kept across tabs and links
+};
 
 /** PL-29 to PL-31, PL-35: no account; the student types their name and uploads per problem. */
 export default function Student({ token }: { token: string }) {
@@ -18,6 +21,8 @@ export default function Student({ token }: { token: string }) {
   const [name, setName] = useState("");
   const [lang, setLang] = useLocalLang();
   const i = info.data;
+  const bound = i?.student_name ?? null;  // PL-35: once this browser has sent, it sends for that name only
+  useEffect(() => { if (bound) setName(bound); }, [bound]);
   return (
     <div className="mx-auto max-w-xl space-y-4 px-4 pt-6 pb-[calc(1.5rem+var(--footer-pad))]">
       <div className="flex items-center justify-between gap-2">
@@ -27,7 +32,18 @@ export default function Student({ token }: { token: string }) {
       <ErrorText>{info.error}</ErrorText>
       {i && !i.open && (
         <Card><CardHeader><CardTitle>{t("This upload link is closed")}</CardTitle>
-          <CardDescription>{t("It accepts no more answers. If you still need to submit, ask your teacher.")}</CardDescription></CardHeader></Card>
+          <CardDescription>{t("It accepts no more answers. If you still need to submit, ask your teacher.")}</CardDescription></CardHeader>
+          {i.received.length > 0 && (
+            <CardContent className="space-y-1">
+              <p className="text-sm font-medium">{t("What you sent, as {name}", { name: bound ?? "" })}</p>
+              {i.received.map((r) => (
+                <p key={`${r.problem_id}-${r.version}`} className="text-sm text-success">
+                  ✓ {i.problems.find((p) => p.id === r.problem_id)?.title ?? t("Problem")}: <ReceiptText r={r} />
+                </p>
+              ))}
+            </CardContent>
+          )}
+        </Card>
       )}
       {i?.open && (
         <>
@@ -37,10 +53,13 @@ export default function Student({ token }: { token: string }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="name">{t("Your full name")}</Label>
-            <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
-            <p className="text-xs text-muted-foreground">{t("Upload only your own answer. Your teacher sees the name, the time and every version you send.")}</p>
+            <Input id="name" autoComplete="name" value={name} readOnly={!!bound} onChange={(e) => setName(e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              {bound ? t("This browser has already sent answers as {name}, so it keeps that name.", { name: bound })
+                : t("Upload only your own answer. Your teacher sees the name, the time and every version you send.")}
+            </p>
           </div>
-          {i.problems.map((p) => <ProblemUpload key={p.id} token={token} problem={p} name={name} />)}
+          {i.problems.map((p) => <ProblemUpload key={p.id} token={token} problem={p} name={name} received={i.received.filter((r) => r.problem_id === p.id)} />)}
           <p className="text-xs text-muted-foreground">{t("This page sets one cookie so that this browser submits for one student only in this exam. It holds no name and no answers.")}</p>
         </>
       )}
@@ -48,9 +67,15 @@ export default function Student({ token }: { token: string }) {
   );
 }
 
-function ProblemUpload({ token, problem, name }: { token: string; problem: { id: string; title: string }; name: string }) {
+function ReceiptText({ r }: { r: Receipt }) {
+  return <>{r.version > 1
+    ? t("Received at {time}: pages {n} (version {v})", { time: when(r.received_at), n: r.pages, v: r.version })
+    : t("Received at {time}: pages {n}", { time: when(r.received_at), n: r.pages })}</>;
+}
+
+function ProblemUpload({ token, problem, name, received }: { token: string; problem: { id: string; title: string }; name: string; received: Receipt[] }) {
   const [pages, setPages] = useState<Page[]>([]);
-  const [sent, setSent] = useState<Receipt[]>([]);
+  const [sent, setSent] = useState<Receipt[]>(received);
   const act = useAction();
   const send = () => act.run(async () => {
     const r = await api.form<Receipt>(`/api/public/links/${token}/answers`, pagesForm(pages, { student_name: name, problem_id: problem.id }));
@@ -62,9 +87,7 @@ function ProblemUpload({ token, problem, name }: { token: string; problem: { id:
       <CardHeader>
         <CardTitle>{problem.title}</CardTitle>
         {sent.map((r) => (
-          <p key={r.version} className="text-sm text-success">✓ {r.version > 1
-            ? t("Received at {time}: pages {n} (version {v})", { time: when(r.received_at), n: r.pages, v: r.version })
-            : t("Received at {time}: pages {n}", { time: when(r.received_at), n: r.pages })}</p>
+          <p key={r.version} className="text-sm text-success">✓ <ReceiptText r={r} /></p>
         ))}
       </CardHeader>
       <CardContent className="space-y-3">

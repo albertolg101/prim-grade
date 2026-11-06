@@ -500,5 +500,7 @@
  "No exam matches the search and filters.": "Ни один экзамен не подходит под поиск и фильтры.",
  "Search by exam, problem or group": "Поиск по экзамену, задаче или группе",
  "Search exams": "Поиск экзаменов",
- "{n} of {total} exams": "{n} из {total} экзаменов"
+ "{n} of {total} exams": "{n} из {total} экзаменов",
+ "This browser has already sent answers as {name}, so it keeps that name.": "Этот браузер уже отправлял ответы как {name}, поэтому имя сохраняется.",
+ "What you sent, as {name}": "Что вы отправили как {name}"
 }

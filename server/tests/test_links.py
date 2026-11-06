@@ -137,3 +137,23 @@ def test_link_needs_a_problem_and_unknown_link_404(admin):
     assert admin.post(f"/api/exams/{e['id']}/groups/{g['id']}/links",
                       json={}).status_code == 409
     assert student(admin).get("/api/public/links/nope").status_code == 404
+
+
+def test_reopened_page_shows_what_this_browser_sent(admin):  # PL-57, AC-P31
+    e, g, p1, p2 = setup_exam(admin)
+    link, token = open_link(admin, e, g)
+    s = student(admin)
+    first = s.get(f"/api/public/links/{token}").json()
+    assert first["student_name"] is None and first["received"] == []
+    submit(s, token, "Student One", p1["id"])
+    submit(s, token, "Student One", p1["id"])
+    again = s.get(f"/api/public/links/{token}").json()  # the tab was closed and opened again
+    assert again["student_name"] == "Student One"
+    assert [(r["problem_id"], r["version"], r["pages"]) for r in again["received"]] == [
+        (p1["id"], 1, 1), (p1["id"], 2, 1)]
+    admin.post(f"/api/links/{link['id']}/close")
+    _, token2 = open_link(admin, e, g)  # a new link for the same exam and group
+    assert len(s.get(f"/api/public/links/{token2}").json()["received"]) == 2
+    assert len(s.get(f"/api/public/links/{token}").json()["received"]) == 2  # closed: still shown
+    other = student(admin).get(f"/api/public/links/{token2}").json()  # another browser
+    assert other["student_name"] is None and other["received"] == []
