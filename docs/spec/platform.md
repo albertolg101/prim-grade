@@ -347,7 +347,11 @@ Each requirement has a stable id; tests and tasks cite it.
   first 10 rows and a "Show all" button, so a teacher with many problems still sees the top costs.
 - **PL-64 The approved total stays in view** (simulation wave 2, B3, 6 November 2026). After
   *Approve grade* or *Approve again*, the grade card scrolls back into view, so the teacher sees the
-  total and "Approved …" they just made final (I1) instead of the bottom of the panel.
+  total and "Approved …" they just made final (I1) instead of the bottom of the panel. Once an
+  answer is approved, the PL-59 feedback notice compares with the approved scores, so it no longer
+  stays on screen after the teacher approved; it comes back if they change a score again. B1
+  (criterion names in the grade card) and a blocking feedback check (B2) were proposed by wave 2 and
+  declined by the owner, keeping PL-59.
 - **PL-65 The student sees what was received and what is missing** (simulation wave 2, B4, B5,
   6 November 2026). Once the student has sent anything, a line says how many of the exam's exercises
   were sent and names the ones not sent yet; a card with nothing sent says "Not sent yet", and its

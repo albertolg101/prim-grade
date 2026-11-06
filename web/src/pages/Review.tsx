@@ -239,10 +239,12 @@ function ApprovalForm({ a, run, onDone }: { a: AnswerDetail; run?: RunOut; onDon
   const needVerdict = aiRan && !verdict;
   const needWhy = verdict === "wrong" && (!reason || (!wrong.length && !note.trim()));
   const blank = rubric.criteria.some((c) => scores[c.id] === "");  // PL-59: no total without every score (I2)
-  // PL-59: the AI wrote its feedback for its own scores; once a score changes it may no longer fit
+  // PL-59: the AI wrote its feedback for its own scores; once a score changes it may no longer fit.
+  // After approval the teacher has decided, so it compares with the approved scores (PL-64).
   const aiFeedback = run?.harness?.feedback;
+  const base = approved ?? proposed;
   const stale = !!aiFeedback && feedback === aiFeedback
-    && rubric.criteria.some((c) => c.id in proposed && scores[c.id] !== "" && Number(scores[c.id]) !== proposed[c.id]);
+    && rubric.criteria.some((c) => c.id in base && scores[c.id] !== "" && Number(scores[c.id]) !== base[c.id]);
 
   const submit = () => act.run(async () => onDone(await api.post<AnswerDetail>(`/api/answers/${a.id}/approve`, {
     run_id: run && run.status !== "running" ? run.id : null,
