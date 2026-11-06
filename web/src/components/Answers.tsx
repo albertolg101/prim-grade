@@ -109,6 +109,7 @@ export function AnswerTable({ rows, reload, ctx, canGrade, problemTitle, groupNa
                className="min-w-0 flex-1 hover:underline">
               <div className="truncate font-medium">
                 {r.student_name || r.label || t("Unnamed answer")}
+                {r.student_name && r.label && <span className="font-normal text-muted-foreground"> · {r.label}</span>}
                 {problemTitle && <span className="font-normal text-muted-foreground"> · {problemTitle(r.problem_id)}</span>}
                 {groupName?.(r.group_id) && <span className="font-normal text-muted-foreground"> · {groupName(r.group_id)}</span>}
               </div>
