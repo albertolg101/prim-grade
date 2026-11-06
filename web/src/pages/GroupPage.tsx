@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Archive, ArchiveRestore } from "lucide-react";
 import AddAnswers from "@/components/AddAnswers";
 import { ErrorText, Page, useAction, useLoad, when } from "@/components/common";
@@ -12,6 +13,7 @@ import { navigate } from "@/lib/router";
 /** PL-51: one group: its exams, then its problems with the problem filters, each with Add answer(s) and Grade. */
 export default function GroupPage({ id }: { id: string }) {
   const group = useLoad(() => api.get<GroupDetail>(`/api/groups/${id}`), [id]);
+  useEffect(() => { void api.post(`/api/groups/${id}/opened`); }, [id]);  // PL-54: now recently used
   const tags = useLoad(() => api.get<string[]>("/api/problems/tags"), []);
   const edit = useAction();
   const g = group.data;

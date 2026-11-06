@@ -100,10 +100,13 @@ def problem_out(db, p: models.Problem) -> dict:
 
 
 def last_used(db, owner_id: str) -> dict:
-    """PL-47: per problem, when an answer to it was last uploaded, graded by the AI or approved."""
+    """PL-47, PL-54: per problem, when it was last opened, or an answer to it last uploaded, graded
+    by the AI or approved."""
     a = models.Answer
     events = union_all(
-        select(a.problem_id, a.created_at.label("at")),
+        select(models.Problem.id.label("problem_id"), models.Problem.opened_at.label("at"))
+        .where(models.Problem.opened_at.is_not(None)),
+        select(a.problem_id, a.created_at),
         select(a.problem_id, models.Run.started_at).join(models.Run, models.Run.answer_id == a.id),
         select(a.problem_id, models.Approval.approved_at)
         .join(models.Approval, models.Approval.answer_id == a.id),
@@ -166,6 +169,15 @@ def new_problem(body: NewProblem, db: Db, user: Teacher) -> dict:
     p = create(db, user, body)  # PL-15: a title is enough for a draft
     db.commit()
     return problem_out(db, p)
+
+
+@router.post("/{problem_id}/opened", status_code=204)
+def problem_opened(problem_id: str, db: Db, user: Teacher) -> None:
+    """PL-54: opening a problem makes it recently used. It is not a change: updated_at stays."""
+    owned(db, models.Problem, problem_id, user)
+    db.execute(update(models.Problem).where(models.Problem.id == problem_id)
+               .values(opened_at=models.now(), updated_at=models.Problem.updated_at))
+    db.commit()
 
 
 @router.get("/{problem_id}")

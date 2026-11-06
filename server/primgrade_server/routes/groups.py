@@ -22,10 +22,13 @@ class GroupEdit(BaseModel):
 
 
 def last_used(db, owner_id: str) -> dict:
-    """PL-51: per group, when an answer in it was last uploaded, graded by the AI or approved."""
+    """PL-51, PL-54: per group, when it was last opened, or an answer in it last uploaded, graded
+    by the AI or approved."""
     a = models.Answer
     events = union_all(
-        select(a.group_id, a.created_at.label("at")),
+        select(models.Group.id.label("group_id"), models.Group.opened_at.label("at"))
+        .where(models.Group.opened_at.is_not(None)),
+        select(a.group_id, a.created_at),
         select(a.group_id, models.Run.started_at).join(models.Run, models.Run.answer_id == a.id),
         select(a.group_id, models.Approval.approved_at)
         .join(models.Approval, models.Approval.answer_id == a.id),
@@ -71,6 +74,13 @@ def edit_group(group_id: str, body: GroupEdit, db: Db, user: Teacher) -> dict:
         g.archived = body.archived
     db.commit()
     return group_out(db, g)
+
+
+@router.post("/{group_id}/opened", status_code=204)
+def group_opened(group_id: str, db: Db, user: Teacher) -> None:
+    """PL-54: opening a group makes it recently used."""
+    owned(db, models.Group, group_id, user).opened_at = models.now()
+    db.commit()
 
 
 @router.get("/{group_id}")

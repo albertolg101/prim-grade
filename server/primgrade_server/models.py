@@ -93,6 +93,7 @@ class Problem(Base):
     # PL-43: set while the AI prepares the grader in the background; every tab reads it
     preparing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     prepare_error: Mapped[str | None] = mapped_column(Text)  # the last preparation failed (I2)
+    opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # PL-54
     created_at: Mapped[datetime] = ts()
     updated_at: Mapped[datetime] = ts(onupdate=now)
 
@@ -134,6 +135,7 @@ class Group(Base):
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(200))
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # PL-54
     created_at: Mapped[datetime] = ts()
 
 

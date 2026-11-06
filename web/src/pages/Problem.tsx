@@ -29,6 +29,7 @@ export default function ProblemPage({ id }: { id: string }) {
   const preparing = usePreparing().has(id);  // PL-43: the server's state, seen by every tab
   // loads again when a preparation starts or ends, so the proposal or the error shows by itself
   const prob = useLoad(() => api.get<Problem>(`/api/problems/${id}`), [id, preparing]);
+  useEffect(() => { void api.post(`/api/problems/${id}/opened`); }, [id]);  // PL-54: now recently used
   const p = prob.data;
   const from = query("exam");
   const asked = query("view") as View | null;

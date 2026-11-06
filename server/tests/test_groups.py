@@ -39,3 +39,19 @@ def test_an_exam_is_created_with_problems_in_the_given_order(admin, make_client)
     theirs = other.post("/api/exams", json={"title": "Theirs", "problem_ids": [p1["id"]]})
     assert theirs.status_code == 404
     assert [x["title"] for x in other.get("/api/exams").json()] == []  # nothing half-created
+
+
+def test_opening_a_problem_or_group_makes_it_recently_used(admin, make_client):  # PL-54
+    p = ready_problem(admin)
+    g = admin.post("/api/groups", json={"name": "Group A"}).json()
+    row = next(r for r in admin.get("/api/problems").json() if r["id"] == p["id"])
+    assert row["last_used_at"] is None
+    assert admin.post(f"/api/problems/{p['id']}/opened").status_code == 204
+    after = next(r for r in admin.get("/api/problems").json() if r["id"] == p["id"])
+    assert after["last_used_at"] is not None
+    assert after["updated_at"] == row["updated_at"]  # opening is not a change
+    assert admin.post(f"/api/groups/{g['id']}/opened").status_code == 204
+    assert admin.get("/api/groups").json()[0]["last_used_at"] > g["last_used_at"]
+    theirs = teacher(make_client, admin, "other@example.test")
+    assert theirs.post(f"/api/problems/{p['id']}/opened").status_code == 404
+    assert theirs.post(f"/api/groups/{g['id']}/opened").status_code == 404
