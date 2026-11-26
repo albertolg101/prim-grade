@@ -80,6 +80,7 @@ jobs:
           SECURE_COOKIES: ${{ vars.PRIMGRADE_SECURE_COOKIES || '1' }}
           LLM: ${{ vars.PRIMGRADE_LLM || 'openai' }}
           APP_PORT: ${{ vars.APP_PORT || '8080' }}
+          APP_BIND: ${{ vars.APP_BIND || '127.0.0.1' }}
         run: |
           umask 077
           {
@@ -90,6 +91,7 @@ jobs:
             printf 'PRIMGRADE_SECURE_COOKIES=%s\n' "$SECURE_COOKIES"
             printf 'PRIMGRADE_LLM=%s\n' "$LLM"
             printf 'APP_PORT=%s\n' "$APP_PORT"
+            printf 'APP_BIND=%s\n' "$APP_BIND"
           } > .env.deploy
           ssh vps "mkdir -p $DIR"
           scp docker-compose.yml vps:$DIR/docker-compose.yml

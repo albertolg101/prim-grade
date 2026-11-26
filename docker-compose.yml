@@ -28,7 +28,7 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}   # the address in the QR code
       PRIMGRADE_SECURE_COOKIES: ${PRIMGRADE_SECURE_COOKIES:-0}   # 1 behind HTTPS
     ports:
-      - "127.0.0.1:${APP_PORT:-8080}:8000"
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8080}:8000"   # APP_BIND=172.17.0.1 for a proxy in Docker
     volumes:
       - storage:/data/storage   # originals, captures and scans, never modified (I4)
 
