@@ -62,7 +62,7 @@ jobs:
     permissions:
       packages: read
     env:
-      DIR: ${{ vars.VPS_DIR || '/opt/primgrade' }}
+      DIR: ${{ vars.VPS_DIR || '~/primgrade' }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up SSH
@@ -79,6 +79,7 @@ jobs:
           PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
           SECURE_COOKIES: ${{ vars.PRIMGRADE_SECURE_COOKIES || '1' }}
           LLM: ${{ vars.PRIMGRADE_LLM || 'openai' }}
+          APP_PORT: ${{ vars.APP_PORT || '8080' }}
         run: |
           umask 077
           {
@@ -88,6 +89,7 @@ jobs:
             printf 'PUBLIC_BASE_URL=%s\n' "$PUBLIC_BASE_URL"
             printf 'PRIMGRADE_SECURE_COOKIES=%s\n' "$SECURE_COOKIES"
             printf 'PRIMGRADE_LLM=%s\n' "$LLM"
+            printf 'APP_PORT=%s\n' "$APP_PORT"
           } > .env.deploy
           ssh vps "mkdir -p $DIR"
           scp docker-compose.yml vps:$DIR/docker-compose.yml
