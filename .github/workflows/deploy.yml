@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
+      - run: uv sync --all-packages   # the server is a workspace member
       - run: uv run ruff check .
       - run: uv run python -m pytest
         env:
