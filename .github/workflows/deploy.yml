@@ -1,0 +1,102 @@
+# Test, build the app image to GHCR, then deploy it to the VPS over SSH with docker compose.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:17
+        env:
+          POSTGRES_USER: primgrade
+          POSTGRES_PASSWORD: primgrade
+          POSTGRES_DB: primgrade
+        ports: ["5433:5432"]
+        options: --health-cmd "pg_isready -U primgrade" --health-interval 2s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run python -m pytest
+        env:
+          PRIMGRADE_LLM: fake
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ env.IMAGE }}:latest,${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      packages: read
+    env:
+      DIR: ${{ vars.VPS_DIR || '/opt/primgrade' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          echo "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          printf 'Host vps\n  HostName %s\n  User %s\n  Port %s\n  IdentityFile ~/.ssh/id_deploy\n' \
+            "${{ secrets.VPS_HOST }}" "${{ secrets.VPS_USER }}" "${{ secrets.VPS_PORT || '22' }}" > ~/.ssh/config
+      - name: Write .env and copy files
+        env:
+          SECRET_KEY: ${{ secrets.PRIMGRADE_SECRET_KEY }}
+          DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+          SECURE_COOKIES: ${{ vars.PRIMGRADE_SECURE_COOKIES || '1' }}
+          LLM: ${{ vars.PRIMGRADE_LLM || 'openai' }}
+        run: |
+          umask 077
+          {
+            echo "PRIMGRADE_IMAGE=$IMAGE:${{ github.sha }}"
+            printf 'PRIMGRADE_SECRET_KEY=%s\n' "$SECRET_KEY"
+            printf 'POSTGRES_PASSWORD=%s\n' "$DB_PASSWORD"
+            printf 'PUBLIC_BASE_URL=%s\n' "$PUBLIC_BASE_URL"
+            printf 'PRIMGRADE_SECURE_COOKIES=%s\n' "$SECURE_COOKIES"
+            printf 'PRIMGRADE_LLM=%s\n' "$LLM"
+          } > .env.deploy
+          ssh vps "mkdir -p $DIR"
+          scp docker-compose.yml vps:$DIR/docker-compose.yml
+          scp .env.deploy vps:$DIR/.env
+      - name: Pull and restart
+        run: |
+          ssh vps "set -e; cd $DIR
+            echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+            docker compose pull app
+            docker compose up -d --no-build --wait
+            docker logout ghcr.io
+            docker image prune -f"
